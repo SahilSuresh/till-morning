@@ -1,0 +1,51 @@
+# Top-level .gitignore for Till Morning (the Expo app has its own at app/expo/.gitignore too)
+
+# dependencies anywhere in the tree
+node_modules/
+**/node_modules/
+
+# env files (keys live in EAS and Codemagic, never in the repo)
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Expo
+**/.expo/
+**/dist/
+**/web-build/
+**/expo-env.d.ts
+
+# generated native folders (Expo prebuild writes them fresh)
+**/ios/
+**/android/
+
+# Metro
+**/.metro-health-check*
+
+# iOS signing material — never commit
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.cer
+*.jks
+
+# OS
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/*
+!.vscode/settings.json.example
+
+# logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# TypeScript
+*.tsbuildinfo

@@ -1,0 +1,10 @@
+{
+  "folders": [
+    { "path": ".", "name": "Till Morning" },
+    { "path": "app/expo", "name": "Expo app" }
+  ],
+  "settings": {
+    "liveServer.settings.root": "/",
+    "files.exclude": { "**/node_modules": true }
+  }
+}

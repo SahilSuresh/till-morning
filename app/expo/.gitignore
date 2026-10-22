@@ -1,0 +1,58 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android
+
+# secrets: every .env file except the example
+.env
+.env.*
+!.env.example
+sentry.properties
+google-services.json
+GoogleService-Info.plist
+
+# build outputs
+*.ipa
+*.apk
+*.aab
+build-*.tar.gz
+
+# Screen Time extension targets are copied in by react-native-device-activity on prebuild
+/targets

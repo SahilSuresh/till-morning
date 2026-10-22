@@ -1,0 +1,939 @@
+<title>App Name Lab</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light dark;
+  --bg:#F5F6FF; --surface:#FFFFFF; --surface-2:#EEF0FF; --line:#D9DCF5; --fg:#121433; --muted:#545A8C;
+  --accent:#3550E6; --accent-soft:rgba(53,80,230,.10); --purple:#6D3FE0;
+  --mint:#12945F; --mint-soft:rgba(18,148,95,.12); --amber:#A86200; --amber-soft:rgba(178,107,0,.12);
+  --coral:#C93C3C; --coral-soft:rgba(214,69,69,.11); --grey-soft:rgba(84,90,140,.10);
+  --night:#0D0F2E; --night-2:#1A1F5C; --paper:#FBF7EC; --paper-ink:#141633; --paper-muted:#5E6290;
+  --shadow:0 1px 2px rgba(18,20,51,.06),0 8px 24px rgba(18,20,51,.06);
+  color:var(--fg); background:var(--bg);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D0F2E; --surface:#151842; --surface-2:#1C2056; --line:#2A2F6B; --fg:#EEF0FF; --muted:#A3A8D6;
+    --accent:#6F86FF; --accent-soft:rgba(67,97,255,.18); --purple:#A98BFF;
+    --mint:#3DDC97; --mint-soft:rgba(61,220,151,.14); --amber:#FFB547; --amber-soft:rgba(255,181,71,.14);
+    --coral:#FF7B7B; --coral-soft:rgba(255,107,107,.14); --grey-soft:rgba(163,168,214,.12);
+    --night:#090B24; --night-2:#171B52; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D0F2E; --surface:#151842; --surface-2:#1C2056; --line:#2A2F6B; --fg:#EEF0FF; --muted:#A3A8D6;
+  --accent:#6F86FF; --accent-soft:rgba(67,97,255,.18); --purple:#A98BFF;
+  --mint:#3DDC97; --mint-soft:rgba(61,220,151,.14); --amber:#FFB547; --amber-soft:rgba(255,181,71,.14);
+  --coral:#FF7B7B; --coral-soft:rgba(255,107,107,.14); --grey-soft:rgba(163,168,214,.12);
+  --night:#090B24; --night-2:#171B52; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg)}
+body{font-family:Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.55;color:var(--fg);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-underline-offset:2px}
+h1,h2,h3,h4{font-family:Fredoka,Figtree,sans-serif;font-weight:600;line-height:1.15;margin:0}
+h2{font-size:clamp(1.5rem,3.2vw,2rem);letter-spacing:-.01em}
+h3{font-size:1.2rem}
+p{margin:.4em 0 .8em}
+.wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+.tiny{font-size:.78rem}
+.eyebrow{font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+section{padding:56px 0 8px;scroll-margin-top:64px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 24px;margin-bottom:20px}
+.sec-head p{max-width:62ch;margin:6px 0 0;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow)}
+.grid{display:grid;gap:16px}
+@media(min-width:760px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:700;white-space:nowrap}
+.p-g{background:var(--mint-soft);color:var(--mint)}
+.p-y{background:var(--amber-soft);color:var(--amber)}
+.p-r{background:var(--coral-soft);color:var(--coral)}
+.p-n{background:var(--grey-soft);color:var(--muted)}
+.p-a{background:var(--accent-soft);color:var(--accent)}
+.unv{font-weight:700;color:var(--amber);letter-spacing:.02em}
+
+/* Night band + nav */
+.night{background:radial-gradient(1200px 500px at 85% -10%,rgba(67,97,255,.35),transparent 60%),radial-gradient(800px 400px at 0% 110%,rgba(139,92,246,.28),transparent 60%),linear-gradient(180deg,var(--night),var(--night-2));color:#EEF0FF;position:relative;overflow:hidden}
+.night::before{content:"";position:absolute;inset:0;background-image:radial-gradient(1.5px 1.5px at 12% 22%,#fff8,transparent),radial-gradient(1px 1px at 32% 68%,#fff6,transparent),radial-gradient(1.5px 1.5px at 58% 18%,#fff9,transparent),radial-gradient(1px 1px at 78% 52%,#fff7,transparent),radial-gradient(1.2px 1.2px at 92% 82%,#fff6,transparent),radial-gradient(1px 1px at 44% 88%,#fff5,transparent),radial-gradient(1.3px 1.3px at 6% 74%,#fff7,transparent);pointer-events:none}
+.night .muted{color:#B9BDE8}
+.night .eyebrow{color:#B9BDE8}
+.hero{position:relative;padding:40px 0 48px}
+.hero h1{font-size:clamp(2.6rem,8vw,4.6rem);font-weight:700;letter-spacing:.02em;line-height:1}
+.hero h1 span{color:#8EA0FF}
+.lede{font-size:clamp(1.05rem,2.2vw,1.25rem);max-width:60ch;color:#D6D9F5;margin:14px 0 22px}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px}
+.stat{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 14px;min-width:120px}
+.stat b{display:block;font-family:Fredoka,sans-serif;font-size:1.5rem;font-weight:600;line-height:1.1}
+.stat span{font-size:.8rem;color:#B9BDE8}
+
+.ticket{display:grid;grid-template-columns:1fr;background:var(--paper);color:var(--paper-ink);border-radius:22px;box-shadow:0 18px 50px rgba(0,0,0,.35);position:relative;max-width:980px}
+@media(min-width:820px){.ticket{grid-template-columns:1.65fr 1fr}}
+.t-main{padding:26px 26px 22px}
+.t-stub{padding:22px 26px 26px;position:relative;border-top:2px dashed #CFC8B4}
+@media(min-width:820px){.t-stub{border-top:0;border-left:2px dashed #CFC8B4}}
+.t-stub::before,.t-stub::after{content:"";position:absolute;width:26px;height:26px;border-radius:50%;background:var(--night-2)}
+.t-stub::before{left:-13px;top:-14px}.t-stub::after{right:-13px;top:-14px}
+@media(min-width:820px){.t-stub::before{left:-14px;top:-13px}.t-stub::after{left:-14px;right:auto;top:auto;bottom:-13px}}
+.t-label{font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--paper-muted)}
+.t-name{font-family:Fredoka,sans-serif;font-weight:700;font-size:clamp(2.4rem,7vw,3.6rem);line-height:1;margin:6px 0 6px;color:#1B2259}
+.t-score{display:inline-flex;align-items:baseline;gap:4px;font-family:Fredoka,sans-serif;font-weight:600;font-size:1.6rem;color:#1B2259}
+.t-score small{font-size:.9rem;color:var(--paper-muted)}
+.t-row{display:flex;flex-wrap:wrap;gap:18px 28px;align-items:flex-end;margin-bottom:14px}
+.listing{background:#fff;border:1px solid #E6E0CE;border-radius:14px;padding:12px 14px;display:flex;gap:12px;align-items:center;max-width:460px}
+.app-ic{width:52px;height:52px;border-radius:13px;flex:none;background:linear-gradient(160deg,#1B2259 0%,#4361FF 70%,#FFB547 100%);display:grid;place-items:center}
+.listing b{display:block;font-size:.98rem;color:#141633}
+.listing span{font-size:.85rem;color:#5E6290}
+.t-note{margin-top:14px;font-size:.92rem;color:#3B3F6B;max-width:62ch}
+.t-note b{color:#141633}
+.backup{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 0;border-bottom:1px dashed #DDD5BF}
+.backup:last-of-type{border-bottom:0}
+.backup .bn{font-family:Fredoka,sans-serif;font-weight:600;font-size:1.35rem;color:#1B2259}
+.backup .bs{font-family:Fredoka,sans-serif;font-weight:600;color:#1B2259}
+.stamp{display:inline-block;margin-top:10px;border:2px solid #12945F;color:#12945F;border-radius:8px;padding:2px 8px;font-weight:700;font-size:.75rem;letter-spacing:.12em;transform:rotate(-3deg)}
+
+.nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;gap:6px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:none}
+.nav .wrap::-webkit-scrollbar{display:none}
+.nav a{flex:none;text-decoration:none;color:var(--muted);font-weight:600;font-size:.88rem;padding:6px 12px;border-radius:999px;border:1px solid transparent}
+.nav a:hover,.nav a.on{color:var(--fg);background:var(--surface);border-color:var(--line)}
+
+/* Head to head */
+.h2h{display:grid;gap:14px}
+.crit{display:grid;grid-template-columns:130px 1fr;gap:6px 14px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.crit:last-child{border-bottom:0}
+.crit .cl{font-weight:600;font-size:.9rem}
+.crit .cl small{display:block;color:var(--muted);font-weight:500}
+.bars{display:grid;gap:4px}
+.bar{display:grid;grid-template-columns:92px 1fr 34px;gap:8px;align-items:center;font-size:.8rem}
+.bar .bt{height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+.bar .bf{height:100%;border-radius:6px}
+.bar .bv{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.bar.win .bn{font-weight:700}
+.f-tm{background:var(--accent)} .f-et{background:var(--amber)} .f-ko{background:var(--purple)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;margin-bottom:10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:6px;vertical-align:-1px}
+@media(max-width:560px){.crit{grid-template-columns:1fr}.bar{grid-template-columns:80px 1fr 30px}}
+
+/* Funnel */
+.funnel{display:grid;gap:10px}
+.fstage{display:grid;grid-template-columns:1fr;gap:6px}
+.fbar{display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:14px;padding:12px 16px;color:#fff;font-weight:700;margin:0 auto;min-width:220px;max-width:100%;cursor:pointer;border:0;font:inherit;font-weight:700;text-align:left}
+.fbar .fn{font-family:Fredoka,sans-serif;font-size:1.35rem}
+.fbar .fl{font-size:.9rem;opacity:.95}
+.fdetail{display:none;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:.9rem}
+.fstage.open .fdetail{display:block}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:.84rem;font-weight:600;color:var(--fg)}
+.chip.cut{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--coral)}
+
+/* Controls */
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:12px}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{font:inherit;font-size:.84rem;font-weight:600;border:0;background:transparent;color:var(--muted);padding:6px 10px;border-radius:9px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:var(--shadow)}
+.search{font:inherit;font-size:.9rem;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);min-width:180px}
+.chk{display:inline-flex;gap:8px;align-items:center;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer}
+.chk input{accent-color:var(--accent);width:16px;height:16px}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:var(--shadow);-webkit-overflow-scrolling:touch}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:.86rem}
+.score-tbl{min-width:1720px}
+th,td{padding:10px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+thead th{position:sticky;top:0;background:var(--surface-2);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;white-space:nowrap;z-index:2}
+th button{all:unset;cursor:pointer;display:inline-flex;gap:4px;align-items:center}
+th button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+th[aria-sort="ascending"] button::after{content:"▲";font-size:.6rem}
+th[aria-sort="descending"] button::after{content:"▼";font-size:.6rem}
+.stick{position:sticky;left:0;background:var(--surface);z-index:1}
+thead .stick{z-index:3;background:var(--surface-2)}
+.c-rank{width:46px}
+td.c-rank{font-family:Fredoka,sans-serif;font-weight:600;font-size:1.05rem}
+.detail-in{position:sticky;left:0;width:calc(min(100vw,1160px) - 66px);max-width:100%}
+.c-name{min-width:170px}
+.nm{all:unset;cursor:pointer;font-family:Fredoka,sans-serif;font-weight:600;font-size:1.05rem;color:var(--fg);display:block}
+.nm:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.nm::after{content:" ▾";font-size:.7rem;color:var(--muted)}
+tr.exp .nm::after{content:" ▴"}
+.sc{white-space:nowrap;font-variant-numeric:tabular-nums}
+.sc b{font-weight:700}
+.ov{font-family:Fredoka,sans-serif;font-weight:600;font-size:1.15rem;white-space:nowrap}
+.c-txt{min-width:220px;max-width:280px}
+.c-mid{min-width:170px;max-width:210px}
+tr.gatefail td:not(.stick){opacity:.82}
+tr.win td{background:var(--accent-soft)}
+tr.win td.stick{background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
+tr.detail td{background:var(--surface-2);padding:16px}
+tr.detail .stick{background:var(--surface-2)}
+.subgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:12px}
+.sub{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.sub b{display:block;font-family:Fredoka,sans-serif;font-size:1.05rem}
+.sub span{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.dom-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px}
+.dchip{border-radius:8px;padding:3px 8px;font-size:.78rem;font-weight:600;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.links{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.84rem}
+.count{font-size:.85rem;color:var(--muted);margin:8px 2px 0}
+
+/* Domain matrix */
+.dm{min-width:860px}
+.dm td,.dm th{text-align:center;white-space:nowrap}
+.dm td:first-child,.dm th:first-child{text-align:left}
+.dot{display:inline-block;min-width:74px;border-radius:7px;padding:3px 6px;font-size:.7rem;font-weight:700;letter-spacing:.03em}
+
+/* Market */
+.hbar{display:grid;grid-template-columns:minmax(120px,190px) 1fr 54px;gap:10px;align-items:center;font-size:.86rem;padding:3px 0}
+.hbar .t{height:12px;background:var(--surface-2);border-radius:6px;overflow:hidden}
+.hbar .f{height:100%;border-radius:6px;background:var(--coral)}
+.hbar .v{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.hbar.blue .f{background:var(--accent)}
+.hbar.mint .f{background:var(--mint)}
+.pattern{border-left:4px solid var(--line);padding:2px 0 2px 14px;margin:12px 0}
+.pattern.gap{border-color:var(--mint)}
+.pattern b{display:block}
+
+/* Pool */
+.pool{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.pc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.pc .pn{font-family:Fredoka,sans-serif;font-weight:600;font-size:1.02rem;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.pc .pr{font-size:.82rem;color:var(--muted);margin-top:2px}
+.pc.scored{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+
+/* Tabs / deep dive */
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:thin}
+.tab{flex:none;font:inherit;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:12px;padding:8px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tab b{font-family:Fredoka,sans-serif;color:var(--fg);font-size:1.05rem}
+.tab[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--fg)}
+.dd-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}
+.dd-head h3{font-size:2rem}
+.big{font-family:Fredoka,sans-serif;font-size:2.2rem;font-weight:600;line-height:1}
+.big small{font-size:1rem;color:var(--muted)}
+.kv{display:grid;grid-template-columns:1fr;gap:0}
+@media(min-width:760px){.kv{grid-template-columns:1fr 1fr;column-gap:28px}}
+.kv div{padding:10px 0;border-bottom:1px solid var(--line)}
+.kv dt{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.kv dd{margin:0}
+.quote{font-family:Fredoka,sans-serif;font-weight:500;font-size:1.05rem}
+.store-prev{display:flex;gap:10px;align-items:center;background:var(--surface-2);border-radius:12px;padding:8px 10px;margin-top:4px}
+.store-prev .app-ic{width:40px;height:40px;border-radius:10px}
+.store-prev b{display:block;font-size:.92rem}
+.store-prev span{font-size:.82rem;color:var(--muted)}
+
+/* Compare */
+.cmp{min-width:860px}
+.cmp th{font-size:.7rem}
+.cmp td{min-width:220px}
+.cmp td:first-child{min-width:150px;font-weight:700;color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
+.cmp thead th{font-family:Fredoka,sans-serif;font-size:1.15rem;text-transform:none;letter-spacing:0;color:var(--fg)}
+.cmp thead th.w{color:var(--accent)}
+
+/* Recommendation */
+.rec{display:grid;gap:16px}
+@media(min-width:860px){.rec{grid-template-columns:1.4fr 1fr}}
+.winbox{border:2px solid var(--accent);background:linear-gradient(180deg,var(--accent-soft),transparent 70%),var(--surface)}
+.winbox h3{font-size:2.2rem;margin:6px 0 4px}
+ol.reasons{padding-left:1.2em;margin:8px 0}
+ol.reasons li{margin:6px 0}
+
+/* Tests */
+.wom{min-width:560px}
+.wom td,.wom th{text-align:center}
+.wom td:first-child,.wom th:first-child{text-align:left;font-weight:600}
+
+/* Checklist */
+.todo{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.todo li{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.todo input{width:18px;height:18px;margin-top:3px;accent-color:var(--mint)}
+.todo li.done .tt{text-decoration:line-through;color:var(--muted)}
+.todo .tt b{display:block}
+.todo .tt span{font-size:.88rem;color:var(--muted)}
+
+.src{columns:1;column-gap:28px;font-size:.88rem;padding-left:1.1em}
+@media(min-width:760px){.src{columns:2}}
+.src li{break-inside:avoid;margin:0 0 6px}
+footer{padding:40px 0 60px;color:var(--muted);font-size:.85rem}
+</style>
+
+<div class="night">
+  <div class="wrap hero">
+    <div class="eyebrow">Naming research · 21 October 2026 · for the app now called Pausa</div>
+    <h1>APP NAME <span>LAB</span></h1>
+    <p class="lede">101 names tested against the App Store, Google Play, web search, domains, social handles and trademark records. 22 survived to a full check. One wins.</p>
+    <div class="stats">
+      <div class="stat"><b>101</b><span>names generated</span></div>
+      <div class="stat"><b>22</b><span>fully checked and scored</span></div>
+      <div class="stat"><b>275</b><span>domain registry lookups</span></div>
+      <div class="stat"><b>110</b><span>App Store searches</span></div>
+      <div class="stat"><b>24</b><span>US trademark searches</span></div>
+      <div class="stat"><b>£0</b><span>spent, nothing registered</span></div>
+    </div>
+
+    <div class="ticket" role="group" aria-label="Verdict">
+      <div class="t-main">
+        <div class="t-label">Winner</div>
+        <div class="t-name">Till Morning</div>
+        <div class="t-row">
+          <div class="t-score">67<small>/100</small></div>
+          <span class="pill" style="background:#E3E9FF;color:#2A3FB8">Best name that passes every check</span>
+        </div>
+        <div class="listing" aria-label="App Store listing preview">
+          <div class="app-ic" aria-hidden="true">
+            <svg width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="19" r="7" fill="#FFB547"/><path d="M3 21h24" stroke="#FBF7EC" stroke-width="2" stroke-linecap="round"/><path d="M19 6a5 5 0 1 0 5 6 4 4 0 0 1-5-6z" fill="#FBF7EC"/></svg>
+          </div>
+          <div><b>Till Morning: No Impulse Buys</b><span>Pause shopping &amp; takeaway apps</span></div>
+        </div>
+        <p class="t-note"><b>Your pick holds up.</b> You chose Till Morning in the shortlist thread. The Lab tested it against 100 other names and it still comes out on top once conflicts are counted. Two names scored higher on raw points (Easy Tiger 71, Kip On It 68); both fail a hard brand-conflict check. Strict scoring: no clean name reached 70.</p>
+      </div>
+      <div class="t-stub">
+        <div class="t-label">Backups</div>
+        <div class="backup"><div><div class="tiny" style="color:#5E6290;font-weight:700">BACKUP #1</div><div class="bn">Anti-Haul</div></div><div class="bs">65</div></div>
+        <div class="backup"><div><div class="tiny" style="color:#5E6290;font-weight:700">BACKUP #2</div><div class="bn">One Sleep</div></div><div class="bs">64</div></div>
+        <div class="backup"><div><div class="tiny" style="color:#5E6290;font-weight:700">CURRENT NAME</div><div class="bn" style="color:#8A8DAE">Pausa</div></div><div class="bs" style="color:#8A8DAE">42</div></div>
+        <span class="stamp">NOTHING BOUGHT</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav class="nav" aria-label="Sections">
+  <div class="wrap">
+    <a href="#h2h">Head-to-head</a><a href="#funnel">Funnel</a><a href="#board">Scoreboard</a><a href="#domains">Domains</a><a href="#market">Market</a><a href="#pool">All 101</a><a href="#top5">Top 5</a><a href="#final3">Final 3</a><a href="#verdict">Verdict</a><a href="#tests">Tests</a><a href="#check">Still to check</a><a href="#sources">Sources</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<section id="h2h">
+  <div class="sec-head">
+    <div>
+      <div class="eyebrow">Fair fight</div>
+      <h2>Till Morning against the two names that outscored it</h2>
+      <p>You asked whether anything is clearly stronger. On raw points, two names are. Here is exactly where they beat Till Morning, and why neither survives.</p>
+    </div>
+  </div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="legend"><span><i class="f-tm"></i>Till Morning 67</span><span><i class="f-et"></i>Easy Tiger 71</span><span><i class="f-ko"></i>Kip On It 68</span></div>
+      <div class="h2h" id="h2hBars"></div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <span class="pill p-r">Fails: HIGH conflict</span>
+        <h3 style="margin:8px 0 4px">Easy Tiger beats it on sound, not safety</h3>
+        <p class="small">Wins on memorability (+3), marketability (+1), brandability (+1), pronunciation (+3) and future-proofing (+2). It is the most fun name in the Lab.</p>
+        <p class="small"><b>Why it loses:</b> ASOS already sells an <a href="https://www.asos.com/easy-tiger/easy-tiger-desert-disco-strappy-mesh-dress/prd/204606567" target="_blank" rel="noopener">"Easy Tiger" fashion label</a>, the exact audience you sell to. Two App Store apps already use the name, one of them for restaurant ordering. US marks exist from Hallmark and several food and drink firms, and an "EASY TIGER APPS" class 9 filing exists (status <span class="unv">UNVERIFIED</span>). easytiger.com is registered with a "coming soon" page.</p>
+      </div>
+      <div class="card">
+        <span class="pill p-r">Fails: HIGH conflict</span>
+        <h3 style="margin:8px 0 4px">Kip On It beats it on domains</h3>
+        <p class="small">Wins on domains (+5: every one checked was free), SEO (+3), memorability (+1) and brandability (+1).</p>
+        <p class="small"><b>Why it loses:</b> <a href="https://kip.life" target="_blank" rel="noopener">kip.life</a> is a UK brand called "kip" with a free iPhone app that blocks distracting apps. It is the same category in the same country, and it ranks first when you search "kip" on the App Store. Americans don't know "kip", it can be heard as "Keep On It", and in Dutch it means chicken.</p>
+      </div>
+      <div class="card" style="border-color:var(--mint)">
+        <span class="pill p-g">Verdict</span>
+        <p class="small" style="margin-top:8px"><b>Nothing that passes every check beats Till Morning.</b> The nearest clean rival, Anti-Haul (65), is louder on TikTok but says nothing about takeaways and fights the calm tone.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="funnel">
+  <div class="sec-head">
+    <div>
+      <div class="eyebrow">Selection</div>
+      <h2>From 101 names to one</h2>
+      <p>Tap a stage to see who made it and what cut the rest. The hard gates sit between the Top 20 and the Top 10: no HIGH brand conflict, at least one usable domain free, and no same-name app in the same or a neighbouring category.</p>
+    </div>
+  </div>
+  <div class="funnel" id="funnelBox"></div>
+</section>
+
+<section id="board">
+  <div class="sec-head">
+    <div>
+      <div class="eyebrow">Scoreboard</div>
+      <h2>All 22 fully checked names</h2>
+      <p>Rank is the final order after the hard gates. Sort by Overall to see raw points. Tap a name for all ten sub-scores, the domain check and the evidence links. 🟢 strong · 🟡 mixed · 🔴 weak · ⚪ <span class="unv">UNVERIFIED</span>.</p>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Stage filter" id="stageSeg">
+      <button data-v="all" aria-pressed="true">All</button>
+      <button data-v="final3" aria-pressed="false">Final 3</button>
+      <button data-v="top5" aria-pressed="false">Top 5</button>
+      <button data-v="top10" aria-pressed="false">Top 10</button>
+      <button data-v="gate" aria-pressed="false">Failed a gate</button>
+    </div>
+    <div class="seg" role="group" aria-label="Conflict filter" id="riskSeg">
+      <button data-v="all" aria-pressed="true">Any risk</button>
+      <button data-v="LOW" aria-pressed="false">LOW</button>
+      <button data-v="MEDIUM" aria-pressed="false">MEDIUM</button>
+      <button data-v="HIGH" aria-pressed="false">HIGH</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="domChk"> .com, .app or .co.uk free</label>
+    <input class="search" id="q" type="search" placeholder="Search names or notes" aria-label="Search names">
+  </div>
+  <div class="tbl-wrap">
+    <table class="score-tbl" id="scoreTbl">
+      <thead><tr>
+        <th class="stick c-rank" data-k="rank" aria-sort="ascending"><button>Rank</button></th>
+        <th class="c-name" data-k="name"><button>Name</button></th>
+        <th data-k="total"><button>Overall</button></th>
+        <th data-k="mem"><button>Memorability</button></th>
+        <th data-k="mkt"><button>Marketability</button></th>
+        <th data-k="brand"><button>Brandability</button></th>
+        <th data-k="aso"><button>ASO</button></th>
+        <th data-k="seo"><button>SEO</button></th>
+        <th data-k="dom"><button>Domain</button></th>
+        <th data-k="storeL"><button>App Store conflict</button></th>
+        <th data-k="socialL"><button>Social handle status</button></th>
+        <th data-k="riskL"><button>Brand conflict risk</button></th>
+        <th data-k="fut"><button>Future-proof score</button></th>
+        <th>Why it works</th>
+        <th>Main weakness</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="count" id="count"></div>
+  <p class="tiny muted">Weights: Memorability 15, Marketability 15, Brandability 15, ASO 10, SEO 10, Domain 10, Pronunciation and spelling 10, Distinctiveness 5, Future-proofing 5, Conflict risk 5 (5 = least risk). Score colours: 🟢 70% of the maximum or more, 🟡 45 to 69%, 🔴 under 45%.</p>
+</section>
+
+<section id="domains">
+  <div class="sec-head">
+    <div>
+      <div class="eyebrow">Domains</div>
+      <h2>Domain check for every scored name</h2>
+      <p>Checked against the official registries (Verisign for .com, Google Registry for .app, Nominet for .co.uk, Identity Digital for .ai) on 21 October 2026. AVAILABLE* means the registry had no record. The price was not checked at a registrar, so any of them could still turn out to be premium. Nothing was bought.</p>
+    </div>
+  </div>
+  <div class="legend">
+    <span class="dot p-g">AVAILABLE*</span><span class="dot p-r">REGISTERED</span><span class="dot p-y">FOR SALE</span><span class="dot p-n">NOT CHECKED</span>
+  </div>
+  <div class="tbl-wrap"><table class="dm" id="domTbl"></table></div>
+  <p class="tiny muted" style="margin-top:8px">tillmorning.com: the registrant is the BuyDomains brokerage and <a href="https://www.afternic.com/domain/tillmorning.com" target="_blank" rel="noopener">Afternic lists it for sale</a>. Price <span class="unv">UNVERIFIED</span>. easytiger.com has been registered since 2001 and shows a "coming soon" page; whether it is for sale is <span class="unv">UNCERTAIN</span>. tillmorning.app was registered in September 2026; the owner is hidden (<span class="unv">UNVERIFIED</span>).</p>
+</section>
+
+<section id="market">
+  <div class="sec-head">
+    <div>
+      <div class="eyebrow">Market research</div>
+      <h2>How rivals are named, and the gap nobody uses</h2>
+      <p>From UK and US App Store searches for "impulse buying", "impulse spending", "no buy", "app blocker" and "shopping blocker" on 21 October 2026. Rating counts are the numbers shown on the App Store search page.</p>
+    </div>
+  </div>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Apps that earn money have short brands</h3>
+      <p class="small muted">Ratings, UK App Store "app blocker" search</p>
+      <div id="blockers"></div>
+      <p class="small" style="margin-top:12px">Opal, one sec and Brick pair a short name you can own with a descriptive subtitle. Opal grew largely through creators (<a href="https://www.milkkarten.net/p/creator-brand-olivia-unplugged-opal" target="_blank" rel="noopener">Milk Karten</a>, <a href="https://speedinvest.com/blog/scaling-smart-how-opal-built-a-10m-arr-business-in-just-2-years" target="_blank" rel="noopener">Speedinvest</a>).</p>
+    </div>
+    <div class="card">
+      <h3>Impulse-buy apps have keyword names and no traction</h3>
+      <p class="small muted">Ratings, UK and US App Store impulse searches (same scale as left)</p>
+      <div id="impulse"></div>
+      <p class="small" style="margin-top:12px">Names like "Stop Impulse Buying | No Spend" rank for the keyword but can't be told apart or recommended by name. None of them has more than 200 ratings.</p>
+    </div>
+  </div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card">
+      <h3>Crowded naming patterns to avoid</h3>
+      <p class="small muted">Apps already using each word, App Store search</p>
+      <div id="crowded"></div>
+    </div>
+    <div class="card">
+      <h3>What this means for the name</h3>
+      <div class="pattern"><b>Pause and wait words are used up</b><span class="small muted">Pausa ×8+, PauseBuy, CartPause, Piggy Pause, impause, Cooldown ×5.</span></div>
+      <div class="pattern"><b>Calm and breath words belong to sleep and meditation apps</b><span class="small muted">Lull, Breather, Exhale, Calmly, Stilla.</span></div>
+      <div class="pattern"><b>"No" words are crowded and sound like a scold</b><span class="small muted">NoBuy ×3, Nope ×8, Not Today ×4, Unspent ×3, Unbought ×3.</span></div>
+      <div class="pattern gap"><b>Gap: nobody names the time of day</b><span class="small muted">No rival uses night, morning or overnight language, though the 11 pm basket is the moment the whole category is built around. Till Morning, One Sleep and Small Hours are the only names that own it.</span></div>
+      <div class="pattern gap"><b>Creator angle: anti-haul and underconsumption core</b><span class="small muted">Creators already post "anti-haul" and de-influencing videos (<a href="https://www.cosmeticsbusiness.com/how-youtube-s-anti-haul-videos-have-been-given-the-tiktok-makeover-207060" target="_blank" rel="noopener">Cosmetics Business</a>, <a href="https://en.wikipedia.org/wiki/Underconsumption_core" target="_blank" rel="noopener">Wikipedia</a>, <a href="https://www.queensjournal.ca/de-influencing-is-redefining-consumer-culture-one-anti-haul-at-a-time/" target="_blank" rel="noopener">Queen's Journal</a>). That is why Anti-Haul made the final 3.</span></div>
+      <p class="small"><b>Search volume:</b> <span class="unv">UNVERIFIED</span>. No free tool gives reliable App Store search volume. Check Apple Search Ads keyword popularity once the App Store Connect record exists.</p>
+    </div>
+  </div>
+</section>
+
+<section id="pool">
+  <div class="sec-head">
+    <div>
+      <div class="eyebrow">Candidate pool</div>
+      <h2>All 101 names and why each was cut</h2>
+      <p>Ten naming strategies. Most names fell at the first App Store or Play search because an app with that name already exists. The 22 in blue went through every check.</p>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Strategy filter" id="stratSeg"></div>
+  </div>
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Status filter" id="poolStatus">
+      <button data-v="all" aria-pressed="true">All</button>
+      <button data-v="scored" aria-pressed="false">Fully checked</button>
+      <button data-v="cut" aria-pressed="false">Cut early</button>
+    </div>
+  </div>
+  <div class="pool" id="poolBox"></div>
+  <div class="count" id="poolCount"></div>
+</section>
+
+<section id="top5">
+  <div class="sec-head">
+    <div>
+      <div class="eyebrow">Top 5 deep dive</div>
+      <h2>The five names that passed every gate</h2>
+      <p>Each one with its App Store listing, launch lines, domains, conflicts and main risk.</p>
+    </div>
+  </div>
+  <div class="tabs" role="tablist" id="ddTabs"></div>
+  <div class="card" id="ddPanel" role="tabpanel"></div>
+</section>
+
+<section id="final3">
+  <div class="sec-head">
+    <div>
+      <div class="eyebrow">Final 3</div>
+      <h2>Till Morning, Anti-Haul and One Sleep side by side</h2>
+    </div>
+  </div>
+  <div class="tbl-wrap"><table class="cmp" id="cmpTbl"></table></div>
+</section>
+
+<section id="verdict">
+  <div class="sec-head">
+    <div>
+      <div class="eyebrow">Final recommendation</div>
+      <h2>One winner</h2>
+    </div>
+  </div>
+  <div class="rec">
+    <div class="card winbox">
+      <span class="pill p-a">WINNER</span>
+      <h3>Till Morning</h3>
+      <p class="muted" style="margin:0">App Store: <b style="color:var(--fg)">Till Morning: No Impulse Buys</b> · subtitle <b style="color:var(--fg)">Pause shopping &amp; takeaway apps</b></p>
+      <ol class="reasons">
+        <li><b>The name is the promise.</b> Tonight's want waits for the 08:00 "still want it?" check. It matches the hero feature and the line "Your 11 PM basket can wait till morning".</li>
+        <li><b>It covers both jobs.</b> Shopping and takeaway are both late-night urges; Anti-Haul and Calm Cart only cover shopping.</li>
+        <li><b>Clean store namespace.</b> No app called Till Morning on the App Store (UK, US) or Google Play.</li>
+        <li><b>It owns an empty spot.</b> No rival uses time-of-day naming.</li>
+        <li><b>It is the punchline in a creator video.</b> "It's 1:12am, your basket says £86.40… it can wait Till Morning."</li>
+        <li><b>Usable domains are free</b> (tillmorning.co.uk, tillmorningapp.com), and the .com is buyable later from a broker if the app takes off.</li>
+      </ol>
+      <p class="small"><b>What it costs you:</b> the exact handles @tillmorning are taken on X and TikTok (use @tillmorningapp). A US kids' banking app is called "Till" and holds a class 9 TILL mark, so get a lawyer's view before a US marketing push. Some people will write "Til Morning", so claim that spelling too when you claim handles (free).</p>
+      <p class="small"><b>What would change this:</b> if a UK or EU search finds a TILL MORNING mark in software classes, switch to Backup #1.</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <span class="pill p-y">BACKUP #1</span>
+        <h3 style="margin:8px 0 2px">Anti-Haul · 65</h3>
+        <p class="small">The strongest creator hook, LOW conflict, and .app, .co.uk and .ai are all free. Pick it if you want to lean fully into TikTok fashion and beauty culture and can live without takeaways in the name.</p>
+      </div>
+      <div class="card">
+        <span class="pill p-y">BACKUP #2</span>
+        <h3 style="margin:8px 0 2px">One Sleep · 64</h3>
+        <p class="small">The same promise as Till Morning in rule form ("give it one sleep"), LOW conflict, onesleep.app free. Weaker in search because Apple and Google read it as a sleep query.</p>
+      </div>
+      <div class="card">
+        <span class="pill p-n">CURRENT NAME</span>
+        <h3 style="margin:8px 0 2px">Pausa · 42</h3>
+        <p class="small">Last of the 22. Eight or more App Store apps already use "Pausa", one of them for the same pause-before-apps idea, and every domain is taken.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tests">
+  <div class="sec-head">
+    <div>
+      <div class="eyebrow">Tests</div>
+      <h2>Word of mouth, global and future-proofing</h2>
+      <p>Word of mouth: after hearing the name once in a café, can a friend remember it, spell it, find it in the App Store, and tell someone else?</p>
+    </div>
+  </div>
+  <div class="grid g2">
+    <div class="tbl-wrap"><table class="wom" id="womTbl"></table></div>
+    <div class="tbl-wrap"><table class="wom" id="globTbl"></table></div>
+  </div>
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><b>Till Morning · future 3/5</b><p class="small">Works for any late-night urge: shopping, takeaway, later maybe betting or texting an ex. Reads as night-only if the app grows into daytime features.</p></div>
+    <div class="card"><b>Anti-Haul · future 2/5</b><p class="small">Tied to a trend word and to clothes and beauty. If "haul" culture fades, the name dates with it.</p></div>
+    <div class="card"><b>One Sleep · future 3/5</b><p class="small">A rule that fits any purchase, but it keeps the sleep-app confusion as the product grows.</p></div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="sec-head">
+    <div>
+      <div class="eyebrow">Still to check</div>
+      <h2>What is UNVERIFIED and how to check it</h2>
+      <p>Ticks are saved in this browser only.</p>
+    </div>
+  </div>
+  <ul class="todo" id="todo"></ul>
+</section>
+
+<section id="sources">
+  <div class="sec-head">
+    <div>
+      <div class="eyebrow">Method and sources</div>
+      <h2>How this was checked</h2>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <ul class="small" style="margin:0;padding-left:1.1em">
+      <li><b>Stores:</b> live App Store search pages (UK and US) and Google Play search (UK), 21 October 2026.</li>
+      <li><b>Domains:</b> official RDAP registry lookups. A "no record" answer is shown as AVAILABLE*; prices were not checked.</li>
+      <li><b>Social:</b> X via the public fxtwitter profile API, YouTube and TikTok profile pages. TikTok often returns errors, so many TikTok results are <span class="unv">UNVERIFIED</span>. Instagram blocks automated checks, so every Instagram handle is <span class="unv">UNVERIFIED</span>.</li>
+      <li><b>Trademarks:</b> US marks via Justia and Trademarkia. UKIPO and EUIPO/TMview could not be reached from here, so UK and EU marks are <span class="unv">UNVERIFIED</span>. This is a brand-conflict precheck, not legal clearance; no name here is "legally safe".</li>
+      <li><b>Web search:</b> "[name]", "[name] app", "[name] iPhone", "[name] software", "[name] company" for each scored name.</li>
+      <li><b>Earlier work reused:</b> <a href="https://claude.ai/artifact/P5idfcj2ZWB1Xf8DoTXwg2" target="_blank" rel="noopener">Name shortlist</a> and <a href="https://claude.ai/artifact/R9TZiuhVNRTSPa6HM5hm9q" target="_blank" rel="noopener">market check</a>.</li>
+    </ul>
+  </div>
+  <ul class="src" id="srcList"></ul>
+</section>
+
+</main>
+<footer class="wrap">APP NAME LAB · 21 October 2026 · Research only. Nothing was registered, bought or filed.</footer>
+
+<script>
+(function(){
+const MAX={mem:15,mkt:15,brand:15,aso:10,seo:10,dom:10,pron:10,dist:5,fut:5,conf:5};
+const LBL={mem:"Memorability",mkt:"Marketability",brand:"Brandability",aso:"ASO",seo:"SEO",dom:"Domain",pron:"Pronunciation + spelling",dist:"Distinctiveness",fut:"Future-proof",conf:"Conflict risk (5 = safest)"};
+const KEYS=["mem","mkt","brand","aso","seo","dom","pron","dist","fut","conf"];
+// domains: com, app, couk, ai, get, xapp, try, use : A available*, R registered, S for sale, - not checked
+const S=[
+ {rank:1,name:"Till Morning",slug:"tillmorning",s:[11,12,10,8,5,5,7,4,3,2],stage:"winner",d:"SRAAAAAA",
+  store:["g","None on App Store UK/US or Google Play"],social:["y","@tillmorning taken on X and TikTok; @tillmorningapp free on X and YouTube"],risk:["MEDIUM","US TILL mark (Till Financial, class 9 saving and spending app); Till Morning Games indie studio"],
+  why:"Names the promise: tonight's want waits for the 08:00 check. Covers shopping and takeaway; nobody in the category uses time-of-day naming.",weak:"Exact handles taken on X and TikTok; US 'Till' kids' banking app and TILL mark; till / til spelling split.",
+  ev:[["US TILL mark","https://www.trademarkia.com/till-88983963"],["US App Store 'till'","https://apps.apple.com/us/iphone/search?term=till"],["tillmorning.com for sale","https://www.afternic.com/domain/tillmorning.com"],["WHOIS","https://who.is/whois/tillmorning.com"],["TikTok @tillmorning","https://www.tiktok.com/@tillmorning"],["Survive Till Morning (Steam)","https://store.steampowered.com/app/2060320/Survive_Till_Morning/"],["Till Morning Games","https://steambase.io/developers/till-morning-games"]]},
+ {rank:2,name:"Anti-Haul",slug:"antihaul",q:"anti haul",s:[12,11,7,7,5,7,6,4,2,4],stage:"final3",d:"RAAAAAAA",
+  store:["g","None; the App Store maps 'haul' to shopping apps"],social:["g","@antihaul free on X and YouTube; TikTok and Instagram UNVERIFIED"],risk:["LOW","No US marks found; genre word, so weak protection"],
+  why:"Rides a creator genre that already exists (anti-haul, underconsumption core). Every domain except .com is free.",weak:"Says nothing about takeaways; 'anti' fights the calm tone; hyphen; a genre word is hard to protect.",
+  ev:[["Anti-haul trend","https://www.cosmeticsbusiness.com/how-youtube-s-anti-haul-videos-have-been-given-the-tiktok-makeover-207060"],["Underconsumption core","https://en.wikipedia.org/wiki/Underconsumption_core"]]},
+ {rank:3,name:"One Sleep",slug:"onesleep",s:[10,10,10,5,4,6,9,3,3,4],stage:"final3",d:"RARRAAAA",
+  store:["g","No app named One Sleep; results are sleep apps"],social:["y","X taken (dormant); YouTube free; TikTok UNVERIFIED"],risk:["LOW","No marks found; onesleep.com is a Bulgarian mattress shop"],
+  why:"A rule people can repeat: 'give it one sleep'. Clean store namespace and LOW conflict.",weak:"Search and Apple read it as a sleep app; echoes the rival 'one sec' and the small rival 'Sleep On It'.",ev:[]},
+ {rank:4,name:"Fresh Eyes",slug:"fresheyes",s:[10,9,9,7,3,2,9,4,4,2],stage:"top5",d:"RRRRRRAA",
+  store:["g","None on either store"],social:["r","X and TikTok taken"],risk:["MEDIUM","Eye-drop, optometry and consulting marks"],
+  why:"Warm, positive idiom that fits the morning check; no apps use it.",weak:"Every main domain taken; X and TikTok taken; search buried under eye-care brands.",ev:[["Justia 'fresh eyes'","https://trademarks.justia.com/search?q=fresh+eyes"]]},
+ {rank:5,name:"Cooling Off",slug:"coolingoff",s:[9,9,6,6,3,7,9,1,4,4],stage:"top5",d:"RAAAAAAA",
+  store:["y","No exact app; 5 'Cooldown' impulse-buy apps nearby"],social:["y","X free; TikTok and YouTube UNVERIFIED"],risk:["LOW","No marks found; generic UK legal term"],
+  why:"UK shoppers already know a 'cooling-off period'. .app, .co.uk and every prefix .com are free.",weak:"Generic legal phrase with almost no distinctiveness; can't be owned in search; can sound like a break-up.",ev:[]},
+ {rank:6,name:"Sit Tight",slug:"sittight",s:[9,9,7,6,3,6,9,3,4,2],stage:"top10",d:"RAA-AAR-",
+  store:["y","Play: Sit Tight charger alarm, Sit Tight slide puzzle"],social:["r","X taken"],risk:["MEDIUM","Boots cosmetics, fitness and golf marks"],
+  why:"Friendly instruction, easy to say; .app and .co.uk free.",weak:"SitTight chairs own the .com; Boots holds a SIT TIGHT mark; doesn't say shopping.",ev:[["Justia 'sit tight'","https://trademarks.justia.com/search?q=sit+tight"]]},
+ {rank:7,name:"Not So Fast",slug:"notsofast",s:[8,9,6,6,2,3,9,3,4,3],stage:"top10",d:"RRR-ARA-",
+  store:["g","None"],social:["r","@notsofast on X has 199k followers"],risk:["MEDIUM","Origins cosmetics, TV and Consol Energy marks"],
+  why:"Playful brake at the moment of purchase; no apps use it.",weak:"Big X account owns the handle; three words make a weak brand.",ev:[["Justia 'not so fast'","https://trademarks.justia.com/search?q=not+so+fast"]]},
+ {rank:8,name:"Hang Tight",slug:"hangtight",s:[8,8,7,5,3,3,9,3,4,3],stage:"top10",d:"RRR-RAA-",
+  store:["y","Hangtight: Student Living (both stores)"],social:["r","X taken"],risk:["MEDIUM","Hangers, quilts and underwear marks"],
+  why:"Calm and friendly; hangtightapp.com free.",weak:"A Hangtight app exists; .com, .app and .co.uk taken.",ev:[["Justia 'hang tight'","https://trademarks.justia.com/search?q=hang+tight"]]},
+ {rank:9,name:"Calm Cart",slug:"calmcart",s:[7,8,6,6,5,6,8,2,1,4],stage:"top10",d:"RAA-ARA-",
+  store:["g","None"],social:["r","X taken (small gaming account)"],risk:["LOW","No marks found"],
+  why:"Says exactly what it does; .app and .co.uk free; no apps or marks found.",weak:"Flat and descriptive; shopping only, no takeaway; hard to grow beyond carts.",ev:[]},
+ {rank:10,name:"Wait and See",slug:"waitandsee",s:[7,7,5,6,2,6,8,2,4,3],stage:"top10",d:"RAR-AAA-",
+  store:["y","Play: Wait: The Waiting Room, WaitWell"],social:["r","X taken"],risk:["MEDIUM","Cosmetics, baby clothes and financial-planning marks"],
+  why:"Plain-English wait; .app and prefix .coms free.",weak:"Three words, low energy, generic in search.",ev:[["Justia 'wait and see'","https://trademarks.justia.com/search?q=wait+and+see"]]},
+ {rank:11,name:"Easy Now",slug:"easynow",s:[7,7,5,6,1,3,9,3,4,3],stage:"top20",d:"RRR-RAA-",
+  store:["g","None"],social:["n","UNVERIFIED"],risk:["MEDIUM","Traditional Medicinals EASY NOW tea mark"],
+  why:"Gentle and short; no apps use it.",weak:"Cut on score. .com, .app and .co.uk taken; tea mark.",ev:[["Justia 'easy now'","https://trademarks.justia.com/search?q=easy+now"]]},
+ {rank:12,name:"Morning You",slug:"morningyou",s:[6,6,5,6,3,5,8,3,2,4],stage:"top20",d:"RA------",
+  store:["g","None; alarm apps fill the results"],social:["n","UNVERIFIED"],risk:["LOW","No marks found"],
+  why:"Hopeful 'future self' angle; .app free.",weak:"Cut on score. Awkward grammar, sounds like an alarm app.",ev:[]},
+ {rank:13,name:"Easy Tiger",slug:"easytiger",s:[14,13,11,6,2,5,10,4,5,1],stage:"gate",gate:"HIGH conflict",d:"RARRAAAA",
+  store:["r","Easy Tiger Yoga (UK), Easy Tiger To Go restaurant ordering (US)"],social:["y","X and YouTube free; TikTok @easytiger taken"],risk:["HIGH","ASOS 'Easy Tiger' fashion label; Hallmark, bakery, spirits, beer, snack marks; 'EASY TIGER APPS' class 9 filing"],
+  why:"Highest raw score: cheeky British idiom, great on video, perfect pronunciation.",weak:"Same-audience fashion label, two apps with the name, many US marks, .com taken.",
+  ev:[["ASOS Easy Tiger","https://www.asos.com/easy-tiger/easy-tiger-desert-disco-strappy-mesh-dress/prd/204606567"],["Justia 'easy tiger'","https://trademarks.justia.com/search?q=easy+tiger"],["WHOIS","https://who.is/whois/easytiger.com"]]},
+ {rank:14,name:"Kip On It",slug:"kiponit",s:[12,11,11,5,8,10,5,2,3,1],stage:"gate",gate:"HIGH conflict",d:"AAAAAAAA",
+  store:["y","None exact; 'kip' app blocker (kip.life) ranks first for 'kip'"],social:["g","X and YouTube free; TikTok UNVERIFIED"],risk:["HIGH","kip.life: UK brand with a free app that blocks distracting apps; KIP clothing and software marks"],
+  why:"Every domain free, unique search phrase, warm British slang.",weak:"Same-category UK brand called kip; US doesn't know the word; heard as 'Keep On It'.",
+  ev:[["kip.life","https://kip.life"],["Justia 'kip'","https://trademarks.justia.com/search?q=kip"]]},
+ {rank:15,name:"Nightcap",slug:"nightcap",s:[13,12,11,4,3,1,9,4,3,2],stage:"gate",gate:"no domain, crowded store",d:"RRR-RRR-",
+  store:["r","NightCap Camera (859 ratings), a cocktail app, Nightcap: Points for Two"],social:["r","X taken (5.6k followers)"],risk:["MEDIUM","Hangover supplement, tea, fragrance, firearm-light marks"],
+  why:"Memorable and cosy, fits late night.",weak:"Every domain taken; three apps already called Nightcap; alcohol meaning.",ev:[["Justia 'nightcap'","https://trademarks.justia.com/search?q=nightcap"]]},
+ {rank:16,name:"Speedbump",slug:"speedbump",s:[12,11,9,6,3,2,8,1,4,1],stage:"gate",gate:"HIGH conflict, same-category app",d:"RRRRRRAA",
+  store:["r","Play: SpeedBump: App Timer (same category)"],social:["r","X taken"],risk:["HIGH","Mattel and other marks; listed as a ScreenZen alternative"],
+  why:"Perfect metaphor for friction.",weak:"An app timer already uses the name; .com is a cartoon site.",ev:[["AlternativeTo SpeedBump","https://alternativeto.net/software/speedbump/about"],["Justia 'speedbump'","https://trademarks.justia.com/search?q=speedbump"]]},
+ {rank:17,name:"Small Hours",slug:"smallhours",s:[10,9,11,7,3,1,8,4,2,2],stage:"gate",gate:"no usable domain",d:"RRRARRRR",
+  store:["g","None"],social:["y","X free; YouTube taken"],risk:["MEDIUM","smallhours.com is a reusable-products and habits brand; wine, cleaning marks"],
+  why:"Poetic; names the 1am moment.",weak:"Only .ai free; an existing habits brand owns the .com.",ev:[["smallhours.com","https://smallhours.com"],["Justia 'small hours'","https://trademarks.justia.com/search?q=small+hours"]]},
+ {rank:18,name:"Raincheck",slug:"raincheck",s:[12,11,10,3,2,1,7,3,5,2],stage:"gate",gate:"no domain, same-job app",d:"RRR-RRR-",
+  store:["r","RainCheck: Save for later, plus weather apps; 3 on Play"],social:["r","X and TikTok taken"],risk:["MEDIUM","Same-job app called RainCheck"],
+  why:"'Take a raincheck' means do it later; very sayable.",weak:"An app already does the same job under this name; every domain taken.",ev:[["Justia 'raincheck'","https://trademarks.justia.com/search?q=raincheck"]]},
+ {rank:19,name:"On Purpose",slug:"onpurpose",s:[9,9,9,6,2,2,9,3,5,1],stage:"gate",gate:"HIGH conflict",d:"RRR-RRA-",
+  store:["y","Tangle and Telos 'Life on purpose' apps"],social:["n","UNVERIFIED"],risk:["HIGH","Kate Spade ON PURPOSE marks for bags, wallets, jewellery"],
+  why:"Matches the 'shop on purpose, not never' line.",weak:"A fashion house owns the mark; only tryonpurpose.com free.",ev:[["Justia 'on purpose'","https://trademarks.justia.com/search?q=on+purpose"]]},
+ {rank:20,name:"Afterthought",slug:"afterthought",s:[9,8,8,5,3,3,9,3,4,1],stage:"gate",gate:"HIGH conflict",d:"RRR-ARA-",
+  store:["y","3 small Afterthought apps (voice notes, journal, log)"],social:["n","UNVERIFIED"],risk:["HIGH","AFTERTHOUGHT class 9 game mark (Studio Moondowner); Amazon clothing mark"],
+  why:"Clever: the thought that comes after the urge.",weak:"Exact software-class mark plus Amazon; .com and .app taken.",ev:[["Justia 'afterthought'","https://trademarks.justia.com/search?q=afterthought"]]},
+ {rank:21,name:"Overnight",slug:"overnight",s:[8,7,7,4,2,1,10,3,3,3],stage:"out",d:"RRR-RRR-",
+  store:["y","Overnight apps on both stores"],social:["n","UNVERIFIED"],risk:["MEDIUM","Too generic to own"],
+  why:"Short, clear, impossible to misspell.",weak:"Every domain taken; generic in search and in store.",ev:[]},
+ {rank:22,name:"Pausa",slug:"pausa",s:[10,8,11,1,1,0,6,0,4,1],stage:"out",d:"RRR-RRR-",
+  store:["r","8+ Pausa apps, incl. 'Pausa: Screen Time & Focus' (same idea)"],social:["n","UNVERIFIED"],risk:["HIGH","Same-idea app; EU PAUSA mark (Bel, food); firearms, wine, TV marks"],
+  why:"Brandable, and already designed into the prototype.",weak:"Same-idea app already uses it; pausa.com is a restaurant; every domain taken.",ev:[["Justia 'pausa'","https://trademarks.justia.com/search?q=pausa"]]}
+];
+const DT=["com","app","co.uk","ai","get…com","…app.com","try…com","use…com"];
+function domName(slug,i){return [slug+".com",slug+".app",slug+".co.uk",slug+".ai","get"+slug+".com",slug+"app.com","try"+slug+".com","use"+slug+".com"][i]}
+const RL={LOW:0,MEDIUM:1,HIGH:2}, IL={g:0,y:1,r:2,n:3};
+S.forEach(r=>{KEYS.forEach((k,i)=>r[k]=r.s[i]);r.total=r.s.reduce((a,b)=>a+b,0);r.riskL=RL[r.risk[0]];r.storeL=IL[r.store[0]];r.socialL=IL[r.social[0]];r.mainFree=/A/.test(r.d.slice(0,3))});
+
+function ind(v,m){const p=v/m;return p>=.7?"🟢":p>=.45?"🟡":"🔴"}
+const EM={g:"🟢",y:"🟡",r:"🔴",n:"⚪"};
+const RE={LOW:"🟢",MEDIUM:"🟡",HIGH:"🔴"};
+const STG={winner:["WINNER","p-a"],final3:["Final 3","p-a"],top5:["Top 5","p-g"],top10:["Top 10","p-g"],top20:["Top 20 · cut on score","p-n"],gate:["Failed gate","p-r"],out:["Outside Top 20","p-n"]};
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function storeLinks(r){const q=encodeURIComponent((r.q||r.name).toLowerCase());return [["App Store UK","https://apps.apple.com/gb/iphone/search?term="+q],["App Store US","https://apps.apple.com/us/iphone/search?term="+q],["Google Play","https://play.google.com/store/search?q="+q+"&c=apps&hl=en_GB&gl=GB"]]}
+function dchip(code,name){const m={A:["p-g","AVAILABLE*"],R:["p-r","REGISTERED"],S:["p-y","FOR SALE"],"-":["p-n","NOT CHECKED"]}[code];return `<span class="dchip ${m[0]}" title="${m[1]}">${esc(name)} · ${m[1]}</span>`}
+
+/* Head-to-head bars */
+(function(){
+ const tm=S.find(r=>r.slug==="tillmorning"),et=S.find(r=>r.slug==="easytiger"),ko=S.find(r=>r.slug==="kiponit");
+ const box=document.getElementById("h2hBars");
+ box.innerHTML=KEYS.map(k=>{const m=MAX[k];const row=(r,c,lab)=>`<div class="bar${r===tm?" win":""}"><span class="bn">${lab}</span><div class="bt"><div class="bf ${c}" style="width:${r[k]/m*100}%"></div></div><span class="bv">${r[k]}</span></div>`;
+  return `<div class="crit"><div class="cl">${LBL[k]}<small>out of ${m}</small></div><div class="bars">${row(tm,"f-tm","Till Morning")}${row(et,"f-et","Easy Tiger")}${row(ko,"f-ko","Kip On It")}</div></div>`}).join("");
+})();
+
+/* Funnel */
+(function(){
+ const by=st=>S.filter(r=>st.includes(r.stage)).map(r=>r.name);
+ const stages=[
+  {n:101,l:"names generated across 10 strategies",c:"#3A3F86",in:["79 cut at the first store search; see the full pool below"],cut:[]},
+  {n:22,l:"fully checked and scored",c:"#3D4CB0",in:S.map(r=>r.name),cut:[]},
+  {n:20,l:"Top 20 by raw score",c:"#4361FF",in:S.filter(r=>r.stage!=="out").map(r=>r.name),cut:by(["out"]),why:"Overnight (every domain taken, tied at 48) and Pausa (42)."},
+  {n:10,l:"Top 10: passed every hard gate",c:"#5B6CFF",in:by(["winner","final3","top5","top10"]),cut:by(["gate","top20"]),why:"Failed a gate: Easy Tiger, Kip On It, Speedbump, On Purpose and Afterthought (HIGH conflict); Nightcap, Small Hours and Raincheck (no usable domain or a same-name app). Easy Now and Morning You passed the gates but scored lowest."},
+  {n:5,l:"Top 5",c:"#7A5CF0",in:by(["winner","final3","top5"]),cut:by(["top10"]),why:"Sit Tight tied Cooling Off at 58 and lost on higher conflict risk (Boots mark). The others scored 53 or less."},
+  {n:3,l:"Final 3",c:"#8B5CF6",in:by(["winner","final3"]),cut:by(["top5"]),why:"Fresh Eyes: every main domain and both main handles taken. Cooling Off: too generic to own."},
+  {n:1,l:"Winner",c:"#12945F",in:["Till Morning"],cut:["Anti-Haul","One Sleep"],why:"Anti-Haul leaves out takeaways and fights the calm tone; One Sleep reads as a sleep app."}
+ ];
+ const box=document.getElementById("funnelBox");
+ box.innerHTML=stages.map((s,i)=>{const w=Math.max(28,Math.round(Math.sqrt(s.n/101)*100));
+  return `<div class="fstage${i===3?" open":""}"><button class="fbar" style="width:${w}%;background:${s.c}" aria-expanded="${i===3}"><span class="fn">${s.n}</span><span class="fl">${s.l}</span></button>
+  <div class="fdetail">${s.in.length&&i>0?`<div class="chips">${s.in.map(n=>`<span class="chip">${esc(n)}</span>`).join("")}${s.cut.map(n=>`<span class="chip cut">${esc(n)}</span>`).join("")}</div>`:`<span class="muted">${esc(s.in[0])}</span>`}${s.why?`<p class="small" style="margin:8px 0 0"><b>Cut here:</b> ${esc(s.why)}</p>`:""}</div></div>`}).join("");
+ box.querySelectorAll(".fbar").forEach(b=>b.addEventListener("click",()=>{const p=b.parentElement;p.classList.toggle("open");b.setAttribute("aria-expanded",p.classList.contains("open"))}));
+})();
+
+/* Scoreboard */
+const state={stage:"all",risk:"all",dom:false,q:"",sort:"rank",dir:1,open:new Set()};
+const tbody=document.querySelector("#scoreTbl tbody");
+function stageOk(r){if(state.stage==="all")return true;if(state.stage==="final3")return["winner","final3"].includes(r.stage);if(state.stage==="top5")return["winner","final3","top5"].includes(r.stage);if(state.stage==="top10")return["winner","final3","top5","top10"].includes(r.stage);if(state.stage==="gate")return r.stage==="gate";return true}
+function renderTable(){
+ let rows=S.filter(r=>stageOk(r)&&(state.risk==="all"||r.risk[0]===state.risk)&&(!state.dom||r.mainFree)&&(!state.q||(r.name+" "+r.why+" "+r.weak+" "+r.risk[1]+" "+r.store[1]).toLowerCase().includes(state.q)));
+ rows.sort((a,b)=>{const k=state.sort;let x=a[k],y=b[k];if(typeof x==="string")return x.localeCompare(y)*state.dir;return (x-y)*state.dir||a.rank-b.rank});
+ tbody.innerHTML=rows.map(r=>{const st=STG[r.stage];const sc=k=>`<td class="sc">${ind(r[k],MAX[k])} <b>${r[k]}</b><span class="muted">/${MAX[k]}</span></td>`;
+  let h=`<tr class="${r.stage==="winner"?"win ":""}${r.stage==="gate"?"gatefail ":""}${state.open.has(r.slug)?"exp":""}">
+  <td class="stick c-rank">${r.rank}</td>
+  <td class="c-name"><button class="nm" data-s="${r.slug}" aria-expanded="${state.open.has(r.slug)}">${esc(r.name)}</button><span class="pill ${st[1]}" style="margin-top:4px">${st[0]}${r.gate?": "+esc(r.gate):""}</span></td>
+  <td class="ov">${ind(r.total,100)} ${r.total}</td>${sc("mem")}${sc("mkt")}${sc("brand")}${sc("aso")}${sc("seo")}${sc("dom")}
+  <td class="c-mid">${EM[r.store[0]]} ${esc(r.store[1])}</td>
+  <td class="c-mid">${EM[r.social[0]]} ${esc(r.social[1]).replace("UNVERIFIED",'<span class="unv">UNVERIFIED</span>')}</td>
+  <td class="c-mid">${RE[r.risk[0]]} <b>${r.risk[0]}</b><br><span class="muted">${esc(r.risk[1])}</span></td>
+  ${sc("fut")}
+  <td class="c-txt">${esc(r.why)}</td><td class="c-txt">${esc(r.weak)}</td></tr>`;
+  if(state.open.has(r.slug)){h+=`<tr class="detail"><td colspan="15"><div class="detail-in"><div class="subgrid">${KEYS.map(k=>`<div class="sub"><span>${LBL[k]}</span><b>${ind(r[k],MAX[k])} ${r[k]}/${MAX[k]}</b></div>`).join("")}</div>
+   <div class="tiny muted" style="font-weight:700;letter-spacing:.06em">DOMAINS (registry lookup, 21 Oct 2026)</div><div class="dom-chips">${[...r.d].map((c,i)=>dchip(c,domName(r.slug,i))).join("")}</div>
+   <div class="tiny muted" style="font-weight:700;letter-spacing:.06em;margin-bottom:4px">EVIDENCE</div><div class="links">${storeLinks(r).concat(r.ev).map(e=>`<a href="${e[1]}" target="_blank" rel="noopener">${esc(e[0])}</a>`).join("")}</div></div></td></tr>`}
+  return h}).join("");
+ document.getElementById("count").textContent=`Showing ${rows.length} of ${S.length} scored names.`;
+ tbody.querySelectorAll(".nm").forEach(b=>b.addEventListener("click",()=>{const s=b.dataset.s;state.open.has(s)?state.open.delete(s):state.open.add(s);renderTable()}));
+ document.querySelectorAll("#scoreTbl thead th[data-k]").forEach(th=>{th.setAttribute("aria-sort",th.dataset.k===state.sort?(state.dir===1?"ascending":"descending"):"none")});
+}
+document.querySelectorAll("#scoreTbl thead th[data-k] button").forEach(b=>b.addEventListener("click",()=>{const k=b.parentElement.dataset.k;if(state.sort===k)state.dir*=-1;else{state.sort=k;state.dir=(["rank","name","storeL","socialL","riskL"].includes(k))?1:-1}renderTable()}));
+function segBind(id,fn){const el=document.getElementById(id);el.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;el.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));fn(b.dataset.v)})}
+segBind("stageSeg",v=>{state.stage=v;renderTable()});
+segBind("riskSeg",v=>{state.risk=v;renderTable()});
+document.getElementById("domChk").addEventListener("change",e=>{state.dom=e.target.checked;renderTable()});
+document.getElementById("q").addEventListener("input",e=>{state.q=e.target.value.trim().toLowerCase();renderTable()});
+state.open.add("tillmorning");
+renderTable();
+
+/* Domain matrix */
+(function(){
+ const m={A:["p-g","AVAILABLE*"],R:["p-r","REGISTERED"],S:["p-y","FOR SALE"],"-":["p-n","—"]};
+ let h=`<thead><tr><th>Name</th>${DT.map(t=>`<th>${t}</th>`).join("")}</tr></thead><tbody>`;
+ S.forEach(r=>{h+=`<tr${r.stage==="winner"?' class="win"':""}><td><b>${esc(r.name)}</b></td>${[...r.d].map((c,i)=>`<td><span class="dot ${m[c][0]}" title="${esc(domName(r.slug,i))}">${m[c][1]}</span></td>`).join("")}</tr>`});
+ document.getElementById("domTbl").innerHTML=h+"</tbody>";
+})();
+
+/* Market bars */
+(function(){
+ const blockers=[["Opal",15000],["one sec",7100],["ScreenZen",7400],["BePresent",6300],["Brick",4400],["Refocus",2000],["AppBlock",1300],["BlockSite",557]].sort((a,b)=>b[1]-a[1]);
+ const imp=[["ThinkTwice",196],["Stop Impulse Buying | Budget",78],["impause",30],["Stop Impulse Buying | No Spend",13],["Yielded",6],["Cartless",2],["PauseBuy",1]];
+ const fmt=n=>n>=1000?(n/1000).toFixed(n%1000?1:0)+"k":n;
+ const mk=(arr,cls,max)=>arr.map(([n,v])=>`<div class="hbar ${cls}"><span>${esc(n)}</span><div class="t"><div class="f" style="width:${Math.max(.6,v/max*100)}%"></div></div><span class="v">${fmt(v)}</span></div>`).join("");
+ document.getElementById("blockers").innerHTML=mk(blockers,"blue",15000);
+ document.getElementById("impulse").innerHTML=mk(imp,"mint",15000);
+ const crowd=[["Lull",10,"10+"],["Ponder",10,"10+"],["Worth It",10,"10+"],["Amber",10,"10+"],["Kept",9,"9+"],["Pausa",8,"8+"],["Breather",8,"8+"],["Whim",8,"8+"],["Nope",8,"8"],["Cooldown",5,"5"],["Calmly",5,"5+"],["Headroom",5,"5"],["Not Today",4,"4"],["Unspent",3,"3"],["Unbought",3,"3"]];
+ document.getElementById("crowded").innerHTML=crowd.map(([n,v,l])=>`<div class="hbar"><span>${esc(n)}</span><div class="t"><div class="f" style="width:${v*10}%"></div></div><span class="v">${l}</span></div>`).join("");
+})();
+
+/* Pool of 101 */
+const STRAT={short:"Very short brandable",real:"Real word",two:"Two-word combination",clever:"Clever / conceptual",action:"Action-oriented",result:"Result / outcome",emotion:"Emotion-focused",core:"Core behaviour",invented:"Easy invented word",big:"Big standalone brand"};
+const P=[
+["Lull","short","10+ sleep apps"],["Hush","short","Hush social apps, Hush Nag Blocker, Hushed; .com and .app taken"],["Ebb","short","12 apps incl. Ebb – Urge Journal and an Ebb launcher"],["Whim","short","8+ apps"],["Kip","short","kip.life UK app-blocking tag and app; Kip: Habit Coach"],["Tarry","short","Prayer, fasting and reflection apps"],["Phew","short","Phew – Stress Relief, Phew.ai; Phew: Quit Vaping on Play"],["Amber","short","10+ apps"],["Owl","short","Crowded"],["Dusk","short","DUSK drinks app (20k ratings)"],["Dawn","short","'Dawn – A fresh start for money'"],["Nah","short","Search returns NHS apps"],
+["Breather","real","8+ breathing apps"],["Respite","real","'Respite: Screen Time Limits'"],["Ponder","real","10+ apps"],["Simmer","real","Recipe apps"],["Afterthought","real","*"],["Steady","real","Several apps; SteadyPay"],["Enough","real","'Enough – App Blocker', ENOUGH: Stop Gambling"],["Layby","real","Apple shows buy-now-pay-later apps"],["Backburner","real","Back Burner to-do app"],["Handbrake","real","Read as video compression"],["Hibernate","real","Hibernate – Expense Tracker"],["Resolve","real","Habit tracker; quit-porn app"],["Headroom","real","5 AI apps"],["Fermata","real","Fermata: Daily Stillness Timer"],["Settle","real","Anxiety app; Settle Up"],["Dormouse","real","Obscure; search returns sleep apps"],
+["Fresh Eyes","two","*"],["Clear Head","two","Two Clearhead apps"],["Calm Cart","two","*"],["Morning You","two","*"],["Breathing Room","two","3 apps"],["Two Minds","two","TwoMinds Decision Partner on Play; 2 Minds"],["Second Look","two","SecondLook medical series"],["Even Keel","two","Even Keel health app; insoles"],["Levelhead","two","Game plus a mindfulness app"],["First Thing","two","First Things; One Thing: Earn Screen Time"],
+["Kip On It","clever","*"],["Nightcap","clever","*"],["Raincheck","clever","*"],["Easy Tiger","clever","*"],["Anti-Haul","clever","*"],["Speedbump","clever","*"],["Want Not","clever","Sounds like Whatnot (78k ratings)"],["Unhaul","clever","U-Haul ranks first in the US (218k)"],["Deinfluence","clever","'DEME: Deinfluence Me'"],["Double Take","clever","DoubleTake multicam app"],["Softlock","clever","Gaming-bug meaning"],["Cooldown","clever","5 impulse-buy apps"],
+["Sit Tight","action","*"],["Hang Tight","action","*"],["Not So Fast","action","*"],["Wait and See","action","*"],["Hold Up","action","Blocker apps"],["Not Now","action","'Not Now: App Blocker'"],["Park It","action","Parking apps"],["Leave It","action","2 apps"],["Nope","action","8 apps incl. 'nope: Stop Impulse Buying'"],["Not Today","action","4 apps incl. Quit Urges"],["Easy Does It","action","Generic; .com and .app taken"],["Cool It","action","Generic; .com and .app taken; Cool It Events"],["Snooze It","action","'Snooze It – Quick Reminders'"],["Maybe Later","action","'Maybe... Later'"],["Night Off","action","NightOff app"],
+["On Purpose","result","*"],["Unspent","result","3 apps"],["Kept","result","9+ apps"],["Unbought","result","3 apps"],["Worth It","result","10+ apps"],
+["Easy Now","emotion","*"],["Cooling Off","emotion","*"],["Exhale","emotion","Quit-vaping and breathing apps"],["Mellow","emotion","Crowded"],["Calmly","emotion","5+ apps"],["Hmm","emotion","Search returns H&M"],["Reckon","emotion","6+ apps incl. decision journals"],
+["Till Morning","core","*"],["Overnight","core","*"],["One Sleep","core","*"],["Small Hours","core","*"],["Until Morning","core","Every exact domain taken"],["Sleep First","core","Read as a sleep query"],["Snooze","core","Alarm apps"],["Laters","core","'Laters – Save for Later' and a shopping app called Laters"],["Mañana","core","To-do app; ñ is hard to type"],["Siesta","core","Sleep apps"],["Lights Out","core","Puzzle games"],["Night Night","core","Nighty Night kids' apps"],["Forty Winks","core","Bed retailer app"],["Night Owl","core","Security-camera brand"],["Bouncer","core","'App Blocker: Bernie Bouncer'"],["Waitwell","core","Queue apps"],
+["Pausa","invented","*"],["Stilla","invented","'Stilla – Social Media Detox'"],["Nocta","invented","Nike NOCTA"],["Calmo","invented","Search returns Calm"],["Tilly","invented","'Tilly — UK Money Coach'"],
+["Harbour","big","Crowded; US spelling split"],["Willow","big","Crowded; Willow Mastercard"],["Cove","big","Crowded"]
+];
+const pstate={strat:"all",status:"all"};
+(function(){const seg=document.getElementById("stratSeg");seg.innerHTML=`<button data-v="all" aria-pressed="true">All 10 strategies</button>`+Object.entries(STRAT).map(([k,v])=>`<button data-v="${k}" aria-pressed="false">${v} (${P.filter(p=>p[1]===k).length})</button>`).join("")})();
+function renderPool(){
+ const rows=P.filter(p=>(pstate.strat==="all"||p[1]===pstate.strat)&&(pstate.status==="all"||(pstate.status==="scored")===(p[2]==="*")));
+ document.getElementById("poolBox").innerHTML=rows.map(p=>{if(p[2]==="*"){const r=S.find(x=>x.name===p[0]);const st=STG[r.stage];return `<div class="pc scored"><div class="pn">${esc(p[0])}<span class="pill ${st[1]}">${r.total}/100</span></div><div class="pr">${esc(STRAT[p[1]])} · ${st[0]}${r.gate?": "+esc(r.gate):""}</div></div>`}
+  return `<div class="pc"><div class="pn">${esc(p[0])}<span class="pill p-n">Cut</span></div><div class="pr">${esc(p[2])}</div></div>`}).join("");
+ document.getElementById("poolCount").textContent=`Showing ${rows.length} of ${P.length} names.`;
+}
+segBind("stratSeg",v=>{pstate.strat=v;renderPool()});
+segBind("poolStatus",v=>{pstate.status=v;renderPool()});
+renderPool();
+
+/* Top 5 deep dive */
+const DD=[
+ {slug:"tillmorning",name:"Till Morning",meaning:"\"It can wait till morning.\" Every late-night want gets parked until the 08:00 \"still want it?\" check. In UK English a till is also the checkout, a quiet bonus pun for a shopping app.",
+  fit:"Exact match for the hero feature (Park it till morning) and the positioning line \"Your 11 PM basket can wait till morning\". Covers shopping and takeaway.",
+  memo:"An everyday phrase, easy to recall after one hearing. Some people will spell it Til or 'Til.",
+  creator:"High. The name is the punchline of a late-night POV video, and the 08:00 check gives a built-in \"morning reveal\" format.",
+  spoken:"\"I've been using Till Morning for two weeks and I haven't done a 1am Deliveroo once.\"",
+  hook:"POV: it's 1:12am, your SHEIN basket says £86.40, and your phone says… it can wait Till Morning.",
+  title:"Till Morning: No Impulse Buys",sub:"Pause shopping & takeaway apps",
+  site:"tillmorning.co.uk, with tillmorningapp.com as a redirect. Both AVAILABLE*, not bought.",
+  dstat:".com FOR SALE via broker (price UNVERIFIED) · .app REGISTERED (Sept 2026) · .co.uk, .ai, get / try / use / …app .com AVAILABLE*",
+  as:"🟢 No app called Till Morning on the UK or US App Store (only \"Good Morning\" apps appear).",gp:"🟢 None on Google Play.",
+  seo:"🟡 The phrase is shared with the Steam game Survive Till Morning, a horror film and songs; \"till\" alone pulls till/POS hardware. \"Till Morning app\" is clean.",
+  aso:"🟢 The brand carries the night-time idea; the subtitle and keyword field carry impulse, shopping, takeaway, spending, no buy.",
+  icon:"A moon turning into a sunrise on the ticket stub, or the green blob asleep on a parcel tagged 08:00.",
+  risk:"US TILL mark held by Till Financial for a saving and spending app (10k ratings in the US). MEDIUM. Matters mainly for a US launch; get a lawyer's view first. Exact handles are taken, so use @tillmorningapp."},
+ {slug:"antihaul",name:"Anti-Haul",meaning:"The opposite of a haul video. It rides the anti-haul, underconsumption-core and de-influencing trend.",
+  fit:"Strong for clothes and beauty shopping. Says nothing about takeaways, and \"anti\" clashes with the calm \"shop on purpose, not never\" voice.",
+  memo:"High among TikTok shoppers; means little to anyone outside haul culture. People will type it as antihaul, anti haul or anti-haul.",
+  creator:"The strongest built-in genre: creators already make anti-haul videos. The catch: you can't own a genre word, so the hashtag belongs to everyone.",
+  spoken:"\"I use Anti-Haul, it locks SHEIN at night.\"",hook:"Everyone's posting hauls. Here's my Anti-Haul…",
+  title:"Anti-Haul: Stop Impulse Buys",sub:"Pause shopping & takeaway apps",
+  site:"antihaul.app or antihaul.co.uk, both AVAILABLE*, not bought.",
+  dstat:".com REGISTERED (parked, privacy-protected) · .app, .co.uk, .ai, get / try / use / …app .com AVAILABLE*",
+  as:"🟢 No app called Anti-Haul; the App Store maps \"haul\" to shopping apps.",gp:"🟢 None on Google Play.",
+  seo:"🟡 The genre term gets searched, but results are other people's videos.",aso:"🟡 The hyphen splits searches; the keyword \"haul\" pulls shopping apps.",
+  icon:"A shopping bag with a calm strike-through, or an \"UNBOUGHT\" receipt stamp.",
+  risk:"Weak protection for a descriptive genre word, no takeaway coverage, and the trend could fade (future-proofing 2/5)."},
+ {slug:"onesleep",name:"One Sleep",meaning:"\"Sleep on it.\" Every want gets one sleep before you buy.",
+  fit:"The same promise as Till Morning, phrased as a rule.",
+  memo:"Simple words, but it sounds close to \"one sec\", a known app blocker (7.1k ratings), and near the small rival \"Sleep On It\".",
+  creator:"Good. \"The one-sleep rule\" is easy to share.",
+  spoken:"\"I just give it one sleep.\"",hook:"Everything over £20 gets one sleep.",
+  title:"One Sleep: Stop Impulse Buys",sub:"Sleep on it before you buy",
+  site:"onesleep.app or getonesleep.com, both AVAILABLE*, not bought.",
+  dstat:".com REGISTERED (Bulgarian mattress shop) · .co.uk, .ai REGISTERED · .app, get / try / use / …app .com AVAILABLE*",
+  as:"🟢 No app called One Sleep; results are sleep trackers.",gp:"🟢 None named One Sleep.",
+  seo:"🔴 \"one sleep\" searches return sleep and mattress results.",aso:"🔴 Apple reads it as a sleep query, so you'd sit next to sleep apps.",
+  icon:"\"Zzz\" over a shopping bag.",risk:"Sleep-app confusion in every search, plus the \"one sec\" echo."},
+ {slug:"fresheyes",name:"Fresh Eyes",meaning:"Look at it again with fresh eyes in the morning.",
+  fit:"Good fit for the 08:00 check; nothing about shopping or takeaway in the name itself.",
+  memo:"A common, positive idiom; moderate recall as a brand.",creator:"Medium. \"What I wanted at 1am vs what Fresh Eyes said at 8am.\"",
+  spoken:"\"I put it in Fresh Eyes and by morning I didn't want it.\"",hook:"Things I almost bought at 1am vs what I thought with fresh eyes at 8am.",
+  title:"Fresh Eyes: Stop Impulse Buys",sub:"Pause shopping & takeaway apps",
+  site:"tryfresheyes.com or usefresheyes.com, the only ones AVAILABLE*.",
+  dstat:".com REGISTERED (active Wix site) · .app, .co.uk, .ai, get / …app .com REGISTERED · try / use .com AVAILABLE*",
+  as:"🟢 None.",gp:"🟢 None.",seo:"🔴 Buried under eye drops, optometrists and consultancies.",aso:"🟡 The name carries no shopping meaning; the subtitle has to do all the work.",
+  icon:"An eye opening like a sunrise.",risk:"Weak web presence: X and TikTok taken, every main domain taken, eye-care marks (MEDIUM)."},
+ {slug:"coolingoff",name:"Cooling Off",meaning:"The UK \"cooling-off period\": the legal right to change your mind after buying.",
+  fit:"Clear spending meaning for UK shoppers.",memo:"Familiar but generic.",creator:"Medium. \"The law gives you 14 days to cancel. My phone gives me a cooling-off period before I buy.\"",
+  spoken:"\"It puts my shopping apps in a cooling-off period.\"",hook:"The law gives you 14 days to cancel. My phone makes me cool off before I buy.",
+  title:"Cooling Off: Impulse Buy Pause",sub:"Stop shopping & takeaway urges",
+  site:"coolingoff.app or coolingoff.co.uk, both AVAILABLE*.",
+  dstat:".com REGISTERED (Japan, since 2000) · .app, .co.uk, .ai, get / try / use / …app .com AVAILABLE*",
+  as:"🟡 No exact app, but five \"Cooldown\" impulse-buy apps sit nearby.",gp:"🟢 No exact app found.",
+  seo:"🔴 \"Cooling off period\" is a legal and consumer-rights search with huge competition.",aso:"🟡 Close to the keyword, but so are the Cooldown apps.",
+  icon:"A snowflake on a shopping bag.",risk:"Almost no distinctiveness (1/5), so it can't be protected or owned in search. It can also sound like a break-up."}
+];
+(function(){
+ const tabs=document.getElementById("ddTabs"),panel=document.getElementById("ddPanel");
+ tabs.innerHTML=DD.map((d,i)=>{const r=S.find(x=>x.slug===d.slug);return `<button class="tab" role="tab" id="tab-${d.slug}" aria-selected="${i===0}" data-i="${i}"><b>${esc(d.name)}</b>${r.total}</button>`}).join("");
+ const unv=s=>esc(s).replace(/UNVERIFIED/g,'<span class="unv">UNVERIFIED</span>');
+ function show(i){const d=DD[i],r=S.find(x=>x.slug===d.slug);const st=STG[r.stage];
+  tabs.querySelectorAll(".tab").forEach((t,j)=>t.setAttribute("aria-selected",j===i));panel.setAttribute("aria-labelledby","tab-"+d.slug);
+  const kv=(k,v,raw)=>`<div><dt>${k}</dt><dd>${raw?v:esc(v)}</dd></div>`;
+  panel.innerHTML=`<div class="dd-head"><div><span class="pill ${st[1]}">${st[0]}</span><h3 style="margin-top:6px">${esc(d.name)}</h3></div><div class="big">${r.total}<small>/100</small></div></div>
+  <dl class="kv">${kv("Meaning",d.meaning)}${kv("Fit with the product",d.fit)}${kv("Memorability",d.memo)}${kv("Creator potential",d.creator)}
+  ${kv("Spoken out loud",`<span class="quote">${esc(d.spoken)}</span>`,1)}${kv("TikTok hook",`<span class="quote">${esc(d.hook)}</span>`,1)}
+  ${kv("App Store name + subtitle",`<div class="store-prev"><div class="app-ic" aria-hidden="true"></div><div><b>${esc(d.title)}</b><span>${esc(d.sub)}</span></div></div><span class="tiny muted">${d.title.length} and ${d.sub.length} characters (limit 30 each)</span>`,1)}
+  ${kv("Website",d.site)}${kv("Domain status",unv(d.dstat),1)}${kv("App Store conflict",d.as)}${kv("Google Play conflict",d.gp)}${kv("SEO",d.seo)}${kv("ASO",d.aso)}
+  ${kv("Logo / icon direction",d.icon)}${kv("Main risk",d.risk)}</dl>`}
+ tabs.addEventListener("click",e=>{const b=e.target.closest(".tab");if(b)show(+b.dataset.i)});
+ tabs.addEventListener("keydown",e=>{const cur=[...tabs.children].findIndex(t=>t.getAttribute("aria-selected")==="true");if(e.key==="ArrowRight"||e.key==="ArrowLeft"){const n=(cur+(e.key==="ArrowRight"?1:-1)+DD.length)%DD.length;show(n);tabs.children[n].focus()}});
+ show(0);
+})();
+
+/* Final 3 comparison */
+(function(){
+ const rows=[
+  ["Score","<b>67</b>/100","<b>65</b>/100","<b>64</b>/100"],
+  ["Why choose it","Names the product's promise and both jobs (shopping and takeaway). Clean stores. Owns the empty time-of-day spot.","Biggest ready-made creator genre. LOW conflict. Almost every domain free.","The same promise as a shareable rule. LOW conflict. Easy to say anywhere."],
+  ["Why not","US \"Till\" banking app and mark; exact handles taken; till/til spelling.","No takeaway; \"anti\" fights the calm voice; hyphen; trend word.","Reads as a sleep app in every search; echoes \"one sec\" and \"Sleep On It\"."],
+  ["What brand it could become","A calm night-time companion: sunrise visuals, the sleeping blob, a morning ritual. Can stretch to any late-night urge.","A movement brand for underconsumption: challenges, community, \"anti-haul of the month\". Narrow to fashion and beauty.","A rule brand, like the 30-day rule. Simple, but thin to build a world around."],
+  ["Marketing advantages","Name is the punchline of 1am POV videos; built-in 08:00 reveal; ad line writes itself.","Creators already make this content; easy to join existing hashtags.","Easy to say in a voiceover; works for any price rule."],
+  ["Marketing disadvantages","Paid ads in the US may need legal review first; handles need the \"app\" suffix.","Your hashtag is everyone's hashtag; hard to stand out inside your own genre.","Search for the name returns sleep trackers and mattresses."],
+  ["Domain","tillmorning.co.uk and tillmorningapp.com AVAILABLE*; .com FOR SALE (price <span class=\"unv\">UNVERIFIED</span>); .app taken.","antihaul.app, .co.uk, .ai AVAILABLE*; .com parked.","onesleep.app and getonesleep.com AVAILABLE*; .com, .co.uk, .ai taken."],
+  ["Search situation","🟡 Shared with a Steam game, a film and songs; \"Till Morning app\" is clean.","🟡 Genre term with lots of creator results.","🔴 Sleep and mattress results."],
+  ["Competitor situation","🟢 No rival uses time-of-day naming.","🟢 No rival app named Anti-Haul; FakeHaul is the nearest.","🟡 Near \"one sec\" (7.1k ratings) and the small rival \"Sleep On It\"."]
+ ];
+ document.getElementById("cmpTbl").innerHTML=`<thead><tr><th></th><th class="w">Till Morning · Winner</th><th>Anti-Haul · Backup #1</th><th>One Sleep · Backup #2</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("")}</tbody>`;
+})();
+
+/* Tests */
+(function(){
+ const w=[["Till Morning","🟢","🟡","🟢","🟢"],["Anti-Haul","🟢","🟡","🟡","🟢"],["One Sleep","🟡","🟢","🔴","🟢"],["Fresh Eyes","🟡","🟢","🔴","🟢"],["Cooling Off","🟡","🟢","🔴","🟡"],["Kip On It","🟢","🔴","🟡","🟢"],["Easy Tiger","🟢","🟢","🔴","🟢"]];
+ document.getElementById("womTbl").innerHTML=`<thead><tr><th>Word of mouth</th><th>Remember</th><th>Spell</th><th>Search</th><th>Tell</th></tr></thead><tbody>${w.map(r=>`<tr${r[0]==="Till Morning"?' class="win"':""}>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>`;
+ const g=[["Till Morning","🟢","🟢","🟡","\"Till\" is also a UK checkout"],["Anti-Haul","🟢","🟢","🟡","Haul is internet slang"],["One Sleep","🟢","🟢","🟢","\"Sleep on it\" idiom needed"],["Kip On It","🟢","🔴","🔴","US doesn't know kip; Dutch: chicken"],["Easy Tiger","🟢","🟡","🟡","UK and Australian idiom"],["Cooling Off","🟢","🟡","🟡","UK legal term"],["Pausa","🟡","🟡","🟢","Means pause in ES, IT, PT"]];
+ document.getElementById("globTbl").innerHTML=`<thead><tr><th>Global</th><th>UK</th><th>US</th><th>Non-native</th><th>Note</th></tr></thead><tbody>${g.map(r=>`<tr${r[0]==="Till Morning"?' class="win"':""}>${r.slice(0,4).map(c=>`<td>${c}</td>`).join("")}<td class="small" style="text-align:left">${esc(r[4])}</td></tr>`).join("")}</tbody>`;
+})();
+
+/* Checklist */
+(function(){
+ const items=[
+  ["uk-tm","UK trademarks for TILL MORNING and TILL","Search the UK IPO in classes 9 and 42. Not reachable from here. <a href=\"https://trademarks.ipo.gov.uk/ipo-tmtext\" target=\"_blank\" rel=\"noopener\">UK IPO search</a>"],
+  ["eu-tm","EU trademarks","Search EUIPO through TMview for TILL MORNING and TILL in classes 9 and 42. <a href=\"https://www.tmdn.org/tmview/\" target=\"_blank\" rel=\"noopener\">TMview</a>"],
+  ["us-tm","US view on TILL (Reg. 6719580)","Ask a trademark lawyer before any US marketing push. No exact TILL MORNING US mark was found on Justia."],
+  ["ig","Instagram handles","Check @tillmorning and @tillmorningapp in the Instagram app. Instagram blocks automated checks."],
+  ["tt","TikTok @tillmorningapp","An earlier check said free; today's check errored. Try claiming it in the TikTok app."],
+  ["dotcom","tillmorning.com price","Ask Afternic or BuyDomains for a quote only. Don't buy until the app proves itself."],
+  ["dotapp","Who owns tillmorning.app","Registered September 2026; the owner is hidden. Watch for a site appearing on it."],
+  ["prices","Registrar prices for the AVAILABLE* domains","Look up tillmorning.co.uk and tillmorningapp.com at a registrar to confirm they're standard price, not premium."],
+  ["vol","Search volume","Check Apple Search Ads keyword popularity for \"till morning\", \"impulse buying\" and \"no buy\" once the App Store Connect record exists."],
+  ["asc","Reserve the name","Create the App Store Connect record called \"Till Morning: No Impulse Buys\" on your friend's developer account. This holds the name."]
+ ];
+ let saved={};try{saved=JSON.parse(localStorage.getItem("anl-todo")||"{}")}catch(e){}
+ const ul=document.getElementById("todo");
+ ul.innerHTML=items.map(([k,t,d])=>`<li class="${saved[k]?"done":""}"><input type="checkbox" id="td-${k}" data-k="${k}" ${saved[k]?"checked":""}><label class="tt" for="td-${k}"><b>${esc(t)}</b><span>${d}</span></label></li>`).join("");
+ ul.addEventListener("change",e=>{const k=e.target.dataset.k;if(!k)return;saved[k]=e.target.checked;e.target.closest("li").classList.toggle("done",e.target.checked);try{localStorage.setItem("anl-todo",JSON.stringify(saved))}catch(err){}});
+})();
+
+/* Sources */
+(function(){
+ const src=[
+  ["App Store UK: impulse buying","https://apps.apple.com/gb/iphone/search?term=impulse%20buying"],["App Store US: impulse spending","https://apps.apple.com/us/iphone/search?term=impulse%20spending"],["App Store UK: no buy","https://apps.apple.com/gb/iphone/search?term=no%20buy"],["App Store UK: app blocker","https://apps.apple.com/gb/iphone/search?term=app%20blocker"],["App Store UK: shopping blocker","https://apps.apple.com/gb/iphone/search?term=shopping%20blocker"],["App Store UK: till morning","https://apps.apple.com/gb/iphone/search?term=till%20morning"],["App Store US: till","https://apps.apple.com/us/iphone/search?term=till"],["App Store US: unhaul","https://apps.apple.com/us/iphone/search?term=unhaul"],["Google Play: till morning","https://play.google.com/store/search?q=till%20morning&c=apps&hl=en_GB&gl=GB"],
+  ["Trademarkia: TILL (Till Financial)","https://www.trademarkia.com/till-88983963"],["Justia: easy tiger","https://trademarks.justia.com/search?q=easy+tiger"],["Justia: kip","https://trademarks.justia.com/search?q=kip"],["Justia: on purpose","https://trademarks.justia.com/search?q=on+purpose"],["Justia: afterthought","https://trademarks.justia.com/search?q=afterthought"],["Justia: pausa","https://trademarks.justia.com/search?q=pausa"],
+  ["Afternic: tillmorning.com","https://www.afternic.com/domain/tillmorning.com"],["WHOIS: tillmorning.com","https://who.is/whois/tillmorning.com"],["WHOIS: easytiger.com","https://who.is/whois/easytiger.com"],
+  ["ASOS: Easy Tiger label","https://www.asos.com/easy-tiger/easy-tiger-desert-disco-strappy-mesh-dress/prd/204606567"],["kip.life","https://kip.life"],["smallhours.com","https://smallhours.com"],["AlternativeTo: SpeedBump","https://alternativeto.net/software/speedbump/about"],["TikTok @tillmorning","https://www.tiktok.com/@tillmorning"],["Steam: Survive Till Morning","https://store.steampowered.com/app/2060320/Survive_Till_Morning/"],["Till Morning Games","https://steambase.io/developers/till-morning-games"],
+  ["Opal's creator growth (Milk Karten)","https://www.milkkarten.net/p/creator-brand-olivia-unplugged-opal"],["Opal growth (Speedinvest)","https://speedinvest.com/blog/scaling-smart-how-opal-built-a-10m-arr-business-in-just-2-years"],["Anti-haul on TikTok (Cosmetics Business)","https://www.cosmeticsbusiness.com/how-youtube-s-anti-haul-videos-have-been-given-the-tiktok-makeover-207060"],["Underconsumption core","https://en.wikipedia.org/wiki/Underconsumption_core"],["De-influencing (Queen's Journal)","https://www.queensjournal.ca/de-influencing-is-redefining-consumer-culture-one-anti-haul-at-a-time/"],
+  ["Earlier name shortlist","https://claude.ai/artifact/P5idfcj2ZWB1Xf8DoTXwg2"],["Earlier market check","https://claude.ai/artifact/R9TZiuhVNRTSPa6HM5hm9q"]
+ ];
+ document.getElementById("srcList").innerHTML=src.map(([t,u])=>`<li><a href="${u}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join("");
+})();
+
+/* Nav highlight */
+(function(){const links=[...document.querySelectorAll(".nav a")];const map=new Map(links.map(a=>[a.getAttribute("href").slice(1),a]));
+ if(!("IntersectionObserver" in window))return;
+ const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.remove("on"));const a=map.get(e.target.id);if(a){a.classList.add("on");const w=a.parentElement;w.scrollLeft=a.offsetLeft-16}}})},{rootMargin:"-40% 0px -55% 0px"});
+ document.querySelectorAll("main section[id]").forEach(s=>io.observe(s));})();
+})();
+</script>

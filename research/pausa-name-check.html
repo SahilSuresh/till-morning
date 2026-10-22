@@ -1,0 +1,322 @@
+<title>Pausa Name Check</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one calm column on the Pausa Night canvas; verdict ticket up top, two-path cards, then the full comparison table and a "buy these" receipt. */
+:root{
+  --bg:#0D0F2E; --surface:#161942; --edge:#282C68; --raised:#1E2256;
+  --fg:#F3F2FF; --fg2:#B4B6E4; --fg3:#8A8EC6;
+  --accent:#4361FF; --accent-soft:#93A5FF;
+  --ticket-a:#7E3FF2; --ticket-b:#B455F0;
+  --ok:#5EE9B5; --ok-bg:rgba(94,233,181,.12);
+  --warn:#FFC94D; --warn-bg:rgba(255,201,77,.12);
+  --bad:#FF8F78; --bad-bg:rgba(255,143,120,.13);
+  --paper:#F2F0FF; --paper-ink:#14163A; --paper-ink2:#5D6192;
+  --display:"Fredoka","Nunito","Trebuchet MS",system-ui,sans-serif;
+  --body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#F4F2FF; --surface:#FFFFFF; --edge:#D9D7F2; --raised:#ECEAFE;
+  --fg:#14163A; --fg2:#4A4E80; --fg3:#6E72A4;
+  --accent:#3550F0; --accent-soft:#3550F0;
+  --ok:#0E8A5F; --ok-bg:#E2F7EE; --warn:#9A6A00; --warn-bg:#FFF3D6; --bad:#C4442C; --bad-bg:#FFE9E4;
+  --paper:#FFFFFF; --paper-ink:#14163A; --paper-ink2:#5D6192;
+  color-scheme:light;}}
+:root[data-theme="light"]{
+  --bg:#F4F2FF; --surface:#FFFFFF; --edge:#D9D7F2; --raised:#ECEAFE;
+  --fg:#14163A; --fg2:#4A4E80; --fg3:#6E72A4;
+  --accent:#3550F0; --accent-soft:#3550F0;
+  --ok:#0E8A5F; --ok-bg:#E2F7EE; --warn:#9A6A00; --warn-bg:#FFF3D6; --bad:#C4442C; --bad-bg:#FFE9E4;
+  --paper:#FFFFFF; --paper-ink:#14163A; --paper-ink2:#5D6192;
+  color-scheme:light;}
+
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55}
+.wrap{max-width:980px;margin:0 auto;padding-block:40px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(34px,6vw,52px)}
+h2{font-size:26px}
+h3{font-size:19px}
+p{margin:0}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg3);font-weight:600}
+.lead{color:var(--fg2);font-size:18px;max-width:62ch}
+section{display:flex;flex-direction:column;gap:16px}
+
+/* verdict ticket */
+.ticket{display:grid;grid-template-columns:1fr auto;border-radius:22px;overflow:hidden;background:linear-gradient(120deg,var(--ticket-a),var(--ticket-b));color:#fff;position:relative}
+.ticket .main{padding:28px 30px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ticket .main .eyebrow{color:rgba(255,255,255,.75)}
+.ticket .name{font-family:var(--display);font-size:clamp(40px,8vw,64px);font-weight:600;line-height:1}
+.ticket .why{color:rgba(255,255,255,.9);max-width:52ch}
+.ticket .stub{border-left:2px dashed rgba(255,255,255,.55);padding:28px 26px;display:flex;flex-direction:column;justify-content:center;gap:6px;background:rgba(0,0,0,.12);min-width:0}
+.ticket .stub b{font-family:var(--display);font-size:20px;font-weight:600}
+.ticket .stub span{font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.88)}
+.ticket::before,.ticket::after{content:"";position:absolute;width:26px;height:26px;border-radius:50%;background:var(--bg);right:calc(var(--stubw,232px) - 13px)}
+.ticket::before{top:-13px}.ticket::after{bottom:-13px}
+@media (max-width:640px){.ticket{grid-template-columns:1fr}.ticket .stub{border-left:0;border-top:2px dashed rgba(255,255,255,.55)}.ticket::before,.ticket::after{display:none}}
+
+/* two paths */
+.paths{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.paths{grid-template-columns:1fr}}
+.path{background:var(--surface);border:1px solid var(--edge);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.path.pick{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.path header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.path ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;color:var(--fg2)}
+.path .example{font-family:var(--mono);font-size:13.5px;background:var(--raised);border-radius:10px;padding:8px 12px;color:var(--fg)}
+
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.blue{background:var(--accent);color:#fff}
+
+/* table */
+.tablebox{overflow-x:auto;border:1px solid var(--edge);border-radius:18px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:900px;font-size:14px}
+th,td{padding:12px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--edge)}
+thead th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg3);font-weight:600;background:var(--raised)}
+tbody tr:last-child td{border-bottom:0}
+td.nm{font-family:var(--display);font-size:18px;font-weight:600;white-space:nowrap}
+tr.win td{background:rgba(67,97,255,.10)}
+td small{display:block;color:var(--fg3);font-size:12.5px;margin-top:4px;line-height:1.4}
+.dom{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.dom i{font-style:normal}
+.dom .y{color:var(--ok)} .dom .n{color:var(--bad);text-decoration:line-through;text-decoration-thickness:1px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;color:var(--fg3);font-size:13px;align-items:center}
+
+/* receipt */
+.receipt{background:var(--paper);color:var(--paper-ink);border-radius:6px;padding:24px 26px 30px;max-width:560px;position:relative;display:flex;flex-direction:column;gap:12px;
+  -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/16px 100%;mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/16px 100%}
+.receipt h3{color:var(--paper-ink)}
+.receipt .row{display:flex;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:14px;border-bottom:1px dashed #C9C6EA;padding-bottom:8px;flex-wrap:wrap}
+.receipt .row span:last-child{color:var(--paper-ink2)}
+.receipt .note{font-size:13.5px;color:var(--paper-ink2)}
+
+.steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px;color:var(--fg2);max-width:70ch}
+.steps b{color:var(--fg)}
+.small{font-size:13.5px;color:var(--fg3);max-width:75ch}
+a{color:var(--accent-soft)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.listing{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:14.5px;background:var(--surface);border:1px solid var(--edge);border-radius:14px;padding:16px 18px;max-width:560px}
+.listing dt{color:var(--fg3)} .listing dd{margin:0;font-family:var(--mono);font-size:13.5px;min-width:0;overflow-wrap:anywhere}
+</style>
+
+<div class="wrap">
+
+  <header style="display:flex;flex-direction:column;gap:14px">
+    <p class="eyebrow">Name check · 21 Oct 2026</p>
+    <h1>Pausa is taken. Go with Till Morning.</h1>
+    <p class="lead">I compared keeping Pausa with a longer App Store title against seven new names, checking the App Store in the UK and US, trademarks, domains, social handles and how close each sounds to Onus.</p>
+  </header>
+
+  <div class="ticket" style="--stubw:232px">
+    <div class="main">
+      <span class="eyebrow">Recommended</span>
+      <span class="name">Till Morning</span>
+      <p class="why">It is the app's promise in two words: your 11 PM basket can wait till morning. No app uses it in the UK or US App Store, no software trademark turned up, and the .co.uk is free.</p>
+    </div>
+    <div class="stub">
+      <b>Free if you want one</b>
+      <span>tillmorning.co.uk</span>
+      <span>tillmorningapp.com</span>
+    </div>
+  </div>
+
+  <section>
+    <h2>The two paths</h2>
+    <div class="paths">
+      <article class="path">
+        <header><h3>A. Keep Pausa, longer title</h3><span class="chip bad">Not recommended</span></header>
+        <div class="example">Pausa: Impulse Buy Pause</div>
+        <ul>
+          <li><b>Apple allows it.</b> Names only have to be unique as a whole and 30 characters or fewer, so this 24-character title would pass.</li>
+          <li><b>But the UK App Store already has 9 apps called "Pausa: …"</b>, from menopause trackers to breathing apps.</li>
+          <li><b>One of them is the same idea.</b> "Pausa: Screen Time &amp; Focus" adds a calm pause before apps you pick, uses Apple's Screen Time, needs no account and keeps data on the phone. People who hear "Pausa" will find that app first.</li>
+          <li><b>Trademark:</b> the EU mark PAUSA belongs to a cheese-snack maker (food only), so the legal risk is low. But with this many Pausas around, you could not protect the name yourself.</li>
+        </ul>
+      </article>
+      <article class="path pick">
+        <header><h3>B. New name</h3><span class="chip blue">Recommended</span></header>
+        <div class="example">Till Morning: No Impulse Buys</div>
+        <ul>
+          <li><b>You own the search.</b> Anyone who hears the name on TikTok can find the app straight away.</li>
+          <li><b>It tells the story.</b> It matches the hero feature "Park it till morning" and the late-night launch pitch for No-buy January.</li>
+          <li><b>You can protect it.</b> A clean name is worth registering as a UK trade mark before launch.</li>
+          <li><b>Cost:</b> rename the prototype and the docs. Nothing is on the App Store yet, so this is the cheapest moment to switch.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>All names compared</h2>
+    <div class="legend"><span class="chip ok">Clear</span><span class="chip warn">Watch</span><span class="chip bad">Problem</span> <span>Domains: <span style="color:var(--ok);font-family:var(--mono)">green = free</span>, <span style="color:var(--bad);font-family:var(--mono);text-decoration:line-through">struck = taken</span></span></div>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Name</th><th>App Store UK / US</th><th>Trademark (quick search)</th><th>Domains</th><th>TikTok / Instagram</th><th>Like "Onus"?</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr class="win">
+            <td class="nm">Till Morning</td>
+            <td><span class="chip ok">No app with this name</span><small>Results are only "Good Morning" message apps</small></td>
+            <td><span class="chip ok">No software mark found</span><small>An indie studio "Till Morning Games" has one unreleased PC game; a US company of the same name exists</small></td>
+            <td><div class="dom"><i class="n">tillmorning.com</i><i class="n">tillmorning.app</i><i class="y">tillmorning.co.uk</i><i class="y">tillmorningapp.com</i><i class="y">gettillmorning.com</i></div><small>The .app was registered on 12 Sep 2026, so someone may have the same idea. Move fast.</small></td>
+            <td><span class="chip warn">Use @tillmorningapp</span><small>TikTok @tillmorning is a gaming creator. @tillmorningapp looks free. Instagram not checked</small></td>
+            <td><span class="chip ok">No</span></td>
+            <td><span class="chip blue">Pick this</span></td>
+          </tr>
+          <tr>
+            <td class="nm">Pausa</td>
+            <td><span class="chip bad">9 apps called Pausa</span><small>Including "Pausa: Screen Time &amp; Focus", which does the same thing</small></td>
+            <td><span class="chip warn">EU mark in food</span><small>Fromageries Bel, class 29. Not software, but you couldn't protect it</small></td>
+            <td><div class="dom"><i class="n">pausa.com</i><i class="n">pausa.app</i><i class="n">pausa.co.uk</i><i class="n">pausaapp.com</i></div></td>
+            <td><span class="chip bad">Crowded</span></td>
+            <td><span class="chip ok">No</span></td>
+            <td><span class="chip bad">Too crowded</span></td>
+          </tr>
+          <tr>
+            <td class="nm">Not Tonight</td>
+            <td><span class="chip ok">No app with this name</span></td>
+            <td><span class="chip bad">Known game</span><small>"Not Tonight", a UK video game on Steam and Switch (PanicBarn and No More Robots, 2018)</small></td>
+            <td><div class="dom"><i class="n">nottonight.com</i><i class="n">nottonight.app</i><i class="y">nottonight.co.uk</i><i class="y">nottonightapp.com</i></div><small>nottonight.app is an intimacy tracker, which shows how people read the phrase</small></td>
+            <td><span class="chip warn">Not checked</span></td>
+            <td><span class="chip ok">No</span></td>
+            <td><span class="chip bad">Game clash and innuendo</span></td>
+          </tr>
+          <tr>
+            <td class="nm">Holdover</td>
+            <td><span class="chip ok">Only pilot and shooting calculators</span></td>
+            <td><span class="chip warn">Common word</span></td>
+            <td><div class="dom"><i class="n">holdover.com</i><i class="n">holdover.app</i><i class="n">holdover.co.uk</i><i class="y">holdoverapp.com</i></div></td>
+            <td><span class="chip warn">Not checked</span></td>
+            <td><span class="chip ok">No</span></td>
+            <td><span class="chip warn">Unclear meaning</span></td>
+          </tr>
+          <tr>
+            <td class="nm">Snoozecart</td>
+            <td><span class="chip ok">No app with this name</span></td>
+            <td><span class="chip bad">Cannabis brand</span><small>"Snooze Carts" are US THC vape cartridges, and "carts" is slang for them</small></td>
+            <td><div class="dom"><i class="n">snoozecart.com</i><i class="y">snoozecart.app</i><i class="y">snoozecart.co.uk</i></div></td>
+            <td><span class="chip ok">Looks free</span></td>
+            <td><span class="chip ok">No</span></td>
+            <td><span class="chip bad">Wrong association</span></td>
+          </tr>
+          <tr>
+            <td class="nm">Kerb</td>
+            <td><span class="chip bad">Taken</span><small>"Kerb" (navigation), "Kerb Driver", "Connected Kerb" (EV charging, 1.9k ratings)</small></td>
+            <td><span class="chip bad">UK companies use it</span></td>
+            <td><div class="dom"><i class="n">kerb.com</i><i class="n">kerb.app</i><i class="n">kerb.co.uk</i></div></td>
+            <td><span class="chip bad">Crowded</span></td>
+            <td><span class="chip ok">No</span></td>
+            <td><span class="chip bad">Taken</span></td>
+          </tr>
+          <tr>
+            <td class="nm">Stub</td>
+            <td><span class="chip bad">4+ apps called Stub</span><small>Plus StubHub at the top of every search</small></td>
+            <td><span class="chip bad">StubHub</span></td>
+            <td><div class="dom"><i class="n">stub.com</i><i class="n">stub.app</i><i class="n">stub.co.uk</i></div></td>
+            <td><span class="chip bad">Crowded</span></td>
+            <td><span class="chip ok">No</span></td>
+            <td><span class="chip bad">Taken</span></td>
+          </tr>
+          <tr>
+            <td class="nm">Morrow</td>
+            <td><span class="chip bad">5+ apps called Morrow</span><small>Including Morrow Bank</small></td>
+            <td><span class="chip warn">Used in finance</span></td>
+            <td><div class="dom"><i class="n">morrow.com</i><i class="n">morrow.app</i><i class="n">morrow.co.uk</i></div></td>
+            <td><span class="chip warn">Not checked</span></td>
+            <td><span class="chip ok">No</span></td>
+            <td><span class="chip bad">Taken</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small">Also already used in this niche, so avoid anything close: UnBuy, Sleep On It (two impulse-buy apps), CartPause, PauseBuy, Pauza, Pausi, CatNap (an app blocker). None of the names above sounds like Onus, so guideline 4.3 isn't affected by the name.</p>
+  </section>
+
+  <section>
+    <h2>Five more names</h2>
+    <p class="lead" style="font-size:16px">British sayings for waiting or sleeping on it, checked the same way. Kip On It is the strongest new option: nothing is called that, and every domain is free.</p>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Name</th><th>App Store UK / US</th><th>Trademark (quick search)</th><th>Domains</th><th>TikTok / Instagram</th><th>Like "Onus"?</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr class="win">
+            <td class="nm">Kip On It</td>
+            <td><span class="chip ok">No app with this name</span><small>"Kip" on its own is used by a few small apps</small></td>
+            <td><span class="chip ok">Nothing found</span></td>
+            <td><div class="dom"><i class="y">kiponit.com</i><i class="y">kiponit.app</i><i class="y">kiponit.co.uk</i></div><small>All three free</small></td>
+            <td><span class="chip ok">@kiponit looks free</span><small>Instagram not checked</small></td>
+            <td><span class="chip ok">No</span></td>
+            <td><span class="chip blue">Best new option</span><small>Very British. US users may not know "kip"</small></td>
+          </tr>
+          <tr>
+            <td class="nm">Cooling Off</td>
+            <td><span class="chip ok">No app with this name</span></td>
+            <td><span class="chip warn">Too generic to own</span><small>Rivals like CartPause, Wait7 and Miss Spent already use "cooling-off" to describe their wait</small></td>
+            <td><div class="dom"><i class="n">coolingoff.com</i><i class="y">coolingoff.app</i><i class="y">coolingoff.co.uk</i><i class="y">coolingoffapp.com</i></div></td>
+            <td><span class="chip ok">@coolingoffapp looks free</span></td>
+            <td><span class="chip ok">No</span></td>
+            <td><span class="chip warn">Clear but plain</span></td>
+          </tr>
+          <tr>
+            <td class="nm">Hold Fire</td>
+            <td><span class="chip warn">One game</span><small>"Hold Fire: Turret Defense TD"</small></td>
+            <td><span class="chip warn">Common phrase</span></td>
+            <td><div class="dom"><i class="n">holdfire.com</i><i class="y">holdfire.app</i><i class="n">holdfire.co.uk</i><i class="y">holdfireapp.com</i></div></td>
+            <td><span class="chip warn">Not checked</span></td>
+            <td><span class="chip ok">No</span></td>
+            <td><span class="chip warn">Sounds aggressive</span></td>
+          </tr>
+          <tr>
+            <td class="nm">Hang Fire</td>
+            <td><span class="chip ok">No app with this name</span></td>
+            <td><span class="chip bad">Software clash</span><small>Hangfire is a well-known developer tool</small></td>
+            <td><div class="dom"><i class="n">hangfire.com</i><i class="n">hangfire.app</i><i class="n">hangfire.co.uk</i></div></td>
+            <td><span class="chip warn">Not checked</span></td>
+            <td><span class="chip ok">No</span></td>
+            <td><span class="chip bad">Taken in software</span></td>
+          </tr>
+          <tr>
+            <td class="nm">Bide</td>
+            <td><span class="chip bad">Taken</span><small>"Bide: Break Bad Habits" (London, covers impulse shopping), plus a Bide fasting app</small></td>
+            <td><span class="chip bad">In use</span></td>
+            <td><div class="dom"><i class="n">bide.com</i><i class="n">bide.app</i><i class="n">bide.co.uk</i><i class="n">bideapp.com</i></div></td>
+            <td><span class="chip warn">Not checked</span></td>
+            <td><span class="chip ok">No</span></td>
+            <td><span class="chip bad">Taken</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small">Also checked and already taken: Steady On, Second Thoughts (an impulse-spending app), First Light, Daybreak, SunUp.</p>
+  </section>
+
+  <section>
+    <h2>What the App Store listing could say</h2>
+    <dl class="listing">
+      <dt>Name</dt><dd>Till Morning: No Impulse Buys</dd>
+      <dt>Subtitle</dt><dd>Pause shopping &amp; takeaway apps</dd>
+    </dl>
+    <p class="small">Both fit Apple's 30-character limit. The subtitle carries the words people search for.</p>
+  </section>
+
+  <section>
+    <h2>Before you pay for anything</h2>
+    <div class="receipt">
+      <h3>Optional: domains and handles</h3>
+      <div class="row"><span>tillmorning.co.uk</span><span>free · UK home</span></div>
+      <div class="row"><span>tillmorningapp.com</span><span>free · main site</span></div>
+      <div class="row"><span>gettillmorning.com</span><span>free · optional spare</span></div>
+      <div class="row"><span>@tillmorningapp</span><span>TikTok + Instagram</span></div>
+      <p class="note">tillmorning.com (since 2006) and tillmorning.app (since Sep 2026) are taken. Use the .co.uk for UK marketing and tillmorningapp.com everywhere else.</p>
+    </div>
+    <ol class="steps">
+      <li><b>Run the free UK IPO search first, it takes 5 minutes.</b> Search "till morning" with the Similar option in classes 9 and 42 at <a href="https://trademarks.ipo.gov.uk/ipo-tmtext" target="_blank" rel="noopener">trademarks.ipo.gov.uk</a>. My check was a web search, not a search of the official registers.</li>
+      <li><b>Claim @tillmorningapp on TikTok and Instagram.</b> I couldn't check Instagram from here. A domain is optional: Apple only needs public Privacy Policy, Support and Terms pages, which can live on a free Carrd or Notion page. Buy tillmorning.co.uk only if you want a branded site and support email, or to stop someone else taking it.</li>
+      <li><b>Ask your friend to create the app record in App Store Connect.</b> That reserves "Till Morning: No Impulse Buys" before anyone else takes it.</li>
+      <li><b>Then file a UK trade mark</b> for Till Morning in class 9 (from £170 online) before launch in January.</li>
+    </ol>
+  </section>
+
+</div>

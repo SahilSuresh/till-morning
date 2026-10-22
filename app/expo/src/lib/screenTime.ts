@@ -1,0 +1,26 @@
+import { Platform } from 'react-native';
+import * as DeviceActivity from 'react-native-device-activity';
+
+// Thin wrapper over Apple's Screen Time APIs. The shield, pause and Shopping Pass logic
+// is built on top of this during the real-iPhone spike, not here.
+
+export function isScreenTimeAvailable() {
+  return Platform.OS === 'ios';
+}
+
+export async function requestScreenTimeAccess() {
+  await DeviceActivity.requestAuthorization('individual');
+  return DeviceActivity.getAuthorizationStatus();
+}
+
+export function getScreenTimeStatus() {
+  return DeviceActivity.getAuthorizationStatus();
+}
+
+// Brief rule: when the trial or subscription ends, remove every shield straight away.
+export function removeAllShields() {
+  DeviceActivity.resetBlocks();
+  DeviceActivity.stopMonitoring();
+}
+
+export { DeviceActivity };

@@ -1,0 +1,454 @@
+<title>Pausa USP Options</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Figtree:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: one centred reading column; the hero idea gets a wide strip of four phone screens, the rest are compact idea cards. Pausa Night, single dark theme on purpose. */
+:root {
+  --night: #0D0F2E; --surface: #161942; --edge: #282C68; --raised: #1E2256;
+  --t1: #F3F2FF; --t2: #B4B6E4; --t3: #8A8EC6;
+  --blue: #4361FF; --blue-l: #93A5FF; --purple: #8B5CF6;
+  --mint: #5EE9B5; --amber: #FFC94D; --coral: #FF8F78;
+  --paper: #F2F0FF; --ink: #14163A; --ink2: #5D6192;
+  --display: "Fredoka", "Nunito", system-ui, sans-serif;
+  --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--night); color: var(--t1); font-family: var(--body); font-size: 16px; line-height: 1.5; font-weight: 500; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 72px; display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(34px, 6vw, 52px); line-height: 1.05; }
+h2 { font-size: clamp(24px, 3.6vw, 31px); line-height: 1.15; }
+h3 { font-size: 20px; line-height: 1.2; }
+p { margin: 0; max-width: 64ch; }
+.muted { color: var(--t2); }
+.label { color: var(--t3); font-weight: 800; font-size: 13.5px; letter-spacing: .02em; }
+section { display: grid; gap: 20px; }
+
+/* hero */
+.hero { position: relative; display: grid; gap: 16px; padding-top: 12px; }
+.hero::before { content: ""; position: absolute; inset: -60px -20% auto; height: 320px; background: radial-gradient(closest-side, rgba(67,97,255,.28), transparent 70%); pointer-events: none; z-index: -1; }
+.hero h1 em { font-style: normal; color: var(--blue-l); }
+.verdict { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 5px 12px; font-weight: 700; font-size: 14px; }
+.chip.mint { background: rgba(94,233,181,.16); color: #74F0C1; }
+.chip.amber { background: rgba(255,201,77,.16); color: #FFD46E; }
+.chip.coral { background: rgba(255,143,120,.16); color: #FFAB98; }
+.chip.purple { background: rgba(139,92,246,.2); color: #C7B2FF; }
+.chip.blue { background: rgba(67,97,255,.2); color: var(--blue-l); }
+
+/* map */
+.mapgrid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 28px; align-items: center; }
+@media (max-width: 760px) { .mapgrid { grid-template-columns: minmax(0,1fr); } }
+.map { position: relative; aspect-ratio: 1 / 1; max-width: 100%; border: 1px solid var(--edge); border-radius: 20px; background:
+  linear-gradient(var(--edge), var(--edge)) center / 1px 100% no-repeat,
+  linear-gradient(var(--edge), var(--edge)) center / 100% 1px no-repeat, var(--surface); }
+.axis { position: absolute; color: var(--t3); font-weight: 700; font-size: 12.5px; }
+.axis.x { bottom: 8px; right: 12px; }
+.axis.x0 { bottom: 8px; left: 12px; }
+.axis.y { top: 10px; left: 12px; }
+.axis.y0 { bottom: 26px; left: 12px; }
+.dot { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 4px; text-align: center; font-size: 13px; font-weight: 700; width: 120px; }
+.dot i { width: 14px; height: 14px; border-radius: 50%; background: var(--t3); display: block; }
+.dot.now i { background: var(--coral); }
+.dot.next i { width: 22px; height: 22px; background: var(--blue); box-shadow: 0 0 0 6px rgba(67,97,255,.25), 0 0 30px rgba(67,97,255,.8); }
+.dot.next { color: var(--blue-l); font-size: 14.5px; }
+.dot small { color: var(--t3); font-weight: 600; font-size: 11.5px; display: block; }
+.arrow { position: absolute; left: 32%; top: 56%; width: 34%; height: 2px; background: repeating-linear-gradient(90deg, var(--blue-l) 0 6px, transparent 6px 11px); transform: rotate(-38deg); transform-origin: left center; opacity: .8; }
+
+/* the big idea */
+.big { border-radius: 28px; padding: clamp(20px, 4vw, 36px); background: linear-gradient(160deg, #1C1F5A 0%, #161942 55%, #1A1450 100%); border: 1px solid var(--edge); border-bottom-width: 4px; display: grid; gap: 24px; }
+.big .top { display: grid; gap: 10px; }
+.pitch { font-family: var(--display); font-weight: 600; font-size: clamp(22px, 3vw, 27px); color: var(--blue-l); }
+.phones { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 900px) { .phones { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 440px) { .phones { grid-template-columns: minmax(0, 1fr); max-width: 260px; margin: 0 auto; } }
+.step { display: grid; gap: 10px; align-content: start; }
+.step .cap { font-size: 14.5px; color: var(--t2); }
+.step .cap b { color: var(--t1); display: block; font-size: 15.5px; }
+.phone { aspect-ratio: 9 / 18.5; max-width: 100%; border-radius: 30px; background: #000; border: 3px solid #2B2F6E; padding: 10px; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px; font-size: 12px; }
+.phone .bar { display: flex; justify-content: space-between; color: #fff; font-weight: 700; font-size: 11px; padding: 2px 8px 0; }
+.p-shop { background: #fff; color: #111; border-radius: 16px; padding: 10px; display: grid; gap: 6px; }
+.p-shop .img { aspect-ratio: 1/1; border-radius: 10px; background: linear-gradient(135deg, #C9B79C, #8C6F4E); position: relative; }
+.p-shop .img::after { content: ""; position: absolute; inset: 22% 26%; border-radius: 40% 40% 10% 10%; background: #5B432B; }
+.p-shop .nm { font-weight: 700; font-size: 12px; }
+.p-shop .pr { font-weight: 800; color: #B00020; }
+.sheet { margin-top: auto; background: #1C1C1E; border-radius: 16px; padding: 10px 8px; display: grid; gap: 8px; }
+.sheet .row { display: flex; justify-content: space-around; }
+.sheet .ap { display: grid; justify-items: center; gap: 3px; color: #ddd; font-size: 10px; }
+.sheet .ap span { width: 34px; height: 34px; border-radius: 9px; background: #3A3A3C; display: block; }
+.sheet .ap.pz span { background: linear-gradient(135deg, #4361FF, #8B5CF6); box-shadow: 0 0 0 2px #fff, 0 0 16px rgba(147,165,255,.9); display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 14px; }
+.sheet .ap.pz { color: #fff; font-weight: 700; }
+.p-pz { background: radial-gradient(120% 80% at 50% 0%, #2A2D7A 0%, var(--night) 60%); }
+.tag { background: var(--paper); color: var(--ink); border-radius: 14px; padding: 12px; display: grid; gap: 6px; position: relative; transform: rotate(-2deg); margin-top: 14px; }
+.tag::before { content: ""; position: absolute; top: 10px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--night); }
+.tag .img { aspect-ratio: 1.4/1; border-radius: 8px; background: linear-gradient(135deg, #C9B79C, #8C6F4E); }
+.tag b { font-size: 13px; }
+.tag .when { color: var(--ink2); font-weight: 700; font-size: 11.5px; }
+.stamp { justify-self: start; border: 2px solid #2A3BC0; color: #2A3BC0; border-radius: 6px; padding: 1px 6px; font-weight: 800; font-size: 11px; transform: rotate(-6deg); }
+.pz-h { font-family: var(--display); font-weight: 600; font-size: 17px; text-align: center; line-height: 1.15; }
+.pz-s { color: var(--t2); text-align: center; font-size: 11.5px; }
+.xp { justify-self: center; background: rgba(255,201,77,.18); color: #FFD46E; border-radius: 999px; padding: 3px 10px; font-weight: 800; font-size: 11.5px; }
+.btn { border-radius: 999px; padding: 8px; text-align: center; font-family: var(--display); font-weight: 600; font-size: 13px; }
+.btn.blue { background: linear-gradient(#5B76FF, #4361FF); box-shadow: 0 3px 0 #2A3BC0; }
+.btn.ghost { background: var(--raised); border: 1px solid var(--edge); box-shadow: 0 3px 0 var(--edge); }
+.stack { position: relative; height: 46%; margin-top: 4px; }
+.card { position: absolute; inset: 0; background: var(--surface); border: 1px solid var(--edge); border-radius: 14px; padding: 8px; display: grid; grid-template-rows: 1fr auto; gap: 6px; }
+.card.c3 { transform: translate(8px, -10px) rotate(4deg); opacity: .5; }
+.card.c2 { transform: translate(4px, -5px) rotate(2deg); opacity: .75; }
+.card .img { border-radius: 8px; background: linear-gradient(135deg, #C9B79C, #8C6F4E); }
+.card.c2 .img { background: linear-gradient(135deg, #F5B2C6, #C85A82); }
+.card.c3 .img { background: linear-gradient(135deg, #9ED3F5, #3C7FB8); }
+.card .meta { display: flex; justify-content: space-between; font-weight: 700; font-size: 11px; }
+.card .meta span { color: var(--t3); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: auto; }
+.shelf { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.shelf div { aspect-ratio: 1/1; border-radius: 10px; filter: grayscale(.85) brightness(.7); position: relative; }
+.shelf div::after { content: ""; position: absolute; inset: 0; border-radius: 10px; border: 1px solid rgba(255,255,255,.12); }
+.big-n { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1; text-align: center; color: var(--mint); }
+
+.why { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .why { grid-template-columns: minmax(0, 1fr); } }
+.why div { display: grid; gap: 6px; align-content: start; }
+.why h3 { font-size: 17px; }
+.why p { color: var(--t2); font-size: 15px; }
+
+.flag { border-radius: 16px; padding: 16px 18px; background: rgba(255,201,77,.08); border: 1px solid rgba(255,201,77,.35); display: grid; gap: 6px; }
+.flag p { font-size: 15px; color: var(--t2); }
+.flag b { color: #FFD46E; }
+
+/* other ideas */
+.ideas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .ideas { grid-template-columns: minmax(0, 1fr); } }
+.idea { background: var(--surface); border: 1px solid var(--edge); border-bottom-width: 3px; border-radius: 20px; padding: 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.idea .head { display: flex; gap: 12px; align-items: center; }
+.ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; flex: none; }
+.ic svg { width: 22px; height: 22px; }
+.ic.blue { background: rgba(67,97,255,.18); color: var(--blue-l); }
+.ic.amber { background: rgba(255,201,77,.15); color: var(--amber); }
+.ic.purple { background: rgba(139,92,246,.18); color: #C7B2FF; }
+.ic.mint { background: rgba(94,233,181,.15); color: var(--mint); }
+.ic.coral { background: rgba(255,143,120,.15); color: var(--coral); }
+.idea p { color: var(--t2); font-size: 15px; }
+.idea .eg { background: #101236; border-radius: 12px; padding: 10px 12px; font-size: 14px; color: var(--t1); border: 1px solid var(--edge); }
+.idea .eg span { color: var(--t3); display: block; font-size: 12.5px; font-weight: 700; }
+.idea .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* table */
+.tbl { overflow-x: auto; border: 1px solid var(--edge); border-radius: 16px; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14.5px; }
+th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--edge); vertical-align: top; }
+th { color: var(--t3); font-weight: 800; font-size: 13px; background: #12153A; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 700; }
+.y { color: var(--mint); font-weight: 700; } .m { color: var(--amber); font-weight: 700; } .n { color: var(--coral); font-weight: 700; }
+tr.hl td { background: rgba(67,97,255,.1); }
+
+.next { display: grid; gap: 12px; background: var(--surface); border: 1px solid var(--edge); border-radius: 20px; padding: 20px; }
+.next ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--t2); }
+.next ol b { color: var(--t1); }
+.src { font-size: 13px; color: var(--t3); }
+
+/* round 2 */
+.r2 { display: grid; gap: 24px; }
+.insight { border-radius: 20px; padding: 18px 20px; background: rgba(94,233,181,.07); border: 1px solid rgba(94,233,181,.35); display: grid; gap: 8px; }
+.insight h3 { color: #74F0C1; }
+.insight p { color: var(--t2); font-size: 15.5px; }
+.insight p b { color: var(--t1); }
+.dirs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 900px) { .dirs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .dirs { grid-template-columns: minmax(0, 1fr); } }
+.dir { background: var(--surface); border: 1px solid var(--edge); border-bottom-width: 3px; border-radius: 20px; padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.dir .num { color: var(--t3); font-weight: 800; font-size: 13px; }
+.dir p { color: var(--t2); font-size: 14.5px; }
+.dir .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dir .chip { font-size: 12.5px; padding: 4px 10px; }
+.mini { background: radial-gradient(120% 90% at 50% 0%, #262A74 0%, #101236 70%); border: 1px solid var(--edge); border-radius: 16px; padding: 14px; min-height: 150px; display: grid; gap: 8px; align-content: center; font-size: 13px; }
+.mini .h { font-family: var(--display); font-weight: 600; font-size: 15px; text-align: center; line-height: 1.2; }
+.mini .s { color: var(--t2); text-align: center; font-size: 12px; }
+.ring { width: 74px; height: 74px; border-radius: 50%; justify-self: center; display: grid; place-items: center; background: conic-gradient(var(--mint) 0 40%, rgba(255,255,255,.1) 40% 100%); position: relative; }
+.ring::before { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: #161942; }
+.ring b { position: relative; font-family: var(--display); font-size: 20px; }
+.bub { border-radius: 14px; padding: 7px 10px; max-width: 88%; font-size: 12.5px; line-height: 1.35; }
+.bub.ai { background: var(--raised); border: 1px solid var(--edge); justify-self: start; }
+.bub.me { background: var(--blue); justify-self: end; }
+.parcel { width: 64px; height: 54px; justify-self: center; border-radius: 8px; background: linear-gradient(#D9A86C, #B07A3E); position: relative; box-shadow: 0 0 30px rgba(255,201,77,.45); }
+.parcel::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 10px; transform: translateX(-50%); background: #F3E1BE; }
+.parcel::after { content: ""; position: absolute; left: -4px; right: -4px; top: -8px; height: 14px; border-radius: 4px; background: #C58D4E; }
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.week span { aspect-ratio: 1/1.25; border-radius: 8px; background: rgba(255,255,255,.06); display: grid; place-items: center; font-weight: 700; font-size: 11px; color: var(--t3); }
+.week span.t { background: rgba(139,92,246,.35); color: #fff; box-shadow: inset 0 0 0 1.5px #B48CFF; }
+.scale { display: grid; gap: 6px; }
+.scale div { display: grid; grid-template-columns: 44px minmax(0,1fr) 56px; gap: 8px; align-items: center; font-size: 12px; font-weight: 700; }
+.scale i { height: 8px; border-radius: 99px; background: linear-gradient(90deg, var(--blue), var(--purple)); display: block; }
+.scale em { font-style: normal; color: var(--t2); text-align: right; }
+.packs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 860px) { .packs { grid-template-columns: minmax(0, 1fr); } }
+.pack { border-radius: 20px; padding: 18px; border: 1px solid var(--edge); background: var(--surface); display: grid; gap: 10px; align-content: start; }
+.pack.pick { border: 2px solid var(--blue); background: linear-gradient(170deg, #1C2468, #161942 70%); box-shadow: 0 0 40px rgba(67,97,255,.25); }
+.pack .line { font-family: var(--display); font-weight: 600; font-size: 18px; color: var(--blue-l); }
+.pack ul { margin: 0; padding-left: 18px; color: var(--t2); font-size: 14.5px; display: grid; gap: 4px; }
+.pack p { color: var(--t2); font-size: 14.5px; }
+.divider { border: 0; border-top: 1px dashed var(--edge); margin: 0; }
+.src a { color: var(--blue-l); }
+</style>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="label">Pausa · finding the unique selling point · 20 Oct 2026</span>
+    <h1>Every blocker locks the <em>app</em>.<br>Pausa should hold the <em>thing you wanted</em>.</h1>
+    <p class="muted">Right now Pausa is a shield, a pause and a timed pass. That reads as a blocker with a shopping skin. The one move rivals have not made is to catch the item itself, park it overnight, and let morning-you decide. That is a different product, not a different colour.</p>
+    <div class="verdict">
+      <span class="chip blue">Round 2 added below: six new directions</span>
+      <span class="chip mint">Every one fits the rules, except where marked</span>
+    </div>
+  </header>
+
+  <section class="r2" aria-labelledby="r2-h">
+    <span class="label">Round 2 · new</span>
+    <h2 id="r2-h">Six more directions, and what I found first</h2>
+
+    <div class="insight">
+      <h3>The finding that changes the pitch</h3>
+      <p>The "no-buy" and "wait before you buy" shelf on the App Store is busier than I said in round 1. <b>UnBuy</b>, <b>NoBuy</b>, <b>Stop Impulse Buying</b>, <b>SpendWise</b> and <b>Buy Later</b> all offer wait lists, streaks or no-buy challenges, several with no account and on-device data, like Pausa.</p>
+      <p>From their listings, they all run on willpower: you log things, and nothing stops you opening the shop. <b>Pausa is the only one with a real lock.</b> So the pitch could be "the no-buy app with teeth": blockers have teeth but don't care about money, and no-buy apps care about money but have no teeth. (The "no lock" part comes from reading their store listings, not from installing each app.)</p>
+    </div>
+
+    <div class="dirs">
+      <div class="dir">
+        <span class="num">A</span>
+        <div class="mini"><div class="ring"><b>12</b></div><div class="h">No-buy November</div><div class="s">Allowed: groceries, gifts. Shops are locked till 1 Dec.</div></div>
+        <h3>No-buy challenges, with a lock</h3>
+        <p>Pick a challenge: No-buy month, Low-buy year, Takeaway-free weekdays. Your rules write the shield, and the shield actually holds. It rides a trend people already search for.</p>
+        <div class="chips"><span class="chip mint">Fits rules</span><span class="chip purple">Strong App Store pitch</span><span class="chip amber">Crowded name</span></div>
+      </div>
+
+      <div class="dir">
+        <span class="num">B</span>
+        <div class="mini"><div class="bub ai">What do you hope the jacket will fix tonight?</div><div class="bub me">Bad day at work tbh</div><div class="bub ai">That's the third "bad day" buy this month. Park it and look again tomorrow?</div></div>
+        <h3>A coach that lives on your phone</h3>
+        <p>Apple's built-in AI runs on the iPhone itself, so Pausa can ask one or two questions about what you want and notice patterns, without anything leaving the phone.</p>
+        <div class="chips"><span class="chip mint">Fits rules</span><span class="chip blue">Most "new"</span><span class="chip coral">iPhone 15 Pro and newer only</span></div>
+      </div>
+
+      <div class="dir">
+        <span class="num">C</span>
+        <div class="mini"><div class="parcel"></div><div class="h">A parcel for you</div><div class="s">You walked away from Deliveroo. Open it to get sticker 7 of 12.</div></div>
+        <h3>Unbox something free</h3>
+        <p>Half the buzz of shopping is the parcel arriving. When you walk away, Pausa gives you a parcel to open with a collectible mascot sticker. You get the feeling without the spending.</p>
+        <div class="chips"><span class="chip mint">Fits rules</span><span class="chip blue">Uses the mascot stickers</span><span class="chip amber">Can feel gimmicky</span></div>
+      </div>
+
+      <div class="dir">
+        <span class="num">D</span>
+        <div class="mini"><div class="h">Your treat nights</div><div class="week"><span>M</span><span>T</span><span>W</span><span>T</span><span class="t">F</span><span>S</span><span class="t">S</span></div><div class="s">Friday 19:30, Deliveroo: "Enjoy your curry!" No pause.</div></div>
+        <h3>Planned treats</h3>
+        <p>You plan treats ahead, like Friday takeaway or a payday shop. Planned ones open with a warm hello and no pause. Only the unplanned ones get the shield. That makes Pausa a plan, not a punishment.</p>
+        <div class="chips"><span class="chip mint">Fits rules</span><span class="chip purple">Great for takeaway</span><span class="chip blue">Small build</span></div>
+      </div>
+
+      <div class="dir">
+        <span class="num">E</span>
+        <div class="mini"><div class="h">The Pausa rule</div><div class="scale"><div>£15<i style="width:8%"></i><em>15 s</em></div><div>£40<i style="width:30%"></i><em>4 h</em></div><div>£68<i style="width:55%"></i><em>7 h</em></div><div>£120<i style="width:100%"></i><em>12 h</em></div></div><div class="s">One hour of waiting for every £10, once it's over £20.</div></div>
+        <h3>Wait grows with the price</h3>
+        <p>The limit you type on the Shopping Pass sets the wait before you can tear the ticket. A snack is 15 seconds; trainers wait till morning. It's a named rule people can repeat.</p>
+        <div class="chips"><span class="chip mint">Fits rules</span><span class="chip blue">Pairs with Park it</span><span class="chip amber">Relies on an honest limit</span></div>
+      </div>
+
+      <div class="dir">
+        <span class="num">F</span>
+        <div class="mini"><div class="bub ai">Sam wants to spend £85 on ASOS. OK?</div><div class="two" style="margin-top:4px"><div class="btn ghost">Not tonight</div><div class="btn blue">Go for it</div></div><div class="s">Sent through iCloud. No Pausa account.</div></div>
+        <h3>Buddy, through iCloud</h3>
+        <p>Round 1's buddy idea gets softer here. Apple's iCloud sharing can pass a request between two phones without a Pausa account or server. Data still leaves the phone, so it bends "everything on the phone".</p>
+        <div class="chips"><span class="chip amber">Bends "on the phone"</span><span class="chip mint">Keeps "no account"</span><span class="chip coral">Bigger build</span></div>
+      </div>
+    </div>
+
+    <h2>Three ways to put them together</h2>
+    <div class="packs">
+      <div class="pack pick">
+        <span class="chip blue" style="justify-self:start">My pick</span>
+        <span class="line">"The no-buy app with teeth"</span>
+        <ul><li>A. No-buy challenges, as the headline</li><li>D. Planned treats, so it never feels like a cage</li><li>Park it till morning (round 1), for the things you still want</li></ul>
+        <p>It names a category people already search for, and the lock is the one thing the rivals can't copy without the Screen Time permission.</p>
+      </div>
+      <div class="pack">
+        <span class="line">"Sleep on it"</span>
+        <ul><li>Park it till morning (round 1)</li><li>E. Wait grows with the price</li><li>Risky hours (round 1)</li></ul>
+        <p>Clearest single mechanic and easiest to explain, but the wait-list part on its own is the crowded bit.</p>
+      </div>
+      <div class="pack">
+        <span class="line">"Your private spending coach"</span>
+        <ul><li>B. A coach that lives on your phone</li><li>Park it till morning (round 1)</li><li>C. Unbox something free</li></ul>
+        <p>Feels newest, but only newer iPhones get the coach, so everyone else needs a simpler fallback.</p>
+      </div>
+    </div>
+    <p class="src">Round 2 sources: <a href="https://apps.apple.com/lu/app/id6761615087">UnBuy</a>, <a href="https://apps.apple.com/app/id6786423515">NoBuy</a>, <a href="https://appgoblin.info/apps/6783100449">Stop Impulse Buying: No Buy</a>, <a href="https://www.wamc.org/2024-09-05/could-you-give-up-shopping-for-a-year-try-the-no-buy-challenge">NPR on no-buy challenges</a>, <a href="https://www.cultofmac.com/news/apple-foundation-models-framework">Apple's on-device AI for apps</a>. Device support for the coach should be checked against Apple's own docs.</p>
+  </section>
+
+  <hr class="divider">
+  <span class="label" style="margin-bottom:-36px">Round 1</span>
+
+  <section>
+    <h2>Where Pausa sits today, and where it could sit</h2>
+    <div class="mapgrid">
+      <div class="map" role="img" aria-label="Map: blockers lock apps but do not hold items; wait-list apps hold items but do not lock apps; Pausa with Park it does both">
+        <span class="axis y">Holds the item you wanted ↑</span>
+        <span class="axis y0">Ignores the item</span>
+        <span class="axis x0">Doesn't stop you opening</span>
+        <span class="axis x">Stops you opening the app →</span>
+        <div class="dot" style="left:25%; top:28%"><i></i>Wait-list apps<small>SpendWise, UnBuy, NoBuy, Buy Later</small></div>
+        <div class="dot" style="left:74%; top:72%"><i></i>Blockers<small>Opal, one sec, Brick, Onus</small></div>
+        <div class="dot now" style="left:62%; top:62%"><i></i>Pausa today<small>shield + pause + pass</small></div>
+        <div class="dot next" style="left:75%; top:24%"><i></i>Pausa with Park it</div>
+      </div>
+      <div style="display:grid; gap:14px; min-width:0">
+        <p><b>Blockers sell time.</b> Opal, one sec and Brick ration minutes or add friction to opening an app. They don't care what you were about to buy.</p>
+        <p><b>Wait-list apps sell patience.</b> SpendWise and Buy Later let you share a product into a 30-day list, but nothing stops you buying it anyway.</p>
+        <p><b>Nobody joins the two.</b> A shield that says "park it instead", plus a list that brings the item back when you're calm, is the gap. Neither half is new on its own; together they are.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="big" aria-labelledby="big-h">
+    <div class="top">
+      <span class="label">The big idea</span>
+      <h2 id="big-h">Park it till morning</h2>
+      <p class="pitch">Night-you can browse. Morning-you decides.</p>
+      <p class="muted">When you find something you want, share it to Pausa. It goes on a paper tag, the shopping app stays shielded, and at 8:00 Pausa asks you once: still want it?</p>
+    </div>
+
+    <div class="phones">
+      <div class="step">
+        <div class="phone">
+          <div class="bar"><span>23:14</span><span>ASOS</span></div>
+          <div class="p-shop"><div class="img"></div><div class="nm">Oversized suede jacket</div><div class="pr">£68.00 · Only 2 left!</div></div>
+          <div class="sheet">
+            <div class="row"><div class="ap"><span></span>Messages</div><div class="ap pz"><span>II</span>Park in Pausa</div><div class="ap"><span></span>Notes</div></div>
+          </div>
+        </div>
+        <div class="cap"><b>1. Share it</b>Tap Share on any product, in a shopping app on a pass, or in Instagram, TikTok or Safari.</div>
+      </div>
+
+      <div class="step">
+        <div class="phone p-pz">
+          <div class="bar"><span>23:14</span><span></span></div>
+          <div class="tag"><div class="img"></div><b>Oversized suede jacket</b><span class="when">ASOS · parked 23:14</span><span class="stamp">Decide at 8:00</span></div>
+          <div class="pz-h">Parked. Sleep on it.</div>
+          <div class="pz-s">ASOS stays shielded until morning.</div>
+          <span class="xp">+5 XP</span>
+          <div class="btn blue" style="margin-top:auto">Done for tonight</div>
+        </div>
+        <div class="cap"><b>2. It's parked</b>The urge is handled, not refused. The pass ends early and the shield goes back on.</div>
+      </div>
+
+      <div class="step">
+        <div class="phone p-pz">
+          <div class="bar"><span>08:00</span><span></span></div>
+          <div class="pz-h" style="margin-top:6px">Night-you wanted 3 things</div>
+          <div class="pz-s">Still want them?</div>
+          <div class="stack"><div class="card c3"><div class="img"></div></div><div class="card c2"><div class="img"></div></div><div class="card"><div class="img"></div><div class="meta">Suede jacket<span>ASOS</span></div></div></div>
+          <div class="two"><div class="btn ghost">Let it go</div><div class="btn blue">Still want it</div></div>
+        </div>
+        <div class="cap"><b>3. Morning review</b>One calm minute with breakfast. Any honest answer earns +10 XP. "Still want it" opens a Shopping Pass.</div>
+      </div>
+
+      <div class="step">
+        <div class="phone p-pz">
+          <div class="bar"><span>Progress</span><span></span></div>
+          <div class="big-n" style="margin-top:10px">14</div>
+          <div class="pz-s">things you let go this month</div>
+          <div class="shelf">
+            <div style="background:linear-gradient(135deg,#C9B79C,#8C6F4E)"></div>
+            <div style="background:linear-gradient(135deg,#F5B2C6,#C85A82)"></div>
+            <div style="background:linear-gradient(135deg,#9ED3F5,#3C7FB8)"></div>
+            <div style="background:linear-gradient(135deg,#FFD9A0,#E08A2E)"></div>
+            <div style="background:linear-gradient(135deg,#B9F5D8,#2FA877)"></div>
+            <div style="background:linear-gradient(135deg,#D8C7FF,#7A4FE0)"></div>
+          </div>
+          <div class="pz-s" style="margin-top:auto">Your let-go shelf. No £ figures, just the things.</div>
+        </div>
+        <div class="cap"><b>4. The let-go shelf</b>A gallery of things you didn't need. It's the proof that feels good, and a share card later.</div>
+      </div>
+    </div>
+
+    <div class="why">
+      <div><h3>Why it's unique</h3><p>Blockers fight the app. Pausa takes the want seriously, keeps it safe and hands it back when you're calm. "Not never, just not tonight" fits the no-shaming tone.</p></div>
+      <div><h3>Why iPhone allows it</h3><p>A Share extension only sees what the person chooses to share (a link, title and picture). It is on-device, needs no account, and the night schedule uses the same Screen Time tools Pausa already plans.</p></div>
+      <div><h3>What it fixes</h3><p>App Review 4.3: a share extension, a wait list and a morning review are clearly not Onus or Opal. Retention: there's a reason to open Pausa every morning. And it can launch under Finance, not Productivity.</p></div>
+    </div>
+
+    <div class="flag">
+      <h3 style="font-size:17px">One rule this tempts us to bend</h3>
+      <p>Parked items often carry a price, so it's tempting to show <b>"£212 you didn't spend"</b> on the let-go shelf. That is the most powerful number we could show, but it breaks the "no money-saved figures" rule, because Pausa can't know you didn't buy it elsewhere. <b>My take:</b> keep the rule and show the count plus pictures. If you want to test the number, label it "Price of things you let go", never "saved".</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Five smaller ideas that stack on top</h2>
+    <p class="muted">None of these is a USP on its own, but each makes Pausa feel more like a spending coach and less like a lock. They're ranked by how much they help, for how little build.</p>
+    <div class="ideas">
+      <div class="idea">
+        <div class="head"><span class="ic blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><h3>Your risky hours</h3></div>
+        <p>Pausa already logs its own shield taps. It learns when you're weakest and makes the pause longer then, shorter at lunch.</p>
+        <div class="eg"><span>On the shield</span>"It's 23:10 on a Thursday. This is your riskiest hour. Pause is 45 s tonight."</div>
+        <div class="chips"><span class="chip mint">Fits every rule</span><span class="chip blue">Small build</span></div>
+      </div>
+      <div class="idea">
+        <div class="head"><span class="ic coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12l8-8h8v8l-8 8z"/><circle cx="15.5" cy="8.5" r="1.5"/></svg></span><h3>Sale season shield</h3></div>
+        <p>Black Friday, Prime Day, 11.11 and your own payday raise the shields automatically and change the shield's wording.</p>
+        <div class="eg"><span>On the shield</span>"It's Prime Day. Every 'deal' today was designed for this exact moment."</div>
+        <div class="chips"><span class="chip mint">Fits every rule</span><span class="chip purple">Marketing moment every season</span></div>
+      </div>
+      <div class="idea">
+        <div class="head"><span class="ic purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><h3>A note from calm you</h3></div>
+        <p>Record ten seconds in setup. It plays during the pause, in your own voice. Hearing yourself is harder to ignore than any app copy.</p>
+        <div class="eg"><span>During the pause</span>"Hey. You said you'd stop buying jackets until the trip. Is this the trip?"</div>
+        <div class="chips"><span class="chip mint">Fits every rule</span><span class="chip blue">Small build</span></div>
+      </div>
+      <div class="idea">
+        <div class="head"><span class="ic amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9"/></svg></span><h3>Hours of your life</h3></div>
+        <p>On the Shopping Pass, the limit you type is also shown in hours of work, from your own take-home pay per hour.</p>
+        <div class="eg"><span>On the ticket</span>Limit £68 · about 5 h 40 m of work</div>
+        <div class="chips"><span class="chip mint">Fits every rule</span><span class="chip amber">Others do similar</span></div>
+      </div>
+      <div class="idea" style="grid-column: 1 / -1">
+        <div class="head"><span class="ic mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M2 20c1-4 4-5 6-5s5 1 6 5M12 20c1-4 3-5 5-5s4 1 5 5"/></svg></span><h3>A spending buddy (later)</h3></div>
+        <p>Big passes, say over £50, need a thumbs-up from a friend you choose. This is the strongest friction of all, but it needs two phones to talk to each other, which bends the "no account, everything on the phone" promise. Worth keeping for version 2, not for launch.</p>
+        <div class="chips"><span class="chip coral">Bends the no-account rule</span><span class="chip amber">Bigger build</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Side by side</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Idea</th><th>Feels unique</th><th>Helps 4.3</th><th>Helps retention</th><th>Fits the rules</th><th>Build</th></tr></thead>
+        <tbody>
+          <tr class="hl"><td>Park it till morning</td><td class="y">Yes</td><td class="y">Strongly</td><td class="y">Daily reason to open</td><td class="y">Yes</td><td class="m">Medium</td></tr>
+          <tr><td>Your risky hours</td><td class="y">Yes</td><td class="m">Some</td><td class="m">Some</td><td class="y">Yes</td><td class="y">Small</td></tr>
+          <tr><td>Sale season shield</td><td class="m">Somewhat</td><td class="m">Some</td><td class="y">Seasonal spikes</td><td class="y">Yes</td><td class="y">Small</td></tr>
+          <tr><td>A note from calm you</td><td class="y">Yes</td><td class="m">Some</td><td class="m">Some</td><td class="y">Yes</td><td class="y">Small</td></tr>
+          <tr><td>Hours of your life</td><td class="n">No</td><td class="n">Little</td><td class="n">Little</td><td class="y">Yes</td><td class="y">Small</td></tr>
+          <tr><td>Spending buddy</td><td class="y">Yes</td><td class="y">Strongly</td><td class="y">Yes</td><td class="n">Bends no-account</td><td class="n">Big</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="next">
+    <h2>What I'd do</h2>
+    <ol>
+      <li><b>Make "Park it till morning" the headline.</b> New App Store line: "Don't stop shopping. Sleep on it."</li>
+      <li><b>Add it to the pause.</b> "Remind me in 1 hour" becomes "Park it till morning", and after 23:00 the pause only offers Leave it or Park it.</li>
+      <li><b>Add risky hours and the voice note</b> as small extras that make the pause feel personal.</li>
+      <li><b>Save sale season</b> for the first Black Friday after launch, as a marketing push.</li>
+      <li><b>Leave the buddy</b> for version 2.</li>
+    </ol>
+    <p class="src">Competitor notes from: <a href="https://habitdoom.com/blog/brick-vs-other-app-blockers">Brick vs Opal comparison</a>, <a href="https://apps.apple.com/us/app/-/id6496203443">SpendWise on the App Store</a>, <a href="https://appshunter.io/ios/app/buy-later-30-day-countdown/id6745124585">Buy Later</a>, <a href="https://www.nerdwallet.com/finance/news/phone-brick-experiment">NerdWallet on blocking shopping apps</a>. "Nobody joins the two" is from a quick search, not an exhaustive App Store audit.</p>
+  </section>
+
+</div>

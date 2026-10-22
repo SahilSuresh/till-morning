@@ -1,0 +1,271 @@
+<title>Pausa App Review Precheck</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a single review slip column; verdict stamp, then severity lanes of finding cards, then notes to paste */
+:root {
+  --bg: #F3F4FA; --paper: #FFFFFF; --ink: #171A33; --ink2: #50557A; --line: #DCDFEE;
+  --accent: #4361FF;
+  --fail: #D93A2B; --fail-bg: #FDECEA;
+  --high: #C76A00; --high-bg: #FFF2DF;
+  --med: #4361FF; --med-bg: #EAEEFF;
+  --pass: #138A5B; --pass-bg: #E3F6EE;
+  --display: 'Bricolage Grotesque', 'Avenir Next', system-ui, sans-serif;
+  --body: 'Atkinson Hyperlegible', system-ui, -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0D0F2E; --paper: #161942; --ink: #F3F2FF; --ink2: #A9ADD6; --line: #2E3374;
+  --accent: #93A5FF;
+  --fail: #FF8A7A; --fail-bg: #3A1A2A; --high: #FFC266; --high-bg: #362A1C;
+  --med: #93A5FF; --med-bg: #1E2460; --pass: #5FE0A8; --pass-bg: #123A33; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0D0F2E; --paper: #161942; --ink: #F3F2FF; --ink2: #A9ADD6; --line: #2E3374;
+  --accent: #93A5FF;
+  --fail: #FF8A7A; --fail-bg: #3A1A2A; --high: #FFC266; --high-bg: #362A1C;
+  --med: #93A5FF; --med-bg: #1E2460; --pass: #5FE0A8; --pass-bg: #123A33; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 36px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 6vw, 44px); font-weight: 800; line-height: 1.05; letter-spacing: -0.01em; }
+h2 { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+h3 { font-size: 17px; font-weight: 600; line-height: 1.3; }
+p { margin: 0; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); }
+.muted { color: var(--ink2); }
+header { display: flex; flex-direction: column; gap: 14px; }
+.verdict { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center; background: var(--paper); border: 1.5px solid var(--line); border-radius: 18px; padding: 20px; }
+.stamp { font-family: var(--display); font-weight: 800; font-size: 20px; line-height: 1; color: var(--high); border: 3px solid var(--high); border-radius: 10px; padding: 10px 14px; transform: rotate(-4deg); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.verdict p { min-width: 0; }
+.tally { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { font-family: var(--mono); font-size: 13px; padding: 5px 10px; border-radius: 999px; font-weight: 500; }
+.p-fail { background: var(--fail-bg); color: var(--fail); }
+.p-high { background: var(--high-bg); color: var(--high); }
+.p-med { background: var(--med-bg); color: var(--med); }
+.p-pass { background: var(--pass-bg); color: var(--pass); }
+section { display: flex; flex-direction: column; gap: 14px; }
+.lane-note { color: var(--ink2); font-size: 15px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.card { background: var(--paper); border: 1.5px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; border-top: 5px solid var(--sev); }
+.fail { --sev: var(--fail); } .high { --sev: var(--high); } .med { --sev: var(--med); }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.gl { font-family: var(--mono); font-size: 12px; color: var(--ink2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+.who { font-size: 12px; font-weight: 700; color: var(--ink2); margin-left: auto; }
+.why { font-size: 15px; color: var(--ink2); }
+.fix { font-size: 15px; }
+.fix b { color: var(--sev); }
+.passes { display: flex; flex-wrap: wrap; gap: 8px; }
+.passes span { background: var(--pass-bg); color: var(--pass); border-radius: 10px; padding: 6px 10px; font-size: 14px; font-weight: 700; }
+.passes small { display: block; font-weight: 400; color: var(--ink2); font-size: 13px; }
+.list { background: var(--paper); border: 1.5px solid var(--line); border-radius: 14px; padding: 6px 18px; }
+.list li { padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.list li:last-child { border-bottom: 0; }
+.list ul { list-style: none; margin: 0; padding: 0; }
+.notes { background: var(--paper); border: 1.5px dashed var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.notes pre { white-space: pre-wrap; font-family: var(--body); font-size: 15px; margin: 0; max-width: 68ch; }
+button.copy { align-self: flex-start; font: 700 14px var(--body); color: #fff; background: var(--accent); border: 0; border-radius: 999px; padding: 9px 16px; cursor: pointer; }
+:root[data-theme="dark"] button.copy { color: #0D0F2E; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button.copy { color: #0D0F2E; } }
+button.copy:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+a { color: var(--accent); }
+footer { font-size: 13px; color: var(--ink2); }
+@media (max-width: 480px) { .verdict { grid-template-columns: 1fr; } .stamp { justify-self: start; } }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">App Review precheck · designed app, main build v20 · 21 Oct 2026</p>
+  <h1>Pausa isn’t ready to submit yet, but nothing here needs a feature cut.</h1>
+  <div class="verdict">
+    <div class="stamp">Fix first</div>
+    <p>Apple won’t take the build until three things exist: the <b>Family Controls approval</b>, public <b>privacy, support and terms pages</b>, and a <b>name nobody else uses</b>. After that, five design fixes take the biggest rejection risks off the table. Most of the rest is for your friend to get right in the native build.</p>
+  </div>
+  <div class="tally"><span class="pill p-fail">3 blockers</span><span class="pill p-high">5 high risk</span><span class="pill p-med">9 get right in the build</span><span class="pill p-pass">8 already pass</span></div>
+</header>
+
+<section>
+  <h2>Blockers <span class="pill p-fail">can’t submit without these</span></h2>
+  <div class="cards">
+    <article class="card fail">
+      <div class="meta"><span class="gl">2.5.1</span><span class="gl">entitlement</span><span class="who">You + builder</span></div>
+      <h3>Family Controls approval not requested</h3>
+      <p class="why">Shields can’t ship to the App Store without Apple’s distribution approval, and it can take weeks.</p>
+      <p class="fix"><b>Fix:</b> request it now for the app and for every Screen Time extension (shield look, shield buttons, activity monitor), each by its own bundle ID.</p>
+    </article>
+    <article class="card fail">
+      <div class="meta"><span class="gl">5.1.1(i)</span><span class="gl">1.5</span><span class="gl">3.1.2(c)</span><span class="who">You</span></div>
+      <h3>No privacy, support or terms pages</h3>
+      <p class="why">Apple needs a privacy policy and a support page with real contact details, plus a terms link for subscriptions. The prototype’s Terms and Privacy links only show a toast.</p>
+      <p class="fix"><b>Fix:</b> one free page set (GitHub Pages or a public Notion page, no domain needed). For terms, link Apple’s standard EULA. Link all three in App Store Connect and on the paywall and in Settings.</p>
+    </article>
+    <article class="card fail">
+      <div class="meta"><span class="gl">2.3.7</span><span class="gl">4.1(c)</span><span class="gl">5.2.1</span><span class="who">You</span></div>
+      <h3>“Pausa” is taken in spirit</h3>
+      <p class="why">“Pausa: Screen Time &amp; Focus” already sells the same calm pause-before-apps idea, and 9 UK apps start with Pausa. Expect a copycat or confusion flag.</p>
+      <p class="fix"><b>Fix:</b> pick <b>Till Morning</b> or <b>Kip On It</b> and reserve it by creating the App Store Connect record.</p>
+    </article>
+  </div>
+</section>
+
+<section>
+  <h2>High risk <span class="pill p-high">fix before submitting</span></h2>
+  <div class="cards">
+    <article class="card high">
+      <div class="meta"><span class="gl">2.1(a)</span><span class="who">Prototype + notes</span></div>
+      <h3>The reviewer may never see a shield</h3>
+      <p class="why">Apple’s review iPhone probably has no Amazon, SHEIN or Deliveroo, so “Shopping &amp; Food” in the picker can be empty and the core feature looks broken.</p>
+      <p class="fix"><b>Fix:</b> add “No shopping apps? Pick any app to try it” on the picker step, and tell the reviewer in the notes to shield Books or Podcasts.</p>
+    </article>
+    <article class="card high">
+      <div class="meta"><span class="gl">2.5.1</span><span class="who">Builder</span></div>
+      <h3>Shield button opening Pausa directly</h3>
+      <p class="why">“I still want to shop” jumping straight into the pause relies on iOS 26.5. I couldn’t find a documented public way for a shield button to open its app; developer forum threads still ask for one.</p>
+      <p class="fix"><b>Fix:</b> use the notification route on every iOS version unless Apple documents an API. No private tricks, because those get rejected.</p>
+    </article>
+    <article class="card high">
+      <div class="meta"><span class="gl">3.1.2</span><span class="gl">5.6</span><span class="who">Prototype</span></div>
+      <h3>“Remind me on day 5” with no notification permission</h3>
+      <p class="why">The paywall promises a reminder, but setup never asks for notifications. A trial reminder that silently never arrives looks like a trap.</p>
+      <p class="fix"><b>Fix:</b> add the notifications step from the ship plan. If someone declines, the toggle says “Turn on notifications to get this reminder.” Pausa must still work without them.</p>
+    </article>
+    <article class="card high">
+      <div class="meta"><span class="gl">2.5.19</span><span class="gl">2.3.1(a)</span><span class="who">Prototype + notes</span></div>
+      <h3>Features that unlock over week one</h3>
+      <p class="why">The reviewer only sees day 1. Apple treats features it can’t find as hidden or undocumented.</p>
+      <p class="fix"><b>Fix:</b> list every feature in the review notes, and add the “Everything Pausa can do” list in Settings with a “Show all now” switch. Remove the test panel and every “(simulated)” label from the real app.</p>
+    </article>
+    <article class="card high">
+      <div class="meta"><span class="gl">5.6.1</span><span class="who">Builder</span></div>
+      <h3>Rating pop-up must be Apple’s own</h3>
+      <p class="why">The prototype draws its own star sheet after “Let it go”. Apple doesn’t allow custom review prompts.</p>
+      <p class="fix"><b>Fix:</b> keep the same timing rules but call Apple’s review request. The Settings “Rate Pausa” row opens the App Store review page.</p>
+    </article>
+  </div>
+</section>
+
+<section>
+  <h2>Get right in the native build <span class="pill p-med">medium</span></h2>
+  <div class="cards">
+    <article class="card med">
+      <div class="meta"><span class="gl">4.3(b)</span><span class="gl">2.3.10</span><span class="who">You</span></div>
+      <h3>Crowded “pause before apps” shelf</h3>
+      <p class="why">ScreenZen, ClearSpace, Clarymind and one sec already put a pause before apps. Onus is Android-only, so the duplicate-app rule doesn’t apply to it today.</p>
+      <p class="fix"><b>Fix:</b> make screenshots 1 to 3 the spending parts: the pass with a £ limit and timer, the waiting room till morning, the check-in. Never mention Android or Onus in the listing.</p>
+    </article>
+    <article class="card med">
+      <div class="meta"><span class="gl">3.1.2(c)</span><span class="who">Builder</span></div>
+      <h3>Paywall wording, nearly there</h3>
+      <p class="why">The billed price is already the biggest number, with a trial timeline and a restore link.</p>
+      <p class="fix"><b>Fix:</b> add “renews automatically”, say “cancel in iPhone Settings”, show the free week only to people who can still get it, and add Manage subscription and Restore purchases to Pausa’s Settings.</p>
+    </article>
+    <article class="card med">
+      <div class="meta"><span class="gl">3.1.2</span><span class="gl">5.6</span><span class="who">Builder</span></div>
+      <h3>What happens when the plan ends</h3>
+      <p class="why">The prototype has no lapsed-subscription state. Apps left shielded behind a paywall would trap people.</p>
+      <p class="fix"><b>Fix:</b> when the trial or plan ends, remove every shield first, then show the paywall.</p>
+    </article>
+    <article class="card med">
+      <div class="meta"><span class="gl">2.3.1</span><span class="gl">2.1</span><span class="who">Prototype</span></div>
+      <h3>“Ask a friend” shows the friend’s reply</h3>
+      <p class="why">An app that keeps everything on the phone can’t read iMessage replies, so “Sam: Go for it” can’t really appear.</p>
+      <p class="fix"><b>Fix:</b> after sending, the person taps “They said yes” or “They said wait”.</p>
+    </article>
+    <article class="card med">
+      <div class="meta"><span class="gl">5.2.1</span><span class="gl">2.3.7</span><span class="who">Builder + you</span></div>
+      <h3>Shop logos and names</h3>
+      <p class="why">The prototype has Amazon, SHEIN, Temu and Uber Eats logos built in.</p>
+      <p class="fix"><b>Fix:</b> show app icons only through Apple’s own picker tokens. Keep shop logos and names out of the screenshots, name, subtitle and keywords.</p>
+    </article>
+    <article class="card med">
+      <div class="meta"><span class="gl">4.4</span><span class="gl">4.4.2</span><span class="who">Builder</span></div>
+      <h3>Safari extension scope</h3>
+      <p class="why">Extensions should ask for no more websites than they need, and must be described in the listing.</p>
+      <p class="fix"><b>Fix:</b> ask only for shop and checkout sites, not all websites. Put no buying buttons inside the extension, mention it in the description, and add a help screen in the app.</p>
+    </article>
+    <article class="card med">
+      <div class="meta"><span class="gl">2.4.1</span><span class="who">Builder</span></div>
+      <h3>Reviewers often use an iPad</h3>
+      <p class="why">iPhone apps get reviewed on iPad too.</p>
+      <p class="fix"><b>Fix:</b> test setup, picker, shield and paywall in iPad compatibility mode before submitting.</p>
+    </article>
+    <article class="card med">
+      <div class="meta"><span class="gl">5.1.1(ix)</span><span class="gl">2.3.5</span><span class="who">You</span></div>
+      <h3>Pick Productivity, not Finance</h3>
+      <p class="why">Apple wants banking and financial services apps to come from a company that provides them. The bank-limit guide could draw that question under Finance.</p>
+      <p class="fix"><b>Fix:</b> list under Productivity (where the blockers are) or Lifestyle.</p>
+    </article>
+    <article class="card med">
+      <div class="meta"><span class="gl">2.1</span><span class="who">Builder</span></div>
+      <h3>Short passes re-locking on time</h3>
+      <p class="why">There are reports that Screen Time schedules have a 15-minute minimum, which could break 5 and 10-minute passes.</p>
+      <p class="fix"><b>Fix:</b> test re-lock timing on a real iPhone in the first test app, before building the rest.</p>
+    </article>
+  </div>
+</section>
+
+<section>
+  <h2>Already passing <span class="pill p-pass">keep as is</span></h2>
+  <div class="passes">
+    <span>No account needed<small>5.1.1(v), plus Delete all data</small></span>
+    <span>No money-saved or addiction claims<small>2.3.7, 1.4.1</small></span>
+    <span>Rewards aren’t sold<small>3.1.1, so no odds needed for sticker parcels</small></span>
+    <span>Screenshots read on the phone<small>5.1.1(iii), use the system photo picker</small></span>
+    <span>Screen Time explained first<small>5.1.1(iv), handles “Don’t allow”</small></span>
+    <span>Billed price is biggest<small>3.1.2(c), £29.88 over £2.49</small></span>
+    <span>Demo pause before paying<small>2.1, shows the reviewer the idea</small></span>
+    <span>Voice note<small>2.5.14, needs a mic purpose line and a visible recording state</small></span>
+  </div>
+</section>
+
+<section>
+  <h2>Draft review notes</h2>
+  <p class="lane-note">Paste into App Store Connect, App Review Information, Notes. Swap in the final name.</p>
+  <div class="notes">
+<pre id="notes">Pausa adds a short pause before the shopping and takeaway apps a person picks, so they shop on purpose instead of on impulse. It uses the Screen Time API (FamilyControls, ManagedSettings, DeviceActivity). Everything stays on the device: no account, no login, no server, no bank connection.
+
+HOW TO TEST
+1. Complete the short setup and allow Screen Time when asked.
+2. In Apple's app picker, choose any installed app. A review device may have no shopping apps, so Books or Podcasts works fine.
+3. Start the free trial on the paywall (sandbox). The yearly and monthly subscriptions are on that screen; Restore purchases is below them and in Settings.
+4. Open the app you picked. Pausa's shield appears. Tap "I still want to shop" to get the 15-second pause, then choose "I'll leave it", "Remind me in 1 hour" or "Shop with a plan".
+5. "Shop with a plan" starts a timed Shopping Pass: the app opens for the chosen minutes, then locks again automatically and Pausa asks a short check-in.
+
+FEATURES THAT APPEAR DURING THE FIRST WEEK
+Some features are introduced one a day so new users aren't overwhelmed. To see them all at once: Settings > Everything Pausa can do > Show all now. They are: [list the week-one features].
+
+WHAT MAKES IT DIFFERENT FROM SCREEN TIME BLOCKERS
+Pausa is about spending, not screen time. It never fully blocks an app: it slows down impulse buys, offers a timed Shopping Pass with a spending limit, and lets people park a want until morning.
+
+OTHER NOTES
+- Notifications are optional. They are used for the trial reminder and the pass check-in.
+- The optional Safari extension only reads shop checkout pages, on the device.
+- Checkout screenshots are picked by the user with the system photo picker and read on the device.
+- When the trial or subscription ends, all shields are removed.</pre>
+    <button class="copy" id="copyBtn" type="button">Copy notes</button>
+  </div>
+</section>
+
+<section>
+  <h2>Can’t verify from here</h2>
+  <div class="list"><ul>
+    <li><b>App Privacy label.</b> “Data Not Collected” is only true if the paywall has no tracking SDK. A paywall SDK such as RevenueCat usually means declaring purchases and an identifier.</li>
+    <li><b>£29.88 as a price.</b> Apple only offers fixed price points. If £29.88 isn’t one, use £29.99 and show “£2.50 a month”.</li>
+    <li><b>EU storefronts.</b> Selling in the EU needs a trader declaration that shows your contact details publicly. A UK-only launch avoids that for now.</li>
+    <li><b>Shield opening the app on iOS 26.5</b>, and the pass re-lock timing. Both need a real iPhone.</li>
+    <li><b>Age rating.</b> Expected 4+. Answer Apple’s questionnaire honestly.</li>
+    <li><b>Crashes.</b> There’s no TestFlight build yet, so no crash data to check.</li>
+  </ul></div>
+</section>
+
+<footer>Checked against Apple’s App Review Guidelines fetched live (last updated 16 Oct 2026). This is the first precheck for this app, so there’s no earlier run to compare. The source was the main build v20 and the app brief. App Review is a human judgement, so this lowers risk and can’t promise approval.</footer>
+</div>
+
+<script>
+document.getElementById('copyBtn').addEventListener('click', function () {
+  var b = this, t = document.getElementById('notes').innerText;
+  function done(msg) { b.textContent = msg; setTimeout(function () { b.textContent = 'Copy notes'; }, 1800); }
+  function fallback() { var r = document.createRange(); r.selectNodeContents(document.getElementById('notes')); var s = getSelection(); s.removeAllRanges(); s.addRange(r); done('Selected, press copy'); }
+  try { navigator.clipboard.writeText(t).then(function () { done('Copied'); }, fallback); } catch (e) { fallback(); }
+});
+</script>

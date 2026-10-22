@@ -1,0 +1,282 @@
+<title>Till Morning Feature Research</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Figtree:wght@400;500;700&display=swap">
+<style>
+/* Layout: one narrow reading column on the app's own night sky; phone mockups sit in a wrapping row under each idea. Single dark look on purpose, matching the app. */
+:root{
+  --night:#0D0F2E; --night2:#161A45; --card:#1F2358; --line:#2C3270;
+  --ink:#EEF0FF; --mute:#A5ABD8; --blue:#4361FF; --blue-l:#8EA0FF;
+  --purple:#9B6BFF; --mint:#4FE3B0; --amber:#FFC24D; --coral:#FF8F78;
+  --display:"Fredoka", "Nunito", system-ui, sans-serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--night);color:var(--ink);font:16px/1.55 var(--body);}
+.wrap{max-width:1040px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(30px,5vw,44px)}
+h2{font-size:26px}
+h3{font-size:19px}
+p{margin:0}
+.eyebrow{font:600 12px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--blue-l)}
+.lede{color:var(--mute);max-width:62ch}
+section{display:flex;flex-direction:column;gap:20px}
+.muted{color:var(--mute)}
+.small{font-size:14px}
+a{color:var(--blue-l)}
+/* hero */
+.hero{display:flex;flex-direction:column;gap:14px}
+.moon{width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFF6D8,#FFD978 60%,#C9A64A);box-shadow:0 0 40px rgba(255,217,120,.35)}
+.top3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.pick{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.pick .n{font:700 34px/1 var(--display);color:var(--amber)}
+.pick p{color:var(--mute);font-size:15px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font:600 12px/1 var(--body);padding:6px 9px;border-radius:99px;background:var(--night2);border:1px solid var(--line);color:var(--ink)}
+.tag.now{background:rgba(79,227,176,.14);border-color:rgba(79,227,176,.4);color:var(--mint)}
+.tag.next{background:rgba(142,160,255,.14);border-color:rgba(142,160,255,.4);color:var(--blue-l)}
+.tag.later{background:rgba(255,194,77,.12);border-color:rgba(255,194,77,.35);color:var(--amber)}
+/* matrix */
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--night2)}
+table{border-collapse:collapse;width:100%;min-width:880px;font-size:14px}
+th,td{padding:10px 10px;text-align:center;border-bottom:1px solid var(--line)}
+th{font:600 13px/1.2 var(--body);color:var(--mute);vertical-align:bottom}
+th.us,td.us{background:rgba(67,97,255,.16);color:var(--ink)}
+th.us{color:var(--ink);font-family:var(--display);font-size:15px}
+td:first-child,th:first-child{text-align:left;position:sticky;left:0;background:var(--night2);min-width:200px}
+tr.edge td:first-child{color:var(--mint)}
+tr.gap td:first-child{color:var(--amber)}
+.h{color:var(--mint);font-weight:700}.p{color:var(--amber)}.x{color:#5B6199}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--mute)}
+/* quotes */
+.pains{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.pain{background:var(--night2);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+blockquote{margin:0;padding-left:12px;border-left:3px solid var(--purple);font-size:15px;color:var(--ink)}
+blockquote cite{display:block;font-style:normal;font-size:12px;color:var(--mute);margin-top:4px}
+.stat{font:700 30px/1 var(--display);color:var(--coral)}
+/* ideas */
+.tier{display:flex;flex-direction:column;gap:22px}
+.tierhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.idea{background:var(--night2);border:1px solid var(--line);border-radius:22px;padding:22px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start}
+@media (max-width:760px){.idea{grid-template-columns:1fr}}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;margin-top:6px}
+.facts dt{color:var(--mute)}
+.facts dd{margin:0}
+.ideatext{display:flex;flex-direction:column;gap:10px;min-width:0}
+.compact{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.compact .idea{grid-template-columns:1fr;padding:18px}
+/* phone mockup in the app's style */
+.phones{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.phone{width:220px;max-width:100%;aspect-ratio:9/19;border-radius:34px;background:var(--night);border:6px solid #2A2E5E;box-shadow:0 20px 40px rgba(0,0,0,.4);padding:18px 14px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;font-size:12px}
+.phone .status{display:flex;justify-content:space-between;font:600 11px var(--body);color:var(--mute)}
+.phone .ttl{font:600 17px/1.2 var(--display);text-align:center}
+.phone .sub{text-align:center;color:var(--mute);font-size:12px}
+.phone .btn{background:var(--blue);color:#fff;border-radius:14px;padding:10px;text-align:center;font:600 13px var(--display);box-shadow:0 3px 0 #2A3FC0}
+.phone .btn.ghost{background:transparent;border:1.5px solid var(--line);box-shadow:none;color:var(--ink)}
+.phone .btn.purple{background:var(--purple);box-shadow:0 3px 0 #6A43C8}
+.phone .card{background:var(--card);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.phone .shield{background:linear-gradient(180deg,#141845,#0D0F2E);}
+.blob{width:64px;height:54px;margin:4px auto 0;border-radius:50% 50% 46% 46%;background:var(--mint);position:relative;box-shadow:0 0 0 4px #fff,0 0 24px rgba(79,227,176,.4)}
+.blob::before,.blob::after{content:"";position:absolute;top:22px;width:12px;height:3px;border-radius:3px;background:#0D0F2E}
+.blob::before{left:16px}.blob::after{right:16px}
+.zz{position:absolute;right:56px;top:58px;font:700 14px var(--display);color:var(--blue-l)}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 20% 15%,#fff8,transparent),radial-gradient(1px 1px at 70% 8%,#fff6,transparent),radial-gradient(1.5px 1.5px at 85% 30%,#fff7,transparent),radial-gradient(1px 1px at 40% 40%,#fff5,transparent);pointer-events:none}
+.row{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mint);flex:none}
+.chip{font:600 10px var(--body);padding:3px 7px;border-radius:99px;background:rgba(79,227,176,.15);color:var(--mint)}
+.chip.amber{background:rgba(255,194,77,.15);color:var(--amber)}
+.chip.coral{background:rgba(255,143,120,.15);color:var(--coral)}
+.tick{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--line);flex:none}
+.tick.on{background:var(--mint);border-color:var(--mint)}
+.widget{width:150px;height:150px;border-radius:26px;background:var(--card);border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;justify-content:space-between;font-size:12px}
+.cap{font-size:12px;color:var(--mute);text-align:center;max-width:220px}
+.figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+/* dropped */
+.dropped{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.drop{border:1px dashed var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.drop b{font-family:var(--display);font-weight:600;text-decoration:line-through;text-decoration-color:var(--coral)}
+.drop span{color:var(--mute);font-size:14px}
+ol.src{margin:0;padding-left:20px;color:var(--mute);font-size:14px;display:flex;flex-direction:column;gap:4px}
+.ok{color:var(--mint);font-weight:700}.as{color:var(--amber);font-weight:700}
+@media (prefers-reduced-motion:no-preference){.moon{animation:glow 5s ease-in-out infinite}@keyframes glow{50%{box-shadow:0 0 60px rgba(255,217,120,.55)}}}
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="moon" aria-hidden="true"></div>
+  <span class="eyebrow">Feature research · 22 Oct 2026 · build v22</span>
+  <h1>Make the name the feature: lock the night, trust the lock, feed the takeaway craving</h1>
+  <p class="lede">I checked 10 rivals and what people trying to stop late-night buying actually say. Nobody pairs a real app lock with a "wait till morning" rule. That pairing is ours, so the next update should make it louder rather than add more parts.</p>
+</header>
+
+<section>
+  <span class="eyebrow">Top 3 for the next update</span>
+  <div class="top3">
+    <div class="pick"><span class="n">1</span><h3>Night lock</h3><p>From 23:00 to 07:00 the shield offers only "Park it till morning" or "Close". No Shopping Pass at night, with a slow emergency door. It turns the app's name into a rule people can feel.</p><div class="tags"><span class="tag now">Now</span><span class="tag">Effort S</span><span class="tag">Hard to copy: the name</span></div></div>
+    <div class="pick"><span class="n">2</span><h3>Backup dinner</h3><p>People write two or three easy meals they already have at home. On takeaway apps, the pause shows them: "You've got freezer pizza or eggs on toast." No rival helps with food at all.</p><div class="tags"><span class="tag now">Now</span><span class="tag">Effort S</span><span class="tag">Nobody does it</span></div></div>
+    <div class="pick"><span class="n">3</span><h3>Shields check and safe off</h3><p>A quiet "Shields working, checked 2 min ago" line, a warning if Screen Time access drops, and a clear "Turn off till tomorrow". This answers the biggest rival complaint: blocks that break or trap people.</p><div class="tags"><span class="tag now">Now</span><span class="tag">Effort S–M</span><span class="tag">Trust edge</span></div></div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Competitor matrix</span>
+  <h2>Where we stand</h2>
+  <div class="legend"><span><span class="h">●</span> has</span><span><span class="p">◐</span> partial</span><span><span class="x">○</span> none</span><span style="color:var(--mint)">green row = our edge</span><span style="color:var(--amber)">amber row = open gap</span></div>
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>Feature</th><th class="us">Till Morning</th><th>one sec</th><th>Opal</th><th>ScreenZen</th><th>PauseBuy</th><th>CartPause</th><th>Pass For Now</th><th>Piggy Pause</th><th>Friction*</th><th>UnBuy*</th></tr></thead>
+    <tbody>
+      <tr><td>Locks real shopping and food apps</td><td class="us h">●</td><td class="h">●</td><td class="h">●</td><td class="h">●</td><td class="h">●</td><td class="x">○</td><td class="h">●</td><td class="x">○</td><td class="h">●</td><td class="x">○</td></tr>
+      <tr><td>Breathing pause before opening</td><td class="us h">●</td><td class="h">●</td><td class="p">◐</td><td class="h">●</td><td class="h">●</td><td class="x">○</td><td class="h">●</td><td class="p">◐</td><td class="p">◐</td><td class="x">○</td></tr>
+      <tr class="edge"><td>Timed pass with a plan, re-locks itself</td><td class="us h">●</td><td class="p">◐</td><td class="p">◐</td><td class="p">◐</td><td class="p">◐</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td></tr>
+      <tr><td>Park a want and wait</td><td class="us h">●</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="h">●</td><td class="h">●</td><td class="p">◐</td><td class="p">◐</td><td class="p">◐</td><td class="h">●</td></tr>
+      <tr class="edge"><td>Lock and wait in one loop ("still want it?" at 08:00)</td><td class="us h">●</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="p">◐</td><td class="p">◐</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="p">◐</td></tr>
+      <tr class="gap"><td>Night rule (stronger midnight to 5am)</td><td class="us p">◐</td><td class="x">○</td><td class="p">◐</td><td class="p">◐</td><td class="x">○</td><td class="x">○</td><td class="p">◐</td><td class="x">○</td><td class="x">○</td><td class="x">○</td></tr>
+      <tr class="gap"><td>Help for takeaway cravings</td><td class="us p">◐</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td></tr>
+      <tr class="gap"><td>Shows the lock is working, safe way out</td><td class="us p">◐</td><td class="x">○</td><td class="p">◐</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td></tr>
+      <tr class="edge"><td>Honest progress, no "money saved" guess</td><td class="us h">●</td><td class="h">●</td><td class="h">●</td><td class="h">●</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="p">◐</td></tr>
+      <tr class="edge"><td>No account, data stays on phone</td><td class="us h">●</td><td class="x">○</td><td class="x">○</td><td class="p">◐</td><td class="p">◐</td><td class="p">◐</td><td class="p">◐</td><td class="h">●</td><td class="p">◐</td><td class="p">◐</td></tr>
+      <tr class="edge"><td>Built for the UK (Klarna, Clearpay, Deliveroo, £)</td><td class="us h">●</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="p">◐</td><td class="x">○</td><td class="x">○</td></tr>
+      <tr class="gap"><td>Home or Lock Screen widget</td><td class="us x">○</td><td class="p">◐</td><td class="h">●</td><td class="p">◐</td><td class="x">○</td><td class="h">●</td><td class="x">○</td><td class="x">○</td><td class="x">○</td><td class="x">○</td></tr>
+      <tr><td>Price (yearly)</td><td class="us">£29.88</td><td>$19.99</td><td>~$99</td><td>free</td><td>$29.99+</td><td>$19.99</td><td>$59.99</td><td>free</td><td>$39.99</td><td>?</td></tr>
+      <tr><td>Ratings (count)</td><td class="us">not out</td><td>4.8</td><td>4.6</td><td>4.8</td><td>5.0 (5)</td><td>4.0 (4)</td><td>none</td><td>5.0 (1)</td><td>?</td><td>?</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="small muted">Checked live today from App Store pages, ScreensDesign and reviews, except * Friction and UnBuy, which come from our 20 Oct research (their pages did not load today). Opal's price and widget are from memory of its listing and are assumed. The small spending rivals all have 1 to 11 ratings, so none has traction yet.</p>
+</section>
+
+<section>
+  <span class="eyebrow">Audience</span>
+  <h2>Who we're for and what hurts</h2>
+  <p class="lede">UK adults, mostly 18 to 34, who buy on their phone when tired, alone or bored, often in bed after 22:00. They want to shop on purpose, not quit shopping. They delete apps that nag, shame, break, or lock them out of their own phone.</p>
+  <div class="pains">
+    <div class="pain"><span class="stat">24%</span><h3>It happens in bed, late</h3><p class="muted small">of UK adults regularly shop between midnight and 2am; 22% have spent over £200 in one bedtime session.</p><blockquote>Midnight to 5am is "when they are most vulnerable."<cite>Money and Mental Health Policy Institute</cite></blockquote></div>
+    <div class="pain"><span class="stat">Food</span><h3>Takeaway is the hardest habit</h3><blockquote>"it happens a lot when I'm alone and have had a recent inconvenience or frustration."<cite>r/nobuy, "Can't stop impulse ordering food"</cite></blockquote><blockquote>"You want it to be as easy to prepare as delivery."<cite>r/nobuy reply</cite></blockquote></div>
+    <div class="pain"><span class="stat">Trust</span><h3>Blockers break, or trap you</h3><blockquote>"Bricked my phone by continuing the block after time was out."<cite>one sec, UK review, May 2026</cite></blockquote><blockquote>"for 4 or so days now for no apparent reason the interruption doesn't run at all"<cite>one sec, UK review, Jan 2026</cite></blockquote></div>
+    <div class="pain"><span class="stat">Friction</span><h3>What they already try</h3><blockquote>"Delete saved payment information" · "Turn off one-click purchasing" · "Institute a waiting period"<cite>KSTP on "friction maxxing", May 2026</cite></blockquote><blockquote>"Friction is a redirection, not restriction."<cite>NerdWallet phone-brick test</cite></blockquote></div>
+    <div class="pain"><span class="stat">Calm</span><h3>They hate clutter and nagging</h3><blockquote>"Just give me the pass or buy buttons. I hate the ai interface change."<cite>CartPause, 1-star review</cite></blockquote><blockquote>"the haptics really bother me … Having to pay for something to make an app accessible is silly."<cite>one sec, US review, Oct 2026</cite></blockquote></div>
+    <div class="pain"><span class="stat">Fair</span><h3>Paywalls that feel like a trick</h3><blockquote>"I would love to try the premium subscription without committing to a whole year."<cite>Opal review</cite></blockquote><blockquote>"Used to be good, now all behind a paywall"<cite>one sec, UK review</cite></blockquote></div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Double down on what only we have</span>
+  <h2>Our edges, made louder</h2>
+  <div class="compact">
+    <div class="idea"><div class="ideatext"><h3>Lock plus wait</h3><p class="muted small">Make "Park it till morning" the first thing in App Store screenshot 1 and the opening of every TikTok: open Deliveroo at 23:40, sleepy bag appears, parked, morning card at 08:00 asks "Still want it?". Night lock (below) makes this a rule, not a tip.</p></div></div>
+    <div class="idea"><div class="ideatext"><h3>The torn ticket</h3><p class="muted small">The tear-to-start Shopping Pass is the most filmable moment in the app. Add a soft paper-tear sound (off with Quiet mode) and use a slow-motion tear as screenshot 2.</p></div></div>
+    <div class="idea"><div class="ideatext"><h3>Honest, not guessy</h3><p class="muted small">Rivals show "money saved" they can't know. Put our line on screenshot 4: "No bank links. No made-up savings. Just the nights you slept on it." Show the privacy label "Data Not Collected" too.</p></div></div>
+    <div class="idea"><div class="ideatext"><h3>Made for the UK</h3><p class="muted small">Name Deliveroo, Just Eat, Klarna and Clearpay in the listing subtitle and keywords. No rival does. Launch in January with the no-buy month.</p></div></div>
+  </div>
+</section>
+
+<section class="tier">
+  <div class="tierhead"><span class="tag now">Now</span><h2>Next update</h2></div>
+
+  <div class="idea">
+    <div class="ideatext">
+      <h3>1 · Night lock</h3>
+      <p>Between 23:00 and 07:00 (user can move it), the shield's buttons become "Park it till morning" and "Close". The Shopping Pass sleeps. "It's urgent" sits small at the bottom: a 60-second wait and one typed reason, no XP, no telling off.</p>
+      <dl class="facts">
+        <dt>Pain</dt><dd>Bedtime buying, the moment people are weakest</dd>
+        <dt>Evidence</dt><dd>24% shop midnight–2am; Money and Mental Health names midnight–5am <span class="ok">checked</span></dd>
+        <dt>Copy risk</dt><dd>Mechanic is easy to copy; the name "Till Morning" makes it ours</dd>
+        <dt>iOS</dt><dd>DeviceActivity schedule (23:00–07:00) swaps the ShieldConfiguration labels; ShieldAction handles the park. Fine on iOS 18+</dd>
+        <dt>App Store</dt><dd>Low. Must always leave a way out (the urgent door) so nobody is trapped</dd>
+        <dt>Builds on</dt><dd>Today's "risky hours" longer pause; this replaces it at night</dd>
+      </dl>
+    </div>
+    <div class="phones">
+      <div class="figure"><div class="phone shield"><div class="stars"></div><div class="status"><span>23:42</span><span>●●●</span></div><div class="blob"></div><span class="zz">z z</span><div class="ttl">It's late. Deliveroo can wait till morning.</div><div class="sub">Night lock is on until 07:00</div><div style="flex:1"></div><div class="btn purple">Park it till morning</div><div class="btn ghost">Close Deliveroo</div><div class="sub" style="font-size:11px;text-decoration:underline">It's urgent</div></div><span class="cap">Shield after 23:00</span></div>
+      <div class="figure"><div class="phone"><div class="status"><span>08:00</span><span>●●●</span></div><div class="ttl" style="margin-top:20px">Good morning</div><div class="card"><div class="row"><b>Deliveroo, 23:42</b><span class="chip amber">parked</span></div><span class="muted">You slept on it. Still want it?</span></div><div style="flex:1"></div><div class="btn">Yes, shop with a plan</div><div class="btn ghost">Let it go</div></div><span class="cap">The morning ask that already exists</span></div>
+    </div>
+  </div>
+
+  <div class="idea">
+    <div class="ideatext">
+      <h3>2 · Backup dinner</h3>
+      <p>For apps tagged Takeaways, setup asks once: "What's easy at home?" (up to 3, with ideas to tap). The pause then shows them under the breathing ring. Edit any time. No XP for it, because we can't check it.</p>
+      <dl class="facts">
+        <dt>Pain</dt><dd>Tired, alone, hungry; delivery is easier than cooking</dd>
+        <dt>Evidence</dt><dd>r/nobuy: freezer meals and "as easy as delivery" are the top fixes <span class="ok">checked</span></dd>
+        <dt>Copy risk</dt><dd>Easy to copy, but no rival treats food separately</dd>
+        <dt>iOS</dt><dd>Text in our own pause screen and in the shield subtitle. Nothing new needed</dd>
+        <dt>App Store</dt><dd>None</dd>
+        <dt>Builds on</dt><dd>The existing habit tag and pause question</dd>
+      </dl>
+    </div>
+    <div class="phones">
+      <div class="figure"><div class="phone" style="background:radial-gradient(circle at 50% 35%,#3B2A7A,#0D0F2E 70%)"><div class="status"><span>21:15</span><span>●●●</span></div><div style="width:110px;height:110px;margin:10px auto 0;border-radius:50%;border:6px solid var(--purple);display:grid;place-items:center;font:600 26px var(--display)">0:09</div><div class="ttl" style="font-size:15px">Hungry, or just tired?</div><div class="card"><span class="muted" style="font-size:11px">You've got at home</span><div class="row"><span>🍕 Freezer pizza</span><span class="muted">15 min</span></div><div class="row"><span>🍳 Eggs on toast</span><span class="muted">5 min</span></div></div><div style="flex:1"></div><div class="btn ghost" style="opacity:.5">Choices in 9 s</div></div><span class="cap">Pause on Just Eat</span></div>
+      <div class="figure"><div class="phone"><div class="status"><span>Setup</span><span></span></div><div class="ttl" style="margin-top:8px">What's easy at home?</div><div class="sub">We'll show it when you open a takeaway app.</div><div class="card"><div class="row"><span>Freezer pizza</span><span class="tick on"></span></div><div class="row"><span>Eggs on toast</span><span class="tick on"></span></div><div class="row"><span>Pasta and pesto</span><span class="tick"></span></div><div class="row muted"><span>+ Write your own</span></div></div><div style="flex:1"></div><div class="btn">Save</div></div><span class="cap">One question, once</span></div>
+    </div>
+  </div>
+
+  <div class="idea">
+    <div class="ideatext">
+      <h3>3 · Shields check and safe off</h3>
+      <p>Today's status card gets one quiet line: "Shields working · checked 2 min ago". If Screen Time access is removed or a shield fails, a calm warning with a one-tap fix. Settings gets "Turn off till tomorrow" that ends cleanly. Covers two of the open must-adds.</p>
+      <dl class="facts">
+        <dt>Pain</dt><dd>"It stopped working" and "it bricked my phone" are the top blocker complaints</dd>
+        <dt>Evidence</dt><dd>one sec 1–3 star reviews, UK and US, 2025–26 <span class="ok">checked</span></dd>
+        <dt>Copy risk</dt><dd>Easy to copy, but it's trust, and trust shows up in our reviews</dd>
+        <dt>iOS</dt><dd>AuthorizationCenter status; extension heartbeat to the App Group; clear all ManagedSettings stores on "off"</dd>
+        <dt>App Store</dt><dd>Lowers risk: reviewers like a clean exit</dd>
+      </dl>
+    </div>
+    <div class="phones">
+      <div class="figure"><div class="phone"><div class="status"><span>Today</span><span>●●●</span></div><div class="card"><div class="row"><b>4 apps shielded</b><span class="chip">on</span></div><div class="row muted" style="justify-content:flex-start;gap:6px"><span class="dot"></span><span>Shields working · checked 2 min ago</span></div></div><div class="card" style="border:1px solid rgba(255,143,120,.5)"><div class="row"><b>Screen Time access is off</b><span class="chip coral">paused</span></div><span class="muted">Your apps aren't shielded right now.</span><div class="btn" style="padding:7px">Turn it back on</div></div><div style="flex:1"></div><div class="card"><div class="row"><span>Turn off till tomorrow</span><span class="muted">›</span></div></div></div><span class="cap">Healthy line, and the rare warning</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="tier">
+  <div class="tierhead"><span class="tag next">Next</span><h2>After that</h2></div>
+  <div class="compact">
+    <div class="idea"><div class="ideatext"><h3>Lock Screen widget</h3><p class="muted small">"2 parked till morning" plus the night lock moon. Visible every time they reach for the phone, great in screenshots. Effort M (WidgetKit, App Group). Opal and CartPause have one; we don't. No review risk.</p></div><div class="phones"><div class="widget"><span class="muted">Till Morning</span><b style="font:600 30px var(--display)">2</b><span>parked till morning</span><span class="chip" style="align-self:flex-start">Night lock 23:00</span></div></div></div>
+    <div class="idea"><div class="ideatext"><h3>Friction tune-up</h3><p class="muted small">A 5-tick checklist per app: turn off 1-Click, remove saved card, sign out of SHEIN, unsubscribe from sale emails. Matches what people already do ("friction maxxing"). No XP, since we can't check it. Effort S, deep links only.</p></div></div>
+    <div class="idea"><div class="ideatext"><h3>Quiet mode, free</h3><p class="muted small">One switch for haptics and sounds, never behind the paywall. one sec users are leaving over paid haptics. Effort S.</p></div></div>
+  </div>
+</section>
+
+<section class="tier">
+  <div class="tierhead"><span class="tag later">Later</span><h2>When 1.0 has users</h2></div>
+  <div class="compact">
+    <div class="idea"><div class="ideatext"><h3>Your risky hour, learned</h3><p class="muted small">From shield taps logged on the phone, suggest "Thursdays around 23:00 are your hardest" and offer to start night lock earlier. Pass For Now sells this. Effort M; needs a few weeks of data.</p></div></div>
+    <div class="idea"><div class="ideatext"><h3>Payday and sale-week lock</h3><p class="muted small">Pick your payday; the shield is a little stronger for 2 days after, like the sale-week shield. Effort S. Assumed pain, needs testing.</p></div></div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Dropped</span>
+  <h2>Ideas cut, and why</h2>
+  <div class="dropped">
+    <div class="drop"><b>"Money saved" counter</b><span>We can't see real spending, so it would be a made-up number. Breaks the honesty rule.</span></div>
+    <div class="drop"><b>AI shopping coach</b><span>CartPause's coach drew a 1-star "just give me the buttons". Adds clutter.</span></div>
+    <div class="drop"><b>Exercise or task to unlock</b><span>Too close to our Android app Onus; guideline 4.3 risk.</span></div>
+    <div class="drop"><b>Reward sounds per pause</b><span>A requested "dopamine hit" is a fake reward. Only checkable actions earn.</span></div>
+    <div class="drop"><b>Friends leaderboard</b><span>Comparison brings shame; needs accounts.</span></div>
+    <div class="drop"><b>Hard weekly spend lockout</b><span>Can't see spending without a bank link, and a hard lockout on food apps causes stress.</span></div>
+    <div class="drop"><b>Bank sync</b><span>Breaks the no-bank-link promise.</span></div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Sources</span>
+  <ol class="src">
+    <li><span class="ok">checked</span> <a href="https://apps.apple.com/app/id6760736227">PauseBuy, App Store</a>: features, Pro prices, 5.0 from 5, v3.3.2 Sep 29</li>
+    <li><span class="ok">checked</span> <a href="https://apps.apple.com/app/id6761660684">Pass For Now, App Store</a>: $59.99/yr, risky-window reminders, no ratings</li>
+    <li><span class="ok">checked</span> <a href="https://apps.apple.com/us/app/cartpause/id6759116063">CartPause, App Store</a>: share extension, 24–72 h pauses, widget, 4.0 from 4, reviews</li>
+    <li><span class="ok">checked</span> <a href="https://mwm.ai/apps/piggy-pause/6782881616">Piggy Pause</a>: free, on-device, 1 rating, Jun 2026</li>
+    <li><span class="ok">checked</span> <a href="https://apps.apple.com/us/app/id1532875441?l=en">one sec</a> and <a href="https://apps.apple.com/us/app/id1541027222?l=en">ScreenZen</a> via ScreensDesign market data and 50 UK/US 1–3 star reviews</li>
+    <li><span class="ok">checked</span> <a href="https://justuseapp.com/en/app/1497465230/opal-save-time-daily/reviews">Opal reviews</a></li>
+    <li><span class="ok">checked</span> <a href="https://www.moneysupermarket.com/credit-cards/bedtime-shopping/">MoneySuperMarket bedtime shopping survey</a> (Censuswide, 1,000 UK adults, May 2026)</li>
+    <li><span class="ok">checked</span> <a href="https://www.moneyandmentalhealth.org/publications/night-time-shopping-and-mental-health/">Money and Mental Health, night-time shopping</a></li>
+    <li><span class="ok">checked</span> <a href="https://cal1.lr.ggtyler.dev/r/nobuy/comments/1g2q1yc/cant_stop_impulse_ordering_food">r/nobuy, "Can't stop impulse ordering food"</a> (mirror)</li>
+    <li><span class="ok">checked</span> <a href="https://kstp.com/?p=3921759">KSTP, friction maxxing</a> · <a href="https://www.nerdwallet.com/finance/news/phone-brick-experiment">NerdWallet phone-brick test</a></li>
+    <li><span class="as">assumed</span> Friction and UnBuy features and prices, from our 20 Oct market research; Opal price and widget; payday pain</li>
+  </ol>
+</section>
+
+</div>
