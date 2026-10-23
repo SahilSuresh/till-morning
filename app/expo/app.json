@@ -111,6 +111,15 @@
                       "group.com.andrej.tillmorning"
                     ]
                   }
+                },
+                {
+                  "bundleIdentifier": "com.andrej.tillmorning.TillMorningWidget",
+                  "targetName": "TillMorningWidget",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.andrej.tillmorning"
+                    ]
+                  }
                 }
               ]
             }
