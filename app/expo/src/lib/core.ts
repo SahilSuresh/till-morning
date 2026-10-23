@@ -493,14 +493,16 @@ export function parkWant(
   what: string,
   band: PriceBand,
   key?: string | null,
-  extra: { price?: number; items?: number; buddy?: boolean } = {},
+  extra: { price?: number; items?: number; buddy?: boolean; coolOff?: boolean } = {},
 ) {
   const now = Date.now();
+  const { coolOff = true, ...fields } = extra;
   // A friend's yes makes it ready straight away.
-  const readyAt = extra.buddy ? now : waitFor(band, now, extra.price ?? 0).readyAt;
-  const want: ParkedWant = { id: String(now), app, what: what.trim(), band, parkedAt: now, readyAt, ...extra, ...(key ? { key } : {}) };
+  const readyAt = fields.buddy ? now : waitFor(band, now, fields.price ?? 0).readyAt;
+  const want: ParkedWant = { id: String(now), app, what: what.trim(), band, parkedAt: now, readyAt, ...fields, ...(key ? { key } : {}) };
   setState((s) => ({ parked: [...s.parked, want] }));
-  startCoolOff(app, key);
+  // Parking from the pause gives the app a cool-off; parking from a screenshot or share doesn't.
+  if (coolOff) startCoolOff(app, key);
   if (!extra.buddy) scheduleParkedReady(want).catch(() => {});
   applyShieldLook(); // the shield mentions the waiting room
   return want;
