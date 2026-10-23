@@ -3,16 +3,16 @@ import type { ReactNode } from 'react';
 import { Alert, Linking, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { config, links } from '../lib/config';
-import { applyShieldLook, liftAllShields, shieldChosenApps } from '../lib/core';
-import { sendTestEvent } from '../lib/crashes';
-import { getOfferings, isPurchasesReady, restorePurchases } from '../lib/purchases';
-import { getScreenTimeStatus } from '../lib/screenTime';
-import { resetState, setState, useAppState } from '../lib/store';
-import { lose } from '../lib/xp';
-import { Card, CircleButton, Tag, toast } from '../ui/components';
-import { IconX } from '../ui/icons';
-import { color, font, type } from '../ui/theme';
+import { config, links } from '../../lib/config';
+import { applyShieldLook, liftAllShields, shieldChosenApps } from '../../lib/core';
+import { sendTestEvent } from '../../lib/crashes';
+import { getOfferings, isPurchasesReady, restorePurchases } from '../../lib/purchases';
+import { getScreenTimeStatus } from '../../lib/screenTime';
+import { resetState, setState, useAppState } from '../../lib/store';
+import { lose } from '../../lib/xp';
+import { Card, Tag, toast } from '../../ui/components';
+import { useTabBarSpace } from '../../ui/layout';
+import { color, font, type } from '../../ui/theme';
 
 function Row({ label, onPress, right, danger }: { label: string; onPress?: () => void; right?: ReactNode; danger?: boolean }) {
   return (
@@ -41,6 +41,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 export default function Settings() {
   const insets = useSafeAreaInsets();
+  const tabSpace = useTabBarSpace();
   const s = useAppState((st) => st);
 
   const onRestore = async () => {
@@ -90,13 +91,8 @@ export default function Settings() {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.night }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 24, paddingBottom: insets.bottom + 32, gap: 20 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <CircleButton label="Close" onPress={() => router.back()}>
-            <IconX />
-          </CircleButton>
-          <Text style={type.h1}>Settings</Text>
-        </View>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 24, paddingBottom: tabSpace, gap: 20 }}>
+        <Text style={type.h1}>Settings</Text>
 
         <Section title="Shield">
           <Row

@@ -93,7 +93,9 @@ export default function CheckIn() {
         </View>
 
         <Text style={[type.small, { marginTop: 14, textAlign: 'center' }]}>
-          Your {pass.app} pass ended, so {pass.app} is locked again.
+          {pass.wholeSelection
+            ? 'Your Shopping Pass ended, so your shop apps are locked again.'
+            : `Your ${pass.app} pass ended, so ${pass.app} is locked again.`}
         </Text>
         <Text style={[type.h1, { marginTop: 8, textAlign: 'center' }]}>Did you stick to the plan?</Text>
 

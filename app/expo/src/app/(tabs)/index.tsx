@@ -1,16 +1,17 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Redirect, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { endPass, formatReady, protectedCount, readyWants, shieldChosenApps } from '../lib/core';
-import { useAppState } from '../lib/store';
-import { DAILY_CAP, earnedToday, rankFor } from '../lib/xp';
-import { TopGlow } from '../ui/backgrounds';
-import { Button, Card, Chip, Rise } from '../ui/components';
-import { IconGear, IconHourglass, IconMoon, IconShield, IconTicket } from '../ui/icons';
-import { color, font, gradient, type } from '../ui/theme';
+import { endPass, formatReady, protectedCount, readyWants, shieldChosenApps } from '../../lib/core';
+import { useAppState } from '../../lib/store';
+import { TopGlow } from '../../ui/backgrounds';
+import { Button, Card, Chip, Rise } from '../../ui/components';
+import { IconHourglass, IconMoon, IconShield, IconTicket } from '../../ui/icons';
+import { useTabBarSpace } from '../../ui/layout';
+import { RankCard } from '../../ui/RankCard';
+import { color, font, gradient, type } from '../../ui/theme';
 
 const greeting = () => {
   const h = new Date().getHours();
@@ -35,34 +36,25 @@ export default function Today() {
   const insets = useSafeAreaInsets();
   const s = useAppState((st) => st);
   const now = useNow();
-
-  if (!s.onboarded) return <Redirect href="/setup" />;
+  const tabSpace = useTabBarSpace();
 
   const counts = protectedCount();
   const shielded = counts.apps + counts.categories;
   const ready = readyWants(now);
   const waiting = s.parked.filter((w) => !w.decided && w.readyAt > now);
-  const { rank, next } = rankFor(s.xp.total);
-  const today = earnedToday();
-  const rankProgress = next ? (s.xp.total - rank.threshold) / (next.threshold - rank.threshold) : 1;
 
   return (
     <View style={{ flex: 1 }}>
       <TopGlow />
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 24, paddingBottom: 140, gap: 14 }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 24, paddingBottom: tabSpace + 76, gap: 14 }}>
         {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Text style={type.h1}>{greeting()}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            {s.shieldsOn ? (
-              <Chip tone="mint" label="Shields on" icon={<IconShield size={13} />} />
-            ) : (
-              <Chip tone="paper" label="Shields off" />
-            )}
-            <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" accessibilityLabel="Settings" hitSlop={10}>
-              <IconGear />
-            </Pressable>
-          </View>
+          {s.shieldsOn ? (
+            <Chip tone="mint" label="Shields on" icon={<IconShield size={13} />} />
+          ) : (
+            <Chip tone="paper" label="Shields off" />
+          )}
         </View>
 
         {/* Check-in nudge */}
@@ -75,7 +67,7 @@ export default function Today() {
                     <IconTicket size={22} color={color.inkOnBright} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[type.title, { color: color.inkOnBright }]}>Your {s.pendingCheckIn.app} pass ended</Text>
+                    <Text style={[type.title, { color: color.inkOnBright }]}>{s.pendingCheckIn.wholeSelection ? 'Your Shopping Pass ended' : `Your ${s.pendingCheckIn.app} pass ended`}</Text>
                     <Text style={{ fontFamily: font.bodySemi, fontSize: 14, color: color.inkOnBright }}>How did it go?</Text>
                   </View>
                 </View>
@@ -95,7 +87,7 @@ export default function Today() {
                 style={{ borderRadius: 22, paddingHorizontal: 20, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', gap: 12, overflow: 'hidden' }}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[type.title, { color: '#FFFFFF' }]}>{s.pass.app} pass</Text>
+                  <Text style={[type.title, { color: '#FFFFFF' }]}>{s.pass.wholeSelection ? 'Shopping pass' : `${s.pass.app} pass`}</Text>
                   <Text numberOfLines={2} style={{ fontFamily: font.bodySemi, fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>
                     {(s.pass.need || { specific: 'Something specific', browsing: 'Just browsing', unsure: 'Not sure yet' }[s.pass.reason]) +
                       (s.pass.limit ? `, up to £${s.pass.limit}` : '')}
@@ -129,7 +121,7 @@ export default function Today() {
         {/* Status */}
         <Rise delay={40}>
           <Card style={{ alignItems: 'center', paddingVertical: 22 }}>
-            <Image source={require('../../assets/mascots/shieldm.webp')} style={{ width: 84, height: 84 }} resizeMode="contain" />
+            <Image source={require('../../../assets/mascots/shieldm.webp')} style={{ width: 84, height: 84 }} resizeMode="contain" />
             {!s.shieldsOn ? (
               <>
                 <Text style={[type.h2, { marginTop: 10, textAlign: 'center' }]}>Shields are off</Text>
@@ -165,7 +157,7 @@ export default function Today() {
 
         {/* Waiting room */}
         <Rise delay={80}>
-          <Pressable onPress={() => ready.length && router.push('/decide')} disabled={!ready.length} accessibilityRole="button">
+          <Pressable onPress={() => router.push('/waiting')} accessibilityRole="button">
             <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <View
                 style={{
@@ -204,39 +196,13 @@ export default function Today() {
 
         {/* Rank */}
         <Rise delay={120}>
-          <View style={{ borderRadius: 24, backgroundColor: '#2A2FB0', paddingBottom: 3 }}>
-            <LinearGradient colors={gradient.rank} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 24, padding: 18 }}>
-              <Text style={{ fontFamily: font.display, fontSize: 22, color: '#FFFFFF' }}>{rank.name}</Text>
-              <Text style={{ fontFamily: font.bodySemi, fontSize: 14, color: 'rgba(255,255,255,0.82)' }}>{rank.title}</Text>
-              <View style={{ height: 12, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.2)', marginTop: 12, overflow: 'hidden' }}>
-                <View style={{ height: 12, borderRadius: 6, width: `${Math.round(rankProgress * 100)}%`, backgroundColor: color.sun }} />
-              </View>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-                <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: '#FFFFFF' }}>
-                  {s.xp.total}
-                  {next ? ` / ${next.threshold}` : ''} XP
-                </Text>
-                {next && (
-                  <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: 'rgba(255,255,255,0.82)' }}>
-                    {next.threshold - s.xp.total} XP to {next.name}
-                  </Text>
-                )}
-              </View>
-              <View style={{ height: 1.5, backgroundColor: 'rgba(255,255,255,0.2)', marginVertical: 12 }} />
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: 'rgba(255,255,255,0.82)' }}>Earned today</Text>
-                <Text style={{ fontFamily: font.bodyHeavy, fontSize: 14, color: color.sun }}>
-                  {today} of {DAILY_CAP} XP
-                </Text>
-              </View>
-            </LinearGradient>
-          </View>
+          <RankCard />
         </Rise>
       </ScrollView>
 
-      {/* Fixed footer: Need to shop? */}
+      {/* Fixed footer above the tab bar: Need to shop? */}
       {!s.pass && (
-        <View style={{ position: 'absolute', left: 24, right: 24, bottom: insets.bottom + 16 }}>
+        <View style={{ position: 'absolute', left: 24, right: 24, bottom: tabSpace - 4 }}>
           <Pressable
             onPress={() => router.push({ pathname: '/pause', params: { app: 'your shop apps' } })}
             accessibilityRole="button"

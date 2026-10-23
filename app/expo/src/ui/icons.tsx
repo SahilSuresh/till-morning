@@ -80,7 +80,29 @@ export const IconClock = ({ size = 16, color = '#FFFFFF' }: P) =>
     </>,
   );
 
-export const IconGear = ({ size = 22, color = '#B4B6E4' }: P) =>
+export const IconSun = ({ size = 22, color = '#B4B6E4' }: P) =>
+  S(
+    size,
+    color,
+    <>
+      <Circle cx="12" cy="12" r="4" />
+      <Path d="M12 2.5v2M12 19.5v2M4.6 4.6L6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4" />
+    </>,
+  );
+
+export const IconUser = ({ size = 22, color = '#B4B6E4' }: P) =>
+  S(
+    size,
+    color,
+    <>
+      <Circle cx="12" cy="8.5" r="4" />
+      <Path d="M4 20.5c1.6-3.6 4.6-5.5 8-5.5s6.4 1.9 8 5.5" />
+    </>,
+  );
+
+export const IconCaret = ({ size = 18, color = '#8A8EC6' }: P) => S(size, color, <Path d="M9 5l7 7-7 7" />);
+
+export const IconGear =({ size = 22, color = '#B4B6E4' }: P) =>
   S(
     size,
     color,
