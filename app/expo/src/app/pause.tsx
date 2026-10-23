@@ -34,10 +34,11 @@ import {
 } from '../lib/core';
 import { bump } from '../lib/progress';
 import { activeChallenge, hh, nextTreat, nightOn, pauseSeconds, saleOn, shopLinkLabel } from '../lib/rules';
-import { getState, type ParkedWant, type PriceBand, setState } from '../lib/store';
+import { getState, type ParkedWant, type PriceBand, setState, useAppState } from '../lib/store';
 import { award, xpToast } from '../lib/xp';
 import { PauseBackground } from '../ui/backgrounds';
 import { BreathRing } from '../ui/BreathRing';
+import { NotePlayer } from '../ui/NotePlayer';
 import { Button, Chip, springOut, Tag, TextLink, toast, useReduceMotion } from '../ui/components';
 import { IconClock, IconHourglass, IconMoon, IconTimer } from '../ui/icons';
 import { color, font, type } from '../ui/theme';
@@ -119,6 +120,7 @@ export default function Pause() {
     return meals.length && !params.app && takeaway ? meals : null;
   }, [params.app, key]);
   const fact = useMemo(() => pauseFact(app), [app]);
+  const note = useAppState((s) => s.note);
   const askQuestion = getState().settings.askQuestion;
   const [answer, setAnswer] = useState<Reason | null>(null);
   const answerReason = (r: Reason) => {
@@ -327,6 +329,12 @@ export default function Pause() {
           </View>
           <Bold text={fact} style={{ fontFamily: font.bodySemi, fontSize: 15, lineHeight: 21, color: color.white82, flexShrink: 1 }} />
         </View>}
+
+        {note && (
+          <View style={{ alignSelf: 'stretch', marginTop: 14 }}>
+            <NotePlayer note={note} />
+          </View>
+        )}
 
         <View style={{ flex: 1, minHeight: 20 }} />
 

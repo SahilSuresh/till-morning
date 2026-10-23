@@ -23,7 +23,8 @@ export default function Unlock() {
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const go = () => {
     if (u.k === 'rules' || u.k === 'risky') router.replace('/rules');
-    else if (u.k === 'stickers' || u.k === 'note') router.replace('/me');
+    else if (u.k === 'note') router.replace('/note');
+    else if (u.k === 'stickers') router.replace('/me');
     else close();
   };
 

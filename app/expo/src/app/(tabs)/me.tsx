@@ -13,6 +13,7 @@ import { Button, Card, Chip, Rise } from '../../ui/components';
 import { IconCaret, IconCheck } from '../../ui/icons';
 import { useTabBarSpace } from '../../ui/layout';
 import { MorningCard } from '../../ui/MorningCard';
+import { NotePlayer } from '../../ui/NotePlayer';
 import { RankCard } from '../../ui/RankCard';
 import { color, font, gradient, type } from '../../ui/theme';
 
@@ -97,6 +98,7 @@ export default function Me() {
   const tabSpace = useTabBarSpace();
   const xp = useAppState((s) => s.xp);
   const helped = useAppState((s) => s.pauseHelped);
+  const note = useAppState((s) => s.note);
   const [openXp, setOpenXp] = useState(false);
   const tipDue = useAppState((st) => st.subscribed && !st.tabTips.me && st.coachStep < 0);
   const [openRanks, setOpenRanks] = useState(false);
@@ -116,6 +118,30 @@ export default function Me() {
 
         <Rise delay={50}>
           <MorningCard />
+        </Rise>
+
+        <Rise delay={60}>
+          {note ? (
+            <Card style={{ gap: 10 }}>
+              <Text style={type.h2}>Your note from calm you</Text>
+              <NotePlayer note={note} onDark={false} />
+              <Text style={type.small}>It plays in every pause.</Text>
+              <Pressable onPress={() => router.push('/note')} accessibilityRole="button">
+                <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: '#93A5FF' }}>Record a new one</Text>
+              </Pressable>
+            </Card>
+          ) : (
+            <Pressable onPress={() => router.push('/note')} accessibilityRole="button">
+              <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Text style={{ fontSize: 26 }}>🎙️</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={type.title}>A note from calm you</Text>
+                  <Text style={type.small}>Record a few words. They play in your pause.</Text>
+                </View>
+                <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: '#93A5FF' }}>Record</Text>
+              </Card>
+            </Pressable>
+          )}
         </Rise>
 
         <Rise delay={70}>

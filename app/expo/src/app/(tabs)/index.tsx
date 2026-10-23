@@ -82,9 +82,15 @@ export default function Today() {
   const unlock = nextUnlock();
   const coach = s.coachStep >= 0 && s.coachStep < COACH_TIPS.length ? COACH_TIPS[s.coachStep] : null;
   const [whichApps, setWhichApps] = useState<MyApp[] | null>(null);
-  const setup: ['/budget' | '/passintro' | '/bank', string, string, boolean][] = [
+  type SetupItem = ['/apps' | '/budget' | '/passintro' | '/note' | '/bank', string, string, boolean];
+  const habitItem: SetupItem[] = hasTmNative
+    ? [['/apps', 'Pick a habit for each app', 'So each shield asks the right question', Object.keys(s.habits).length > 0]]
+    : [];
+  const setup: SetupItem[] = [
+    ...habitItem,
     ['/budget', 'Set a monthly budget', 'One total, split across your apps', s.budgetTotal > 0 || s.budgetSkipped],
     ['/passintro', 'Meet the Shopping Pass', 'How to shop on purpose, and your usual pass length', s.passSet],
+    ['/note', 'Record a note from calm you', 'It plays in your pause', !!s.note],
     ['/bank', 'Add a bank limit (optional)', 'An extra barrier your bank enforces', !!s.bankLock],
   ];
   const setupLeft = s.subscribed ? setup.filter((x) => !x[3]).length : 0;
