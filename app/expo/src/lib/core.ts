@@ -68,6 +68,9 @@ export function applyShieldLook() {
   DA.userDefaultsSet('tm_nl_on', st.nlOn);
   DA.userDefaultsSet('tm_nl_from', st.nlFrom);
   DA.userDefaultsSet('tm_nl_to', st.nlTo);
+  // Read by the Share and Safari extensions for the wait rule and hours of work.
+  DA.userDefaultsSet('tm_sale', st.sale);
+  DA.userDefaultsSet('tm_wage', st.wage);
   writeAppLines();
   writeWidget();
 }
@@ -506,6 +509,61 @@ export function parkWant(
   if (!extra.buddy) scheduleParkedReady(want).catch(() => {});
   applyShieldLook(); // the shield mentions the waiting room
   return want;
+}
+
+type InboxEntry = {
+  id: string;
+  what: string;
+  band: PriceBand;
+  price?: number;
+  items?: number;
+  parkedAt: number;
+  readyAt: number;
+  source: 'share' | 'safari';
+  host?: string;
+};
+
+/**
+ * Wants parked from the Share button or the Safari checkout helper wait in the App Group inbox
+ * until Till Morning opens. Their "ready" notification was already scheduled by the extension.
+ * Returns a toast, if anything was imported.
+ */
+export function importInbox(): string | null {
+  if (!ios) return null;
+  let raw: string | undefined;
+  try {
+    raw = DA.userDefaultsGet<string>('tm_inbox');
+  } catch {
+    return null;
+  }
+  if (!raw) return null;
+  DA.userDefaultsRemove('tm_inbox');
+  let entries: InboxEntry[] = [];
+  try {
+    entries = JSON.parse(raw) as InboxEntry[];
+  } catch {
+    return null;
+  }
+  const known = new Set(getState().parked.map((w) => w.id));
+  const fresh = entries.filter((e) => e && e.id && !known.has(e.id));
+  if (!fresh.length) return null;
+  const wants: ParkedWant[] = fresh.map((e) => ({
+    id: e.id,
+    app: e.host || 'a shop',
+    what: (e.what || '').trim(),
+    band: e.band,
+    parkedAt: e.parkedAt,
+    readyAt: e.readyAt,
+    ...(e.price ? { price: e.price } : {}),
+    ...(e.items ? { items: e.items } : {}),
+  }));
+  setState((s) => ({ parked: [...s.parked, ...wants] }));
+  let last: ReturnType<typeof award> | null = null;
+  for (const w of wants) last = award(5, `Parked ${w.what || 'a want'} from ${fresh[0].source === 'safari' ? 'Safari' : 'Share'}`);
+  applyShieldLook();
+  const first = wants[0];
+  const label = wants.length > 1 ? `${wants.length} things parked` : `${first.what || 'Your basket'} is parked till ${formatReady(first.readyAt)}`;
+  return last && last.ok ? `+${last.amount} XP · ${label}` : label;
 }
 
 export function decideWant(id: string, decision: 'let_go' | 'kept') {

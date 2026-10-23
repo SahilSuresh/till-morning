@@ -120,6 +120,24 @@
                       "group.com.andrej.tillmorning"
                     ]
                   }
+                },
+                {
+                  "bundleIdentifier": "com.andrej.tillmorning.ShareExtension",
+                  "targetName": "ShareExtension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.andrej.tillmorning"
+                    ]
+                  }
+                },
+                {
+                  "bundleIdentifier": "com.andrej.tillmorning.SafariExtension",
+                  "targetName": "SafariExtension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.andrej.tillmorning"
+                    ]
+                  }
                 }
               ]
             }

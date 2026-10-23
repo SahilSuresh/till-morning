@@ -1,0 +1,62 @@
+{
+  "manifest_version": 3,
+  "name": "Till Morning",
+  "short_name": "Till Morning",
+  "description": "Spots checkout pages on shop sites and offers to park your basket till morning. It reads the page on your phone; nothing is sent anywhere.",
+  "version": "1.0",
+  "icons": {
+    "48": "icon-48.png",
+    "96": "icon-96.png",
+    "128": "icon-128.png"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "action": {
+    "default_title": "Till Morning",
+    "default_icon": {
+      "48": "icon-48.png",
+      "96": "icon-96.png"
+    }
+  },
+  "permissions": ["nativeMessaging"],
+  "content_scripts": [
+    {
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "matches": [
+        "*://*.shein.co.uk/*",
+        "*://*.shein.com/*",
+        "*://*.temu.com/*",
+        "*://*.asos.com/*",
+        "*://*.amazon.co.uk/*",
+        "*://*.vinted.co.uk/*",
+        "*://*.ebay.co.uk/*",
+        "*://*.etsy.com/*",
+        "*://*.aliexpress.com/*",
+        "*://*.zara.com/*",
+        "*://*.hm.com/*",
+        "*://*.boohoo.com/*",
+        "*://*.prettylittlething.com/*",
+        "*://*.next.co.uk/*",
+        "*://*.argos.co.uk/*",
+        "*://*.johnlewis.com/*",
+        "*://*.very.co.uk/*",
+        "*://*.currys.co.uk/*",
+        "*://*.primark.com/*",
+        "*://*.uniqlo.com/*",
+        "*://*.nike.com/*",
+        "*://*.jdsports.co.uk/*",
+        "*://*.selfridges.com/*",
+        "*://*.marksandspencer.com/*",
+        "*://*.boots.com/*",
+        "*://*.sephora.co.uk/*",
+        "*://*.lookfantastic.com/*",
+        "*://*.deliveroo.co.uk/*",
+        "*://*.just-eat.co.uk/*",
+        "*://*.ubereats.com/*"
+      ]
+    }
+  ]
+}

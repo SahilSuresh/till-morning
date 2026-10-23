@@ -8,7 +8,7 @@ import { useEffect } from 'react';
 import { AppState, View } from 'react-native';
 
 import { initAnalytics } from '../lib/analytics';
-import { pauseProtection, processShieldLog, syncShields, tick } from '../lib/core';
+import { importInbox, pauseProtection, processShieldLog, syncShields, tick } from '../lib/core';
 import { initCrashReporting, Sentry } from '../lib/crashes';
 import { Notifications } from '../lib/notify';
 import { checkGoals, goalToast, rollDay } from '../lib/progress';
@@ -27,6 +27,8 @@ function onForeground() {
   syncShields();
   const ended = tick();
   if (ended) toast(ended);
+  const imported = importInbox();
+  if (imported) setTimeout(() => toast(imported), 600);
   const toasts = processShieldLog();
   const goal = goalToast(checkGoals());
   if (toasts.length) toast(toasts[toasts.length - 1]);
