@@ -5,7 +5,9 @@ import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GOALS, STICKER_IMG, STICKER_NAME } from '../../lib/progress';
-import { useAppState } from '../../lib/store';
+import { setState, useAppState } from '../../lib/store';
+import { TAB_TIPS } from '../../lib/week';
+import { TipSheet } from '../../ui/TipSheet';
 import { RANKS, rankFor } from '../../lib/xp';
 import { Button, Card, Chip, Rise } from '../../ui/components';
 import { IconCaret, IconCheck } from '../../ui/icons';
@@ -96,6 +98,7 @@ export default function Me() {
   const xp = useAppState((s) => s.xp);
   const helped = useAppState((s) => s.pauseHelped);
   const [openXp, setOpenXp] = useState(false);
+  const tipDue = useAppState((st) => st.subscribed && !st.tabTips.me && st.coachStep < 0);
   const [openRanks, setOpenRanks] = useState(false);
   const { index } = rankFor(xp.total);
   const recent = [...xp.log].reverse().slice(0, 8);
@@ -228,6 +231,13 @@ export default function Me() {
           )}
         </Rise>
       </ScrollView>
+      <TipSheet
+        visible={tipDue}
+        title={TAB_TIPS.me.t}
+        body={TAB_TIPS.me.d}
+        next="Got it"
+        onNext={() => setState((st) => ({ tabTips: { ...st.tabTips, me: true } }))}
+      />
     </View>
   );
 }

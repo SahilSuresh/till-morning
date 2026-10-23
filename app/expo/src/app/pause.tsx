@@ -20,6 +20,7 @@ import {
   BAND_LABEL,
   formatDuration,
   formatReady,
+  isTakeawayApp,
   logPause,
   parkWant,
   recentShieldedApp,
@@ -104,6 +105,11 @@ export default function Pause() {
     return h >= 22 || h < 5;
   }, []);
   const night = useMemo(() => nightOn(), []);
+  // Backup dinner: shown on takeaway apps when you've saved easy meals.
+  const dinner = useMemo(() => {
+    const meals = getState().meals;
+    return meals.length && !params.app && isTakeawayApp(true) ? meals : null;
+  }, [params.app]);
   const fact = useMemo(() => pauseFact(app), [app]);
   const askQuestion = getState().settings.askQuestion;
   const [answer, setAnswer] = useState<Reason | null>(null);
@@ -265,11 +271,25 @@ export default function Pause() {
               </Text>
             )}
           </View>
+        ) : dinner ? (
+          <View style={{ alignSelf: 'stretch', alignItems: 'center', marginTop: 18 }}>
+            <Text style={[type.h1, { color: '#FFFFFF', textAlign: 'center' }]}>Hungry, or just tired?</Text>
+            <View style={{ alignSelf: 'stretch', marginTop: 14, backgroundColor: 'rgba(94,233,181,0.1)', borderRadius: 18, padding: 14, gap: 8 }}>
+              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 13.5, color: '#A8F5D6' }}>You’ve got at home</Text>
+              {dinner.map((m) => (
+                <View key={m.n} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Text style={{ fontSize: 20 }}>{m.e}</Text>
+                  <Text style={{ flex: 1, fontFamily: font.bodyBold, fontSize: 16, color: '#FFFFFF' }}>{m.n}</Text>
+                  {m.m ? <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, color: color.white82 }}>{m.m} min</Text> : null}
+                </View>
+              ))}
+            </View>
+          </View>
         ) : (
           <Text style={[type.h1, { color: '#FFFFFF', textAlign: 'center', marginTop: 18 }]}>Take a breath. Do you still want it?</Text>
         )}
 
-        {!answer && <View
+        {!answer && !dinner && <View
           style={{
             marginTop: 16,
             flexDirection: 'row',

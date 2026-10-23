@@ -5,7 +5,9 @@ import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BAND_LABEL, formatReady } from '../../lib/core';
-import { type ParkedWant, useAppState } from '../../lib/store';
+import { type ParkedWant, setState, useAppState } from '../../lib/store';
+import { TAB_TIPS } from '../../lib/week';
+import { TipSheet } from '../../ui/TipSheet';
 import { Card, Rise } from '../../ui/components';
 import { IconMoon } from '../../ui/icons';
 import { useTabBarSpace } from '../../ui/layout';
@@ -40,6 +42,7 @@ export default function Waiting() {
   const waiting = parked.filter((w) => !w.decided && w.readyAt > now).sort((a, b) => a.readyAt - b.readyAt);
   const letGo = parked.filter((w) => w.decided === 'let_go').reverse();
   const [view, setView] = useState<View_>(ready.length ? 'ready' : 'waiting');
+  const tipDue = useAppState((s) => s.subscribed && !s.tabTips.waiting && s.coachStep < 0);
 
   const segments: [View_, string, number][] = [
     ['waiting', 'Waiting', waiting.length],
@@ -123,6 +126,13 @@ export default function Waiting() {
           The rule: the more it costs, the longer it waits, and it’s never ready at night.
         </Text>
       </ScrollView>
+      <TipSheet
+        visible={tipDue}
+        title={TAB_TIPS.waiting.t}
+        body={TAB_TIPS.waiting.d}
+        next="Got it"
+        onNext={() => setState((s) => ({ tabTips: { ...s.tabTips, waiting: true } }))}
+      />
     </View>
   );
 }

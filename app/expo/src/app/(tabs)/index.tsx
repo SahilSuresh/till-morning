@@ -6,7 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { endPass, formatReady, protectedCount, readyWants, shieldChosenApps } from '../../lib/core';
 import { hh, nightOn, pauseSeconds, risky } from '../../lib/rules';
-import { useAppState } from '../../lib/store';
+import { setState, useAppState } from '../../lib/store';
+import { COACH_TIPS, nextUnlock, recapDue } from '../../lib/week';
+import { TipSheet } from '../../ui/TipSheet';
 import { TopGlow } from '../../ui/backgrounds';
 import { xpToast } from '../../lib/xp';
 import { Button, Card, Chip, Rise, toast } from '../../ui/components';
@@ -44,6 +46,8 @@ export default function Today() {
   const shielded = counts.apps + counts.categories;
   const ready = readyWants(now);
   const waiting = s.parked.filter((w) => !w.decided && w.readyAt > now);
+  const unlock = nextUnlock();
+  const coach = s.coachStep >= 0 && s.coachStep < COACH_TIPS.length ? COACH_TIPS[s.coachStep] : null;
 
   return (
     <View style={{ flex: 1 }}>
@@ -232,6 +236,41 @@ export default function Today() {
           </Pressable>
         </Rise>
 
+        {/* Next steps: week-one feature card, Sunday recap */}
+        {unlock && (
+          <Rise delay={90}>
+            <Pressable onPress={() => router.push({ pathname: '/unlock', params: { k: unlock.k } })} accessibilityRole="button">
+              <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14, borderColor: 'rgba(255,201,77,0.45)' }}>
+                <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(255,201,77,0.15)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 22 }}>✨</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Chip tone="sun" size={11} label={`New · day ${unlock.day}`} />
+                  <Text style={[type.title, { marginTop: 4 }]}>{unlock.t}</Text>
+                  <Text style={type.small}>{unlock.kick}</Text>
+                </View>
+                <IconCaret />
+              </Card>
+            </Pressable>
+          </Rise>
+        )}
+        {recapDue(now) && (
+          <Rise delay={95}>
+            <Pressable onPress={() => router.push('/recap')} accessibilityRole="button">
+              <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(167,139,250,0.19)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 22 }}>📅</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={type.title}>Your week with Till Morning</Text>
+                  <Text style={type.small}>Sunday recap: pauses, waits and passes</Text>
+                </View>
+                <IconCaret />
+              </Card>
+            </Pressable>
+          </Rise>
+        )}
+
         {/* Next step: a parcel to open */}
         {s.queue.length > 0 && (
           <Rise delay={100}>
@@ -290,6 +329,20 @@ export default function Today() {
           </Pressable>
           )}
         </View>
+      )}
+
+      {/* First-time coach tour, right after the paywall */}
+      {coach && (
+        <TipSheet
+          visible
+          title={coach.t}
+          body={coach.d}
+          step={s.coachStep}
+          steps={COACH_TIPS.length}
+          next={s.coachStep === COACH_TIPS.length - 1 ? 'Got it' : 'Next'}
+          onNext={() => setState({ coachStep: s.coachStep + 1 >= COACH_TIPS.length ? -1 : s.coachStep + 1 })}
+          onSkip={() => setState({ coachStep: -1 })}
+        />
       )}
     </View>
   );

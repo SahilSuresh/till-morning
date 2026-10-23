@@ -42,7 +42,7 @@ export default function CheckIn() {
   const answer = (a: CheckInAnswer) => {
     const r = award(10, 'Checked in after a pass');
     const done = getState().checkInsDone + 1;
-    setState({ pendingCheckIn: null, checkInsDone: done });
+    setState((s) => ({ pendingCheckIn: null, checkInsDone: done, checkinLog: [...s.checkinLog, { at: Date.now(), answer: a }].slice(-100) }));
     track('check_in_completed');
     toast(xpToast(r, 'Thanks for being honest'));
     const goal = bump('checkin');
@@ -50,7 +50,6 @@ export default function CheckIn() {
     // "Did this pause help?" after the first pass, then every third.
     if (done === 1 || done % 3 === 0) setTimeout(() => setAskHelp(true), 900);
     else router.replace('/');
-    void a;
   };
 
   const skip = () => {

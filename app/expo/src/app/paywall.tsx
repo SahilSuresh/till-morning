@@ -39,7 +39,7 @@ export default function Paywall() {
 
   const done = async () => {
     const now = Date.now();
-    setState({ subscribed: true, onboarded: true, appsChosen: true, trialAt: now, day: '' });
+    setState({ subscribed: true, onboarded: true, appsChosen: true, trialAt: now, day: '', coachStep: 0 });
     shieldChosenApps();
     if (remind) {
       const when = new Date(now + 5 * 86400000);

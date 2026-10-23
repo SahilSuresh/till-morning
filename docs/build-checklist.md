@@ -14,11 +14,11 @@ Last updated: 23 Oct 2026.
 | ✅ | Screen Time ask (L1245) | real FamilyControls request |
 | ✅ | UK apps tip (L1253) | |
 | ✅ | Apple app picker (L1262) | real FamilyActivityPicker sheet |
-| ⬜ | Meals / backup dinner (L1490) | only if a takeaway app was picked — we can't see which apps were picked, so ask always or skip |
+| ✅ | Meals / backup dinner (L1490) | in Settings → Pause; shown in the pause on takeaway apps (needs your takeaway apps picked in Your rules). Shield meal line ⬜🔧 |
 | ✅ | Demo pause "This is your pause" (L1351) | |
 | ✅ | Tour slide "Park it till morning" (L1184) | |
 | ✅ | Paywall "Your free week" (L1383) | live App Store prices via RevenueCat, day-5 reminder notification, restore; "Skip" only in test builds |
-| ⬜ | Post-purchase coach tour (L2252) | 4 spotlight tips |
+| ✅ | Post-purchase coach tour (L2252) | 4 tips as a paper card (no spotlight cut-out) |
 | ⬜ | Protection paused (plan lapsed) (L1685) | lifts every shield when the subscription ends |
 | ✅ | Notifications permission | real-app addition, needed for "Tap to start your pause" |
 
@@ -27,7 +27,7 @@ Last updated: 23 Oct 2026.
 |---|---|---|
 | ✅ | Tab bar Today / Waiting / Me / Settings + ready badge (L2194) | swipe between tabs ⬜ |
 | 🟡 | Today: greeting, shields chip, check-in nudge, live pass, status card, wait card, Need-to-shop pill | status card variants: access lost ⬜, off till tomorrow ⬜, app list text ⬜; "checked N min ago" ⬜ |
-| ⬜ | Today: sale banner, week-one "New · day N" cards, Sunday recap row | |
+| ✅ | Today: sale banner, week-one "New · day N" cards, Sunday recap row | |
 | ✅ | Today: "A parcel to open" row | |
 | ⬜ | Which-app sheet for "Need to shop?" (L2213) | iOS doesn't give app names up front; currently opens the pause for "your shop apps" |
 | ✅ | Waiting room: segments, tags, let-go shelf, empty states | per-tag progress ring + live countdown ⬜, Share button ⬜🔧 |
@@ -57,12 +57,12 @@ Last updated: 23 Oct 2026.
 | ✅ | Turn off till tomorrow (L2264) | DeviceActivity schedule turns them back on at 07:00 |
 | ✅ | Delete all data dialog (L2265) | |
 | ⬜ | App Store rating prompt rules (L1830) | expo-store-review is installed |
-| ⬜ | First-visit tab tips (L2243) | |
+| ✅ | First-visit tab tips (L2243) | |
 | ✅ | Sticker goal pages (v25–26) incl. "What's a calm day?" | |
 | ✅ | Parcel opening | tear animation simplified to a tap |
 | ⬜ | Note from calm you (L1673) | 🔧 expo-audio for recording/playback |
-| ⬜ | Week-one feature cards (L1552) | days 2–7 |
-| ⬜ | Sunday recap (L1562) | |
+| ✅ | Week-one feature cards (L1552) | days 2–7 |
+| ✅ | Sunday recap (L1562) | share as text |
 | ⬜ | Bank limit guide + seal (L1314, L1334) | seal tiers Committed / Week strong / Month proof / Vault |
 | ⬜ | Monthly budget page (L1289) | |
 | ⬜ | Safari checkout sheet (L2232) | 🔧 Safari Web Extension — later |
@@ -75,7 +75,7 @@ Last updated: 23 Oct 2026.
 | 🟡 | Your apps | "Choose apps" opens the picker |
 | ✅ | Your rules | |
 | ✅ | Night lock switch, starts 22/23/00, ends 06/07/08 | |
-| ⬜ | Backup dinner link | |
+| ✅ | Backup dinner link | |
 | ✅ | Pause length 10/15/30/60 s | |
 | 🟡 | More options: monthly budget, shield message (60), what you're saving for (40) | budget ⬜ |
 | ✅ | Cool-off Off/5/10/30 | |

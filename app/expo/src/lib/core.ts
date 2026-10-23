@@ -432,6 +432,17 @@ export function readyWants(now = Date.now()) {
   return getState().parked.filter((w) => !w.decided && w.readyAt <= now);
 }
 
+/** Is the app from this pause one of your takeaway apps? (For backup dinner.) */
+export function isTakeawayApp(fromShield: boolean) {
+  if (!ios || !fromShield || !getState().takeawaysChosen) return false;
+  try {
+    const m = DA.intersection({ activitySelectionId: LAST_SHIELDED_ID }, { activitySelectionId: TAKEAWAYS_ID }, { stripToken: true });
+    return (m?.applicationCount ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
 export function logPause(app: string, outcome: 'left' | 'parked' | 'shop' | 'walked') {
   setState((s) => ({ pauseLog: [...s.pauseLog, { at: Date.now(), app, outcome }].slice(-200) }));
   // The late-night shield says "You left it N of the last M times" — the extension reads this.

@@ -66,6 +66,12 @@ export type AppState = {
   plan: 'yearly' | 'monthly';
   trialAt: number;
   rankSeen: number; // index of the last rank celebrated
+  unlocked: string[]; // week-one feature cards seen
+  recapSeenWeek: number;
+  tabTips: Record<string, boolean>;
+  coachStep: number; // -1 = done
+  meals: { n: string; e: string; m: number }[]; // backup dinner, up to 3
+  checkinLog: { at: number; answer: CheckInAnswer }[];
   offUntil: number; // "Turn off till tomorrow": shields come back at this time
   reasons: Record<string, number>; // "What's this one about?" answers
   takeawaysChosen: boolean; // a takeaway selection exists for treat nights
@@ -121,6 +127,12 @@ export const initialState: AppState = {
   plan: 'yearly',
   trialAt: 0,
   rankSeen: 0,
+  unlocked: [],
+  recapSeenWeek: 0,
+  tabTips: {},
+  coachStep: -1,
+  meals: [],
+  checkinLog: [],
   offUntil: 0,
   reasons: {},
   takeawaysChosen: false,

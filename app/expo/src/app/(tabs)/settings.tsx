@@ -232,6 +232,12 @@ export default function Settings() {
         </Section>
 
         <Section title="Pause">
+          <Row
+            label="Backup dinner"
+            sub={s.meals.length ? s.meals.map((m) => m.n).join(', ') : 'Easy meals to show on takeaway pauses'}
+            onPress={() => router.push('/meals')}
+          />
+          <Divider />
           <Choice
             title="How long the pause lasts"
             options={[[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min']]}
