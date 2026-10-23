@@ -3,7 +3,7 @@
 Source of truth: `app/prototype/till-morning.html` (prototype **v26**; its title still says v18).
 Line numbers (L…) point into that file. Status: ✅ built · 🟡 partly built · ⬜ not built · 🔧 needs a new native build · ⛔ prototype-only, don't build.
 
-Last updated: 23 Oct 2026.
+Last updated: 23 Oct 2026 (evening). App Review / guideline 5.6 rules: see docs/app-review-notes.md.
 
 ## 1. Setup
 | | Item | Notes |
@@ -30,25 +30,25 @@ Last updated: 23 Oct 2026.
 | ✅ | Today: sale banner, week-one "New · day N" cards, Sunday recap row | |
 | ✅ | Today: "A parcel to open" row | |
 | ✅ | Today: Finish setting up card (budget, Shopping Pass intro, bank limit; Hide) and bank seal card (L1715, L2074) | note item ⬜🔧, habits item needs per-app tokens |
-| ⬜ | Which-app sheet for "Need to shop?" (L2213) | iOS doesn't give app names up front; currently opens the pause for "your shop apps" |
+| ✅ | Which-app sheet for "Need to shop?" (L2213) | Apple's own app labels via modules/tm-native; tap → that app's pause and pass |
 | ✅ | Waiting room: segments, tags, let-go shelf, empty states, countdown ring + time left on each tag | Share button ⬜🔧 |
 | ✅ | Me: rank card, Morning card, sticker goals, How XP works, recent decisions | note card ⬜🔧 |
 | 🟡 | Ranks page (L2010) | built as a collapsible list on Me; medals ⬜ |
 | ✅ | Your rules page (L2131) | challenge, treat nights (with a takeaway-apps picker), wait rule + try a price, when to shield, sale seasons, hours of work. Ask a friend ⬜🔧 |
-| ⬜ | Your apps page (L2082) | per-app switch, habit tags, budgets — needs per-app tokens |
+| ✅ | Your apps page (L2082) | per-app switch (−5 XP once a day, breaks the day), habit tags, budget line, add/remove apps |
 
 ## 3. Core loop
 | | Item | Notes |
 |---|---|---|
 | ✅ | Shield normal / cool-off | custom Swift in targets/ |
 | ✅ | Shield late (22:00–05:00) and night-lock shield | drawn by the Swift extension from the app's night-lock times; "You left it N of the last M" |
-| 🟡 | Shield message priority: own message → challenge → goal → habit; second line budget/meals | ✅ total budget line; habit, per-app budget and meals lines ⬜🔧 |
+| ✅ | Shield message priority: own message → challenge → goal → habit; second line meals → app budget → total → waiting room | per-app lines written to tm_sub::key / tm_nightsub::key |
 | ✅ | Pause: ring, facts, three choices, walk-away XP, "What's this one about?" + coach, challenge button, night-lock version | note playback ⬜🔧, takeaway meals card ⬜ |
-| ✅ | Park sheet short + full, parked screen | Snap your basket ⬜🔧, Ask Sam ⬜ |
+| ✅ | Park sheet short + full, parked screen, Snap your basket (on-device Vision OCR), hours of work, Ask a friend (Messages composer, self-reported answer) | |
 | ✅ | Decide screen | |
-| ✅ | Shopping Pass + tear ticket + 3rd-pass wait | "fromRoom" notice ⬜ |
+| ✅ | Shopping Pass + tear ticket + 3rd-pass wait, fromRoom notice (no pause, no 3rd-pass wait, only that app) | |
 | ✅ | Live pass + re-lock | Live Activity ⬜🔧 |
-| ✅ | Check-in + Did this pause help? | checkout proof screenshot + OCR ⬜🔧 |
+| ✅ | Check-in + Did this pause help? + checkout proof screenshot (+15 XP, receipt/wallet stickers) | |
 | ✅ | Urgent door (night lock "It's urgent") (L1477) | 60 s wait, reason, 10-minute pass, no check-in |
 | ✅ | Rank-up celebration (L1603) | confetti, medal, XP count-up, share |
 
@@ -105,7 +105,7 @@ Last updated: 23 Oct 2026.
 | ✅ | Night lock 23:00–07:00 | passes sleep, urgent door, shield copy |
 | ✅ | Risky hour | pause ≥45 s, chip, late shield, status line |
 | ✅ | Sale week ×2 waits, +15 s pause, Today banner | |
-| 🟡 | Wait rule | bands ✅, exact price ⬜, hours of work ⬜ |
+| ✅ | Wait rule | bands, exact price (1 h per £10), hours of work |
 | ✅ | When to shield: all / evenings / weekends | DeviceActivity schedules |
 
 ## 8. Native extras (need a new install)
@@ -113,9 +113,9 @@ Last updated: 23 Oct 2026.
 |---|---|
 | ⬜🔧 | Home Screen + Lock Screen widgets (v23) — WidgetKit extension |
 | ⬜🔧 | Note recording/playback — expo-audio |
-| ⬜🔧 | Checkout screenshot + on-device OCR — image picker + Vision |
+| ✅ | Checkout screenshot + on-device OCR — image picker + Vision (Install A) |
 | ⬜🔧 | Share Extension ("Park something from a shop's Share button") |
-| ⬜🔧 | Live Activity for a running pass |
+| ⛔ | Live Activity — not in the prototype |
 
 ## ⛔ Prototype-only (not built)
 Springboard, simulated shop apps, home bar, fake picker/permission/purchase sheets, test panel, fast timers, virtual clock, day shift, skip setup.
