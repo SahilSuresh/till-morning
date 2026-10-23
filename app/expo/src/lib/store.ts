@@ -62,6 +62,17 @@ export type AppState = {
   pauseLog: PauseOutcome[];
   coolOffs: Record<string, number>; // app name -> unlock time (ms), for Home
   lastShieldLogAt: number;
+  // Morning card: one stamp per calm day (shields on all day, 2 passes or fewer)
+  day: string; // the day the counters below belong to
+  dayBroken: boolean;
+  brokenWhy: string;
+  stamps: number;
+  cardsFilled: number;
+  shieldsBackOnDay: string; // +5 XP once a day for turning shields back on
+  // Sticker goals: counters, earned stickers and parcels waiting to be opened
+  cnt: Partial<Record<'leave' | 'decided' | 'checkin' | 'underLimit', number>>;
+  got: string[];
+  queue: string[];
 };
 
 export const initialState: AppState = {
@@ -89,6 +100,15 @@ export const initialState: AppState = {
   pauseLog: [],
   coolOffs: {},
   lastShieldLogAt: 0,
+  day: '',
+  dayBroken: false,
+  brokenWhy: '',
+  stamps: 0,
+  cardsFilled: 0,
+  shieldsBackOnDay: '',
+  cnt: {},
+  got: [],
+  queue: [],
 };
 
 const KEY = 'tm_state_v1';

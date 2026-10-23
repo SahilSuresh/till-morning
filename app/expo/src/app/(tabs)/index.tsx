@@ -7,8 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { endPass, formatReady, protectedCount, readyWants, shieldChosenApps } from '../../lib/core';
 import { useAppState } from '../../lib/store';
 import { TopGlow } from '../../ui/backgrounds';
-import { Button, Card, Chip, Rise } from '../../ui/components';
-import { IconHourglass, IconMoon, IconShield, IconTicket } from '../../ui/icons';
+import { xpToast } from '../../lib/xp';
+import { Button, Card, Chip, Rise, toast } from '../../ui/components';
+import { IconCaret, IconHourglass, IconMoon, IconShield, IconTicket } from '../../ui/icons';
 import { useTabBarSpace } from '../../ui/layout';
 import { RankCard } from '../../ui/RankCard';
 import { color, font, gradient, type } from '../../ui/theme';
@@ -126,7 +127,13 @@ export default function Today() {
               <>
                 <Text style={[type.h2, { marginTop: 10, textAlign: 'center' }]}>Shields are off</Text>
                 <View style={{ alignSelf: 'stretch', marginTop: 14 }}>
-                  <Button label="Turn shields back on" onPress={shieldChosenApps} />
+                  <Button
+                    label="Turn shields back on"
+                    onPress={() => {
+                      const r = shieldChosenApps();
+                      toast(r ? xpToast(r, 'Shields are back on') : 'Shields are back on');
+                    }}
+                  />
                 </View>
               </>
             ) : shielded === 0 ? (
@@ -193,6 +200,24 @@ export default function Today() {
             </Card>
           </Pressable>
         </Rise>
+
+        {/* Next step: a parcel to open */}
+        {s.queue.length > 0 && (
+          <Rise delay={100}>
+            <Pressable onPress={() => router.push('/parcel')} accessibilityRole="button">
+              <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(255,201,77,0.15)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 24 }}>🎁</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={type.title}>{s.queue.length > 1 ? `${s.queue.length} parcels to open` : 'A parcel to open'}</Text>
+                  <Text style={type.small}>You finished a sticker goal</Text>
+                </View>
+                <IconCaret />
+              </Card>
+            </Pressable>
+          </Rise>
+        )}
 
         {/* Rank */}
         <Rise delay={120}>

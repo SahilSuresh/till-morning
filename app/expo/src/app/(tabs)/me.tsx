@@ -1,14 +1,79 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GOALS, STICKER_IMG, STICKER_NAME } from '../../lib/progress';
 import { useAppState } from '../../lib/store';
 import { RANKS, rankFor } from '../../lib/xp';
-import { Card, Chip, Rise } from '../../ui/components';
+import { Button, Card, Chip, Rise } from '../../ui/components';
 import { IconCaret, IconCheck } from '../../ui/icons';
 import { useTabBarSpace } from '../../ui/layout';
+import { MorningCard } from '../../ui/MorningCard';
 import { RankCard } from '../../ui/RankCard';
-import { color, font, type } from '../../ui/theme';
+import { color, font, gradient, type } from '../../ui/theme';
+
+/** meExtras() sticker goals: 9 goals, each opens its explainer page. */
+function StickerGoals() {
+  const got = useAppState((s) => s.got);
+  const queue = useAppState((s) => s.queue);
+  useAppState((s) => s); // progress counters live across the state
+  return (
+    <Card style={{ paddingBottom: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={type.h2}>Sticker goals</Text>
+        <Chip tone="sun" label={`${got.length} of ${GOALS.length}`} />
+      </View>
+      <Text style={[type.small, { marginTop: 4 }]}>Finish a goal to earn its sticker. They can’t be bought. Tap one to see how.</Text>
+      <View style={{ marginTop: 6 }}>
+        {GOALS.map((g, i) => {
+          const has = got.includes(g.k);
+          const done = queue.includes(g.k);
+          const v = Math.min(g.get(), g.n);
+          return (
+            <Pressable
+              key={g.k}
+              onPress={() => router.push({ pathname: '/goal', params: { k: g.k } })}
+              accessibilityRole="button"
+              accessibilityLabel={`${g.task}, ${v} of ${g.n}. Show how to get it`}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: i ? 1.5 : 0, borderColor: color.divider }}
+            >
+              <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: has ? '#FFF6D8' : '#1C2057', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                {g.special && !has && <LinearGradient colors={['#FFE38F', '#B48CFF']} style={{ position: 'absolute', inset: 0 }} />}
+                {STICKER_IMG[g.k] ? (
+                  <Image source={STICKER_IMG[g.k]!} style={{ width: 38, height: 38, opacity: has ? 1 : 0.45 }} resizeMode="contain" />
+                ) : (
+                  <Text style={{ fontFamily: font.display, fontSize: 20, color: color.inkOnBright }}>£</Text>
+                )}
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                {g.special && <Text style={{ fontFamily: font.bodyHeavy, fontSize: 11, color: color.sun }}>Proof only</Text>}
+                <Text style={type.title}>{has ? STICKER_NAME[g.k] : g.task}</Text>
+                {has ? (
+                  <Text style={type.small}>{g.task}</Text>
+                ) : done ? (
+                  <Text style={[type.small, { color: color.sun }]}>Done! Open your parcel on Today</Text>
+                ) : (
+                  <View style={{ height: 6, borderRadius: 3, backgroundColor: '#23275E', marginTop: 6, overflow: 'hidden' }}>
+                    <LinearGradient colors={gradient.progress} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 6, width: `${Math.round((v / g.n) * 100)}%` }} />
+                  </View>
+                )}
+              </View>
+              {has || done ? <IconCheck size={20} color={color.mint} /> : <Text style={type.small}>{v} / {g.n}</Text>}
+              <IconCaret />
+            </Pressable>
+          );
+        })}
+      </View>
+      {queue.length > 0 && (
+        <View style={{ marginTop: 8 }}>
+          <Button variant="secondary" label={queue.length > 1 ? `Open ${queue.length} parcels` : 'Open your parcel'} onPress={() => router.push('/parcel')} />
+        </View>
+      )}
+    </Card>
+  );
+}
 
 const EARN: [string, string][] = [
   ['Close an app at the shield', '+2'],
@@ -44,6 +109,14 @@ export default function Me() {
 
         <Rise delay={40}>
           <RankCard />
+        </Rise>
+
+        <Rise delay={50}>
+          <MorningCard />
+        </Rise>
+
+        <Rise delay={70}>
+          <StickerGoals />
         </Rise>
 
         {helped.asked > 0 && (

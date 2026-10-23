@@ -30,7 +30,8 @@ export default function Decide() {
 
   const decide = (d: 'let_go' | 'kept') => {
     const r = award(10, d === 'let_go' ? 'Let a want go' : 'Decided to keep a want');
-    decideWant(want.id, d);
+    const goal = decideWant(want.id, d);
+    if (goal) setTimeout(() => toast(goal), 2900);
     if (d === 'let_go') {
       router.replace('/');
       setTimeout(() => toast(xpToast(r, 'Let go')), 400);

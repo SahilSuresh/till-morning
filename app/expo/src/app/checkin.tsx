@@ -5,6 +5,7 @@ import { Animated, Modal, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { track } from '../lib/analytics';
+import { bump } from '../lib/progress';
 import { type CheckInAnswer, getState, setState, useAppState } from '../lib/store';
 import { award, xpToast } from '../lib/xp';
 import { Chip, OptionCard, springOut, TextLink, toast, useReduceMotion } from '../ui/components';
@@ -44,6 +45,8 @@ export default function CheckIn() {
     setState({ pendingCheckIn: null, checkInsDone: done });
     track('check_in_completed');
     toast(xpToast(r, 'Thanks for being honest'));
+    const goal = bump('checkin');
+    if (goal) setTimeout(() => toast(goal), 2700);
     // "Did this pause help?" after the first pass, then every third.
     if (done === 1 || done % 3 === 0) setTimeout(() => setAskHelp(true), 900);
     else router.replace('/');

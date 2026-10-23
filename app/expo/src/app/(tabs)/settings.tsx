@@ -9,7 +9,7 @@ import { sendTestEvent } from '../../lib/crashes';
 import { getOfferings, isPurchasesReady, restorePurchases } from '../../lib/purchases';
 import { getScreenTimeStatus } from '../../lib/screenTime';
 import { resetState, setState, useAppState } from '../../lib/store';
-import { lose } from '../../lib/xp';
+import { lose, xpToast } from '../../lib/xp';
 import { Card, Tag, toast } from '../../ui/components';
 import { useTabBarSpace } from '../../ui/layout';
 import { color, font, type } from '../../ui/theme';
@@ -66,8 +66,8 @@ export default function Settings() {
 
   const toggleShields = (on: boolean) => {
     if (on) {
-      shieldChosenApps();
-      toast('Shields are back on');
+      const r = shieldChosenApps();
+      toast(r ? xpToast(r, 'Shields are back on') : 'Shields are back on');
     } else {
       Alert.alert('Switch every shield off?', 'Your apps open without a pause until you switch them back on.', [
         { text: 'Keep them on', style: 'cancel' },

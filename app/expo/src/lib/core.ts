@@ -3,6 +3,7 @@ import * as DA from 'react-native-device-activity';
 
 import { track } from './analytics';
 import { cancelPassEnd, scheduleParkedReady, schedulePassEnd } from './notify';
+import { breakDay, bump, FREE_PASSES } from './progress';
 import { dayKey, getState, type ParkedWant, type PriceBand, setState, type ShoppingPass } from './store';
 import { award } from './xp';
 
@@ -78,21 +79,31 @@ export function protectedCount() {
 
 /** (Re)applies the shield to the chosen apps. Call after the picker and when shields go back on. */
 export function shieldChosenApps() {
-  if (!ios) return;
-  applyShieldLook();
-  DA.resetBlocks();
-  DA.blockSelection({ activitySelectionId: PROTECTED_ID });
-  // A pass that's still running keeps its app open.
-  if (getState().pass) DA.addSelectionToWhitelistAndUpdateBlock({ activitySelectionId: PASS_APP_ID });
+  const wasOff = !getState().shieldsOn;
+  if (ios) {
+    applyShieldLook();
+    DA.resetBlocks();
+    DA.blockSelection({ activitySelectionId: PROTECTED_ID });
+    // A pass that's still running keeps its app open.
+    if (getState().pass) DA.addSelectionToWhitelistAndUpdateBlock({ activitySelectionId: PASS_APP_ID });
+  }
   setState({ shieldsOn: true });
+  // v24: +5 XP once a day for turning shields back on.
+  if (wasOff && getState().onboarded && getState().shieldsBackOnDay !== dayKey()) {
+    setState({ shieldsBackOnDay: dayKey() });
+    return award(5, 'Turned shields back on');
+  }
+  return null;
 }
 
-export function liftAllShields() {
-  if (!ios) return;
-  DA.resetBlocks();
-  DA.clearWhitelist();
-  DA.stopMonitoring([PASS_ACTIVITY]);
+export function liftAllShields(why = 'your shields went off') {
+  if (ios) {
+    DA.resetBlocks();
+    DA.clearWhitelist();
+    DA.stopMonitoring([PASS_ACTIVITY]);
+  }
   setState({ shieldsOn: false });
+  if (getState().onboarded) breakDay(why);
 }
 
 // ---- The app the person was trying to open --------------------------------
@@ -207,10 +218,12 @@ export async function startPass(draft: Omit<ShoppingPass, 'id' | 'startedAt' | '
     );
   }
 
+  const before = passesToday();
   setState((s) => ({
     pass,
     passesByDay: { ...s.passesByDay, [dayKey(now)]: (s.passesByDay[dayKey(now)] ?? 0) + 1 },
   }));
+  if (before >= FREE_PASSES) breakDay('you used a third Shopping Pass');
   schedulePassEnd(pass).catch(() => {});
   track('shopping_pass_started', { minutes: pass.minutes });
   return pass;
@@ -307,6 +320,7 @@ export function decideWant(id: string, decision: 'let_go' | 'kept') {
     parked: s.parked.map((w) => (w.id === id ? { ...w, decided: decision, decidedAt: Date.now() } : w)),
   }));
   applyShieldLook();
+  return bump('decided');
 }
 
 export function readyWants(now = Date.now()) {

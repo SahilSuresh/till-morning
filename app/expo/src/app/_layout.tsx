@@ -11,6 +11,7 @@ import { initAnalytics } from '../lib/analytics';
 import { processShieldLog, tick } from '../lib/core';
 import { initCrashReporting, Sentry } from '../lib/crashes';
 import { Notifications } from '../lib/notify';
+import { checkGoals, goalToast, rollDay } from '../lib/progress';
 import { initPurchases } from '../lib/purchases';
 import { loadState, useLoaded } from '../lib/store';
 import { toast, ToastHost } from '../ui/components';
@@ -21,9 +22,12 @@ initAnalytics();
 initPurchases();
 
 function onForeground() {
+  rollDay();
   tick();
   const toasts = processShieldLog();
+  const goal = goalToast(checkGoals());
   if (toasts.length) toast(toasts[toasts.length - 1]);
+  if (goal) setTimeout(() => toast(goal), toasts.length ? 2800 : 0);
 }
 
 const handledResponses = new Set<string>();
@@ -92,6 +96,7 @@ function RootLayout() {
         <Stack.Screen name="pass" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="checkin" options={{ animation: 'fade' }} />
         <Stack.Screen name="decide" options={{ animation: 'fade' }} />
+        <Stack.Screen name="parcel" options={{ animation: 'fade' }} />
       </Stack>
       <ToastHost />
     </View>

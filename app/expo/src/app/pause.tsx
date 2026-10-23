@@ -26,6 +26,7 @@ import {
   startCoolOff,
   waitFor,
 } from '../lib/core';
+import { bump } from '../lib/progress';
 import { getState, type ParkedWant, type PriceBand } from '../lib/store';
 import { award, xpToast } from '../lib/xp';
 import { PauseBackground } from '../ui/backgrounds';
@@ -148,9 +149,11 @@ export default function Pause() {
     const r = award(10, `Left ${app} after the pause`, { app, gap: true });
     logPause(app, 'left');
     startCoolOff(app, key);
+    const goal = bump('leave');
     track('pause_completed', { outcome: 'left' });
     router.replace('/');
     setTimeout(() => toast(xpToast(r, `You left ${app}`)), 400);
+    if (goal) setTimeout(() => toast(goal), 2900);
   };
 
   const shop = () => {
