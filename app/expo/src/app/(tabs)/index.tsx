@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { endPass, formatReady, protectedCount, readyWants, shieldChosenApps } from '../../lib/core';
-import { hasTmNative } from '../../../modules/tm-native';
+import { endPass, formatReady, knownApp, protectedCount, readyWants, shieldChosenApps } from '../../lib/core';
+import { AppLabel, hasTmNative } from '../../../modules/tm-native';
 import { type MyApp, myApps } from '../../lib/apps';
 import { lockDays, TIERS, tierFor } from '../../lib/budget';
 import { hh, nightOn, pauseSeconds, risky } from '../../lib/rules';
@@ -119,7 +119,7 @@ export default function Today() {
                     <IconTicket size={22} color={color.inkOnBright} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[type.title, { color: color.inkOnBright }]}>{s.pendingCheckIn.wholeSelection ? 'Your Shopping Pass ended' : `Your ${s.pendingCheckIn.app} pass ended`}</Text>
+                    <Text style={[type.title, { color: color.inkOnBright }]}>{s.pendingCheckIn.wholeSelection || !knownApp(s.pendingCheckIn.app) ? 'Your Shopping Pass ended' : `Your ${s.pendingCheckIn.app} pass ended`}</Text>
                     <Text style={{ fontFamily: font.bodySemi, fontSize: 14, color: color.inkOnBright }}>How did it go?</Text>
                   </View>
                 </View>
@@ -139,7 +139,10 @@ export default function Today() {
                 style={{ borderRadius: 22, paddingHorizontal: 20, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', gap: 12, overflow: 'hidden' }}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[type.title, { color: '#FFFFFF' }]}>{s.pass.wholeSelection ? 'Shopping pass' : `${s.pass.app} pass`}</Text>
+                  <Text style={[type.title, { color: '#FFFFFF' }]}>{s.pass.wholeSelection || !knownApp(s.pass.app) ? 'Shopping pass' : `${s.pass.app} pass`}</Text>
+                  {!s.pass.wholeSelection && !knownApp(s.pass.app) && s.pass.key ? (
+                    <AppLabel appKey={s.pass.key} mode="both" size={14} color="#FFFFFF" style={{ height: 22, marginTop: 2 }} />
+                  ) : null}
                   <Text numberOfLines={2} style={{ fontFamily: font.bodySemi, fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>
                     {(s.pass.need || { specific: 'Something specific', browsing: 'Just browsing', unsure: 'Not sure yet' }[s.pass.reason]) +
                       (s.pass.limit ? `, up to £${s.pass.limit}` : '')}

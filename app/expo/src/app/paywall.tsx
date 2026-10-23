@@ -60,15 +60,24 @@ export default function Paywall() {
   };
 
   const start = async () => {
-    const pkg = yearly ? plans?.yearly : plans?.monthly;
+    setBusy(true);
+    let pkg = yearly ? plans?.yearly : plans?.monthly;
     if (!pkg) {
+      // The plans may have failed to load the first time: try once more before giving up.
+      const fresh = await getPlans().catch(() => ({}) as Plans);
+      setPlans(fresh);
+      pkg = yearly ? fresh.yearly : fresh.monthly;
+    }
+    if (!pkg) {
+      setBusy(false);
       Alert.alert('The App Store isn’t ready yet', 'The plans couldn’t load. Check your connection and try again.');
       return;
     }
-    setBusy(true);
     try {
       const r = await buy(pkg);
       if (r === 'active') await done();
+      else if (r === 'inactive')
+        Alert.alert('Almost there', 'The App Store took the purchase, but Till Morning Pro didn’t switch on. Tap Restore purchases, or try again in a minute.');
     } catch (e) {
       Alert.alert('Purchase didn’t go through', String((e as Error).message ?? e));
     } finally {

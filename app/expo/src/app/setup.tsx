@@ -49,9 +49,22 @@ export default function Setup() {
     }
   };
 
+  // The picker reports "Done" before it has saved the selection (it saves ~0.1 s later),
+  // so keep it mounted a moment and read the count once the save has landed.
+  const picked = useRef(0);
   const onPickerDone = () => {
-    setPicker(false);
+    setTimeout(() => {
+      setPicker(false);
+      afterPick();
+    }, 450);
+  };
+  const afterPick = (tries = 0) => {
     const c = protectedCount();
+    if (c.apps + c.categories === 0 && picked.current > 0 && tries < 5) {
+      // Saved a beat late: look again rather than making them pick twice.
+      setTimeout(() => afterPick(tries + 1), 400);
+      return;
+    }
     if (c.apps + c.categories > 0) {
       // A fresh pick replaces any apps switched off on the Your apps page.
       setState({ offApps: [] });
@@ -174,6 +187,9 @@ export default function Setup() {
           familyActivitySelectionId={PROTECTED_ID}
           includeEntireCategory
           style={{ width: 1, height: 1, position: 'absolute' }}
+          onSelectionChange={(e) => {
+            picked.current = e.nativeEvent.applicationCount + e.nativeEvent.categoryCount + e.nativeEvent.webDomainCount;
+          }}
           onDismissRequest={onPickerDone}
         />
       )}

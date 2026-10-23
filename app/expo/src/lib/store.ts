@@ -15,6 +15,7 @@ export type ShoppingPass = {
   wholeSelection: boolean; // true when the pass opened every protected app
   urgent?: boolean; // night lock's urgent door: 10 minutes, no check-in
   fromRoom?: boolean; // started after deciding to keep a want: no pause
+  key?: string; // the app's token key, for Apple's own label (iOS hides names from apps)
   reason: PassReason;
   need: string;
   limit: string;

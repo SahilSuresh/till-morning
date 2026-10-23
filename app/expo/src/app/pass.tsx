@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { passesToday, startPass } from '../lib/core';
+import { AppLabel } from '../../modules/tm-native';
+import { knownApp, passesToday, recentShieldedApp, startPass } from '../lib/core';
 import { getState, type PassReason } from '../lib/store';
 import { Chip, CircleButton, OptionCard, toast } from '../ui/components';
 import { IconCheck, IconLock, IconMinus, IconPlus, IconWarn, IconX } from '../ui/icons';
@@ -34,6 +35,8 @@ export default function Pass() {
   const app = params.app ?? 'your shop apps';
   // Kept after the wait: on purpose, so no pause and no third-pass wait (prototype fromRoom).
   const fromRoom = params.fromRoom === '1';
+  // Apple's own label for the app, when iOS hasn't told us its name.
+  const appKey = useState(() => recentShieldedApp()?.key ?? null)[0];
   const { passPresets, defaultPassMinutes } = getState().settings;
 
   const [reason, setReason] = useState<PassReason>('specific');
@@ -50,7 +53,7 @@ export default function Pass() {
   const onTear = async () => {
     await startPass({ app, reason, need: reason === 'specific' ? need : '', limit: reason === 'specific' ? limit : '', minutes, fromRoom: fromRoom || undefined });
     router.replace('/');
-    setTimeout(() => toast(`${app} unlocked for ${minutes} min`), 400);
+    setTimeout(() => toast(knownApp(app) ? `${app} unlocked for ${minutes} min` : `Unlocked for ${minutes} min`), 400);
   };
 
   return (
@@ -72,7 +75,11 @@ export default function Pass() {
               <Text style={{ fontFamily: font.display, fontSize: 20, color: color.inkOnBright }}>{app.charAt(0).toUpperCase()}</Text>
             </View>
             <View>
-              <Text style={type.title}>{app}</Text>
+              {knownApp(app) || !appKey ? (
+                <Text style={type.title}>{knownApp(app) ? app : 'Your shop apps'}</Text>
+              ) : (
+                <AppLabel appKey={appKey} mode="title" size={17} color="#F3F2FF" style={{ height: 24, width: 220 }} />
+              )}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 <IconLock size={13} />
                 <Text style={type.small}>Locked by Till Morning</Text>

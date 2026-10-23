@@ -67,7 +67,8 @@ export async function buy(pkg: PurchasesPackage) {
       track('trial_started', { plan: pkg.packageType });
       return 'active' as const;
     }
-    return 'cancelled' as const;
+    // Paid, but the "pro" entitlement isn't attached to this product in RevenueCat.
+    return 'inactive' as const;
   } catch (e) {
     if ((e as { userCancelled?: boolean }).userCancelled) return 'cancelled' as const;
     throw e;

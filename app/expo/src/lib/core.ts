@@ -198,6 +198,9 @@ export function turnOffTillTomorrow() {
 
 // ---- The app the person was trying to open --------------------------------
 
+/** iOS only shows app names on the shield, so Till Morning often only knows "this app". */
+export const knownApp = (a?: string | null) => !!a && a !== 'this app' && a !== 'your shop apps';
+
 export function lastShielded() {
   if (!ios) return null;
   const name = DA.userDefaultsGet<string>('tm_last_shielded_name');
@@ -282,6 +285,7 @@ export async function startPass(draft: Omit<ShoppingPass, 'id' | 'startedAt' | '
     ...draft,
     id: String(now),
     wholeSelection,
+    ...(!wholeSelection && recent?.key ? { key: recent.key } : {}),
     startedAt: now,
     endsAt: now + draft.minutes * 60 * 1000,
   };
@@ -334,7 +338,7 @@ export function endPass(early = false) {
   }
   if (early) cancelPassEnd(pass);
   setState({ pass: null, pendingCheckIn: pass.urgent ? getState().pendingCheckIn : pass });
-  return pass.urgent ? `${pass.app} is locked again. Sleep well.` : null;
+  return pass.urgent ? (knownApp(pass.app) ? `${pass.app} is locked again. Sleep well.` : 'Locked again. Sleep well.') : null;
 }
 
 /** Called on launch, on resume and every second while the app is open. Returns a toast, if any. */

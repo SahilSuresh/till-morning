@@ -311,9 +311,12 @@ export default function Rules() {
           footerText="On treat nights these open with no pause."
           style={{ width: 1, height: 1, position: 'absolute' }}
           onDismissRequest={() => {
-            setPickTakeaways(false);
-            setState({ takeawaysChosen: true });
-            syncShields();
+            // Wait for the picker to save before closing it (it saves just after "Done").
+            setTimeout(() => {
+              setPickTakeaways(false);
+              setState({ takeawaysChosen: true });
+              syncShields();
+            }, 450);
           }}
         />
       )}

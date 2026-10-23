@@ -5,7 +5,9 @@ import { Animated, Modal, Pressable, ScrollView, Text, View } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { hasTmNative } from '../../modules/tm-native';
+import { AppLabel } from '../../modules/tm-native';
 import { track } from '../lib/analytics';
+import { knownApp } from '../lib/core';
 import { pickScreenshot, readScreenshot } from '../lib/ocr';
 import { bump } from '../lib/progress';
 import { type CheckInAnswer, getState, setState, useAppState } from '../lib/store';
@@ -96,7 +98,11 @@ export default function CheckIn() {
           >
             <Text style={{ fontFamily: font.bodyHeavy, fontSize: 11.5, color: 'rgba(255,255,255,0.85)' }}>Shopping pass</Text>
             <Text style={{ fontFamily: font.display, fontSize: 28, color: '#FFFFFF' }}>{pass.minutes} min</Text>
-            <Text style={{ fontFamily: font.bodyBold, fontSize: 12.5, color: 'rgba(255,255,255,0.85)' }}>{pass.app}</Text>
+            {knownApp(pass.app) || !pass.key ? (
+              <Text style={{ fontFamily: font.bodyBold, fontSize: 12.5, color: 'rgba(255,255,255,0.85)' }}>{knownApp(pass.app) ? pass.app : 'Your shop apps'}</Text>
+            ) : (
+              <AppLabel appKey={pass.key} mode="both" size={12.5} color="#FFFFFF" style={{ height: 18 }} />
+            )}
           </LinearGradient>
           <Animated.View
             style={{
@@ -123,7 +129,9 @@ export default function CheckIn() {
         <Text style={[type.small, { marginTop: 14, textAlign: 'center' }]}>
           {pass.wholeSelection
             ? 'Your Shopping Pass ended, so your shop apps are locked again.'
-            : `Your ${pass.app} pass ended, so ${pass.app} is locked again.`}
+            : knownApp(pass.app)
+              ? `Your ${pass.app} pass ended, so ${pass.app} is locked again.`
+              : 'Your Shopping Pass ended, so the app is locked again.'}
         </Text>
         <Text style={[type.h1, { marginTop: 8, textAlign: 'center' }]}>Did you stick to the plan?</Text>
 
