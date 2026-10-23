@@ -49,3 +49,6 @@ yarn-error.*
 
 # TypeScript
 *.tsbuildinfo
+
+# Till Morning's own native module (hand-written, not generated)
+!app/expo/modules/tm-native/ios/

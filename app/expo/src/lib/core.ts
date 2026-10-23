@@ -6,6 +6,7 @@ import { cancelPassEnd, scheduleParkedReady, schedulePassEnd } from './notify';
 import { breakDay, bump, FREE_PASSES } from './progress';
 import { activeChallenge, inSchedule, isTreatNight, saleOn } from './rules';
 import { dayKey, getState, type ParkedWant, type PriceBand, setState, type ShoppingPass } from './store';
+import { shieldLine1, shieldLine2, writeAppLines } from './apps';
 import { award } from './xp';
 
 // The core loop on top of Apple's Screen Time APIs:
@@ -33,24 +34,10 @@ const rgb = (hex: string) => ({
 
 /** Shield subtitle. Line 1: your own message → challenge line → your goal → the habit line. */
 export function shieldSubtitle() {
-  const s = getState();
-  const ch = activeChallenge();
-  const line1 = s.settings.shieldMsg.trim()
-    ? s.settings.shieldMsg.trim()
-    : ch
-      ? ch.line(ch.day)
-      : s.goal.trim()
-        ? `You’re saving for ${s.goal.trim()}.`
-        : 'Is this a planned purchase?';
-  const waiting = s.parked.filter((w) => !w.decided).length;
-  const line2 = s.budgetTotal
-    ? `Shopping budget: £${Number.isInteger(s.budgetTotal) ? s.budgetTotal : s.budgetTotal.toFixed(2)} a month`
-    : waiting === 1
-      ? '1 thing is already in your waiting room.'
-      : waiting > 1
-        ? `${waiting} things are already in your waiting room.`
-        : '';
-  return line2 ? `${line1}\n${line2}` : line1;
+  const l1 = shieldLine1();
+  const l2 = shieldLine2();
+  return l2 ? `${l1}
+${l2}` : l1;
 }
 
 /** Writes the shield's look and the settings the extensions read. Safe to call often. */
@@ -80,6 +67,7 @@ export function applyShieldLook() {
   DA.userDefaultsSet('tm_nl_on', st.nlOn);
   DA.userDefaultsSet('tm_nl_from', st.nlFrom);
   DA.userDefaultsSet('tm_nl_to', st.nlTo);
+  writeAppLines();
 }
 
 export function protectedCount() {
@@ -369,8 +357,20 @@ export const BAND_LABEL: Record<PriceBand, string> = {
   '20to50': '£20 to £50',
   '50to100': '£50 to £100',
   over100: 'Over £100',
+  exact: 'Exact price',
 };
-const BAND_HOURS: Record<Exclude<PriceBand, 'unsure'>, number> = { under20: 1, '20to50': 3, '50to100': 8, over100: 12 };
+const BAND_HOURS: Record<Exclude<PriceBand, 'unsure' | 'exact'>, number> = { under20: 1, '20to50': 3, '50to100': 8, over100: 12 };
+
+/** The want's price for display: £47, a band, or "price not known". */
+export function priceText(w: { band: PriceBand; price?: number }) {
+  if (w.band === 'exact' && w.price) return `£${Number.isInteger(w.price) ? w.price : w.price.toFixed(2)}`;
+  return w.band === 'unsure' || w.band === 'exact' ? 'price not known' : BAND_LABEL[w.band];
+}
+
+/** Rough price used for the "ask a friend" threshold (prototype parkPrice()). */
+export function parkPrice(band: PriceBand, price = 0) {
+  return band === 'exact' ? price : band === '50to100' ? 75 : band === 'over100' ? 150 : 0;
+}
 
 function next8am(from: number) {
   const d = new Date(from);
@@ -380,10 +380,17 @@ function next8am(from: number) {
 }
 
 /** waitFor() from the prototype: how long a parked want waits before you decide. */
-export function waitFor(band: PriceBand, from = Date.now()) {
+export function waitFor(band: PriceBand, from = Date.now(), price = 0) {
   const chips: string[] = [];
   let readyAt: number;
-  if (band === 'unsure') {
+  if (band === 'exact') {
+    // The Till Morning rule: 1 hour for every £10 (1 hour up to £20).
+    const base = price <= 20 ? 1 : Math.round(price / 10);
+    const h = base * (saleOn() ? 2 : 1);
+    readyAt = from + h * 3600 * 1000;
+    chips.push(price <= 20 ? '£20 or less: 1 h' : `£${Math.round(price)}: ${base} h`);
+    if (saleOn()) chips.push('Sale week: ×2');
+  } else if (band === 'unsure') {
     readyAt = next8am(from);
     chips.push('Not sure? It waits till 08:00');
   } else {
@@ -419,13 +426,20 @@ export function formatDuration(ms: number) {
   return m ? `${h} h ${m} min` : `${h} h`;
 }
 
-export function parkWant(app: string, what: string, band: PriceBand, key?: string | null) {
+export function parkWant(
+  app: string,
+  what: string,
+  band: PriceBand,
+  key?: string | null,
+  extra: { price?: number; items?: number; buddy?: boolean } = {},
+) {
   const now = Date.now();
-  const { readyAt } = waitFor(band, now);
-  const want: ParkedWant = { id: String(now), app, what: what.trim(), band, parkedAt: now, readyAt };
+  // A friend's yes makes it ready straight away.
+  const readyAt = extra.buddy ? now : waitFor(band, now, extra.price ?? 0).readyAt;
+  const want: ParkedWant = { id: String(now), app, what: what.trim(), band, parkedAt: now, readyAt, ...extra };
   setState((s) => ({ parked: [...s.parked, want] }));
   startCoolOff(app, key);
-  scheduleParkedReady(want).catch(() => {});
+  if (!extra.buddy) scheduleParkedReady(want).catch(() => {});
   applyShieldLook(); // the shield mentions the waiting room
   return want;
 }

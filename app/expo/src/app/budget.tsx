@@ -3,7 +3,9 @@ import { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { budgetSummary, evenShare, fillSplit, knownApps, lockDays, money, splitLeft, splitStatus, tierFor, writeBudgetLines } from '../lib/budget';
+import { AppLabel } from '../../modules/tm-native';
+import { myApps } from '../lib/apps';
+import { budgetSummary, evenShare, fillSplit, lockDays, money, splitLeft, splitStatus, tierFor } from '../lib/budget';
 import { applyShieldLook, protectedCount } from '../lib/core';
 import { type AppState, setState, useAppState } from '../lib/store';
 import { Button, Card, CircleButton, OptionCard, Tag, toast } from '../ui/components';
@@ -17,7 +19,8 @@ type Split = AppState['split'];
 export default function Budget() {
   const insets = useSafeAreaInsets();
   const saved = useAppState((s) => s);
-  const apps = useMemo(() => knownApps(), []);
+  const mine = useMemo(() => myApps(), []);
+  const apps = useMemo(() => mine.map((a) => a.key), [mine]);
   const count = protectedCount().apps;
   const [raw, setRaw] = useState(saved.budgetTotal ? String(saved.budgetTotal) : '');
   const [split, setSplit] = useState<Split>(saved.split);
@@ -25,6 +28,7 @@ export default function Budget() {
   const total = Math.max(0, parseFloat(raw) || 0);
   const left = splitLeft(total, budgets, apps);
   const n = count || apps.length;
+  const label = (key: string) => mine.find((a) => a.key === key);
 
   const back = () => (router.canGoBack() ? router.back() : router.replace('/settings'));
   const setTotal = (t: string) => {
@@ -40,7 +44,6 @@ export default function Budget() {
 
   const commit = () => {
     setState({ budgetTotal: total, split, budgets: split === 'custom' ? budgets : {}, budgetSkipped: !total });
-    writeBudgetLines(n);
     applyShieldLook();
   };
   const save = () => {
@@ -54,7 +57,6 @@ export default function Budget() {
   };
   const remove = () => {
     setState({ budgetTotal: 0, budgets: {}, budgetSkipped: true });
-    writeBudgetLines(n);
     applyShieldLook();
     back();
     setTimeout(() => toast('Budget removed'), 300);
@@ -116,12 +118,16 @@ export default function Budget() {
                 <>
                   {apps.map((a, i) => (
                     <View key={a} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: i ? 1.5 : 0, borderColor: color.divider }}>
-                      <Text style={[type.title, { flex: 1 }]} numberOfLines={1}>{a}</Text>
-                      <CircleButton label={`£5 less for ${a}`} onPress={() => step(a, -5)}>
+                      {label(a)?.token ? (
+                        <AppLabel appKey={a} mode="both" size={16} color="#F3F2FF" fallback={label(a)?.name ?? 'App'} style={{ flex: 1, height: 34 }} />
+                      ) : (
+                        <Text style={[type.title, { flex: 1 }]} numberOfLines={1}>{label(a)?.name ?? a}</Text>
+                      )}
+                      <CircleButton label={`£5 less for ${label(a)?.name ?? 'this app'}`} onPress={() => step(a, -5)}>
                         <IconMinus size={16} />
                       </CircleButton>
                       <Text style={{ width: 64, textAlign: 'center', fontFamily: font.display, fontSize: 19, color: color.text }}>{money(budgets[a] || 0) || '£0'}</Text>
-                      <CircleButton label={`£5 more for ${a}`} onPress={() => step(a, 5)}>
+                      <CircleButton label={`£5 more for ${label(a)?.name ?? 'this app'}`} onPress={() => step(a, 5)}>
                         <IconPlus size={16} />
                       </CircleButton>
                     </View>
@@ -135,7 +141,7 @@ export default function Budget() {
                 </>
               ) : (
                 <Text style={[type.small, { paddingVertical: 12 }]}>
-                  Your apps show up here by name once you’ve opened each one at its shield. Until then, one pot or an even split works best.
+                  Choose your apps first, then share the money out here.
                 </Text>
               )}
             </Card>

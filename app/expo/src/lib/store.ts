@@ -14,6 +14,7 @@ export type ShoppingPass = {
   app: string; // display name, or 'your shop apps' when started from Home
   wholeSelection: boolean; // true when the pass opened every protected app
   urgent?: boolean; // night lock's urgent door: 10 minutes, no check-in
+  fromRoom?: boolean; // started after deciding to keep a want: no pause
   reason: PassReason;
   need: string;
   limit: string;
@@ -24,7 +25,7 @@ export type ShoppingPass = {
 
 export type XpEntry = { at: number; amount: number; label: string; app?: string };
 
-export type PriceBand = 'unsure' | 'under20' | '20to50' | '50to100' | 'over100';
+export type PriceBand = 'unsure' | 'under20' | '20to50' | '50to100' | 'over100' | 'exact';
 
 export type ParkedWant = {
   id: string;
@@ -33,6 +34,9 @@ export type ParkedWant = {
   band: PriceBand;
   parkedAt: number;
   readyAt: number;
+  price?: number; // exact price, from a basket screenshot
+  items?: number;
+  buddy?: boolean; // a friend let it skip the wait
   decided?: 'let_go' | 'kept';
   decidedAt?: number;
 };
@@ -112,6 +116,14 @@ export type AppState = {
   proSeen: boolean; // the store has confirmed an active plan at least once
   lapsed: boolean; // plan ended: every shield lifted until they resubscribe
   rateAsked: number[];
+  // Your apps: habit per app and apps switched off (keys from the native module)
+  habits: Record<string, Habit>;
+  offApps: string[];
+  // Note from calm you: a recording on this phone, plus the words it was based on
+  note: { uri: string; text: string; secs: number } | null;
+  // Ask a friend: one text to let something over £50 skip the wait
+  buddy: { on: boolean; name: string; phone: string };
+  lastCheckAt: number; // last time the app confirmed the shields are in place
 };
 
 export const initialState: AppState = {
@@ -182,6 +194,11 @@ export const initialState: AppState = {
   proSeen: false,
   lapsed: false,
   rateAsked: [],
+  habits: {},
+  offApps: [],
+  note: null,
+  buddy: { on: false, name: '', phone: '' },
+  lastCheckAt: 0,
 };
 
 const KEY = 'tm_state_v1';

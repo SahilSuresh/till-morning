@@ -52,29 +52,6 @@ export function budgetSummary() {
   return `${money(s.budgetTotal)} a month, ${{ shared: 'one pot for all apps', even: 'split evenly', custom: 'your own split' }[s.split]}`;
 }
 
-/** Per-app monthly budget, or 0 when there's one pot (prototype budgetFor()). */
-export function budgetFor(app: string, appCount: number) {
-  const s = getState();
-  if (!s.budgetTotal || s.split === 'shared') return 0;
-  return s.split === 'even' ? evenShare(s.budgetTotal, appCount) : Math.max(0, s.budgets[app] || 0);
-}
-
-/** Per-app budget lines the shield extension can read by app name ("tm_budget::Name"). */
-export function writeBudgetLines(appCount: number) {
-  if (!ios) return;
-  try {
-    DA.userDefaultsClearWithPrefix('tm_budget::');
-    const s = getState();
-    if (!s.budgetTotal || s.split === 'shared') return;
-    for (const app of knownApps()) {
-      const b = budgetFor(app, appCount);
-      if (b) DA.userDefaultsSet(`tm_budget::${app}`, money(b));
-    }
-  } catch {
-    // Not fatal: the shield falls back to the total.
-  }
-}
-
 // ---- Bank limit seals --------------------------------------------------------
 
 export const TIERS = [

@@ -10,6 +10,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { track } from '../lib/analytics';
 import { PROTECTED_ID, protectedCount, shieldChosenApps } from '../lib/core';
 import { askNotificationPermission } from '../lib/notify';
+import { setState } from '../lib/store';
 import { requestScreenTimeAccess } from '../lib/screenTime';
 import { PauseBackground } from '../ui/backgrounds';
 import { BreathRing } from '../ui/BreathRing';
@@ -52,6 +53,8 @@ export default function Setup() {
     setPicker(false);
     const c = protectedCount();
     if (c.apps + c.categories > 0) {
+      // A fresh pick replaces any apps switched off on the Your apps page.
+      setState({ offApps: [] });
       track('apps_selected', { apps: c.apps, categories: c.categories });
       if (params.step === 'picker') {
         shieldChosenApps();
