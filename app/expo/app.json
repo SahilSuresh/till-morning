@@ -56,6 +56,12 @@
           "cameraPermission": false,
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-dev-client",
+        {
+          "launchMode": "most-recent"
+        }
       ]
     ],
     "experiments": {
