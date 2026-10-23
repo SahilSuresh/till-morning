@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { budgetSummary, lockDays } from '../../lib/budget';
 import { config, links } from '../../lib/config';
-import { applyShieldLook, liftAllShields, protectedCount, shieldChosenApps, syncShields, turnOffTillTomorrow } from '../../lib/core';
+import { applyShieldLook, liftAllShields, passRelockReport, protectedCount, shieldChosenApps, syncShields, turnOffTillTomorrow } from '../../lib/core';
 import { sendTestEvent } from '../../lib/crashes';
 import { getOfferings, isPurchasesReady, restorePurchases } from '../../lib/purchases';
 import { hh } from '../../lib/rules';
@@ -373,6 +373,8 @@ export default function Settings() {
             <Row label="Try the pause" onPress={() => router.push({ pathname: '/pause', params: { app: 'Test app' } })} />
             <Divider />
             <Row label="Try the urgent door" onPress={() => router.push({ pathname: '/urgent', params: { app: 'Test app' } })} />
+            <Divider />
+            <Row label="Pass re-lock check" sub="When the last pass re-lock ran" onPress={() => Alert.alert('Pass re-lock', passRelockReport())} />
             <Divider />
             <Row label="Send test crash report" onPress={() => { sendTestEvent(); Alert.alert('Sent to Sentry'); }} />
             <Divider />

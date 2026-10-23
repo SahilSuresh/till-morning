@@ -320,17 +320,30 @@ export async function startPass(draft: Omit<ShoppingPass, 'id' | 'startedAt' | '
     // Re-lock even if Till Morning is closed. Screen Time schedules must be at least
     // 15 minutes long, so the interval starts in the past and ends when the pass does.
     DA.stopMonitoring([PASS_ACTIVITY]);
-    DA.configureActions({
-      activityName: PASS_ACTIVITY,
-      callbackName: 'intervalDidEnd',
-      actions: [{ type: 'removeSelectionFromWhitelist', familyActivitySelection: { activitySelectionId: PASS_APP_ID } }],
-    });
+    const relock = [
+      { type: 'removeSelectionFromWhitelist' as const, familyActivitySelection: { activitySelectionId: PASS_APP_ID } },
+      { type: 'blockSelection' as const, familyActivitySelectionId: PROTECTED_ID },
+    ];
+    DA.configureActions({ activityName: PASS_ACTIVITY, callbackName: 'intervalDidEnd', actions: relock });
+    // Second, independent re-lock: iOS counts minutes actually spent in the app and fires
+    // when they reach the pass length, even if the timed end arrives late.
+    const passSelection = DA.getFamilyActivitySelectionId(PASS_APP_ID);
+    const events = passSelection
+      ? [{ eventName: 'used_up', familyActivitySelection: passSelection, threshold: { minute: Math.max(1, pass.minutes) } }]
+      : [];
+    if (events.length) DA.configureActions({ activityName: PASS_ACTIVITY, callbackName: 'eventDidReachThreshold', eventName: 'used_up', actions: relock });
     const start = Math.min(now, pass.endsAt - 15 * 60 * 1000 - 5000);
-    await DA.startMonitoring(
-      PASS_ACTIVITY,
-      { intervalStart: components(start), intervalEnd: components(pass.endsAt), repeats: false },
-      [],
-    );
+    try {
+      await DA.startMonitoring(
+        PASS_ACTIVITY,
+        { intervalStart: components(start), intervalEnd: components(pass.endsAt), repeats: false },
+        events,
+      );
+      DA.userDefaultsRemove('tm_pass_monitor_error');
+    } catch (e) {
+      // Recorded for Settings → Test tools; Till Morning still re-locks when it's next opened.
+      DA.userDefaultsSet('tm_pass_monitor_error', String((e as Error)?.message ?? e));
+    }
   }
 
   if (pass.urgent) {
@@ -368,6 +381,22 @@ export function endPass(early = false) {
   endPassActivities();
   setState({ pass: null, pendingCheckIn: pass.urgent ? getState().pendingCheckIn : pass });
   return pass.urgent ? (knownApp(pass.app) ? `${pass.app} is locked again. Sleep well.` : 'Locked again. Sleep well.') : null;
+}
+
+const NL = String.fromCharCode(10);
+
+/** For Settings → Test tools: did the pass re-lock run? */
+export function passRelockReport() {
+  if (!ios) return 'Not on iOS';
+  try {
+    const events = DA.getEvents(PASS_ACTIVITY);
+    const fmt = (d: Date) => new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const lines = events.map((e) => `${e.callbackName}${e.eventName ? ` (${e.eventName})` : ''}: ${fmt(e.lastCalledAt)}`);
+    const err = DA.userDefaultsGet<string>('tm_pass_monitor_error');
+    return [lines.length ? lines.join(NL) : 'No re-lock events recorded yet', err ? `Error: ${err}` : ''].filter(Boolean).join(NL);
+  } catch (e) {
+    return String(e);
+  }
 }
 
 /** Called on launch, on resume and every second while the app is open. Returns a toast, if any. */
