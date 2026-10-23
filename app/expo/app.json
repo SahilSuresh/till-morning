@@ -45,6 +45,57 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "appEnv": "development",
+      "appGroup": "group.com.andrej.tillmorning",
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "bundleIdentifier": "com.andrej.tillmorning.ShieldConfiguration",
+                  "targetName": "ShieldConfiguration",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": [
+                      "group.com.andrej.tillmorning"
+                    ]
+                  }
+                },
+                {
+                  "bundleIdentifier": "com.andrej.tillmorning.ShieldAction",
+                  "targetName": "ShieldAction",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": [
+                      "group.com.andrej.tillmorning"
+                    ]
+                  }
+                },
+                {
+                  "bundleIdentifier": "com.andrej.tillmorning.ActivityMonitorExtension",
+                  "targetName": "ActivityMonitorExtension",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": [
+                      "group.com.andrej.tillmorning"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "bec5851e-deb4-42ae-a7ae-dbb24a6d0c9f"
+      }
+    },
+    "owner": "sahil-suresh"
   }
 }
