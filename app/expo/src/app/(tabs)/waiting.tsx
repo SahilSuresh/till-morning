@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BAND_LABEL, formatReady } from '../../lib/core';
+import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
+
+import { BAND_LABEL, formatDuration, formatReady } from '../../lib/core';
 import { type ParkedWant, setState, useAppState } from '../../lib/store';
 import { TAB_TIPS } from '../../lib/week';
 import { TipSheet } from '../../ui/TipSheet';
@@ -137,38 +139,72 @@ export default function Waiting() {
   );
 }
 
-/** A parked want as a paper tag: name, app and price band, with its "Decide" stamp. */
+const RING_C = 2 * Math.PI * 33;
+
+/** The countdown ring around a tag's icon (prototype ringSVG()). */
+function TagRing({ frac, ready }: { frac: number; ready: boolean }) {
+  return (
+    <Svg width={56} height={56} viewBox="0 0 74 74" style={{ position: 'absolute' }}>
+      <Defs>
+        <SvgGradient id="wrg" x1="0" y1="0" x2="1" y2="0">
+          <Stop offset="0" stopColor="#4361FF" />
+          <Stop offset="1" stopColor="#8B5CF6" />
+        </SvgGradient>
+      </Defs>
+      <Circle cx="37" cy="37" r="33" fill="none" stroke="#DCD8F7" strokeWidth="6" />
+      <Circle
+        cx="37"
+        cy="37"
+        r="33"
+        fill="none"
+        stroke={ready ? '#1FBF86' : 'url(#wrg)'}
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeDasharray={RING_C}
+        strokeDashoffset={RING_C * (1 - frac)}
+        transform="rotate(-90 37 37)"
+      />
+    </Svg>
+  );
+}
+
+/** A parked want as a paper tag: countdown ring, name, app and price band, time left or "Decide". */
 function WantTag({ want, now, ready }: { want: ParkedWant; now: number; ready?: boolean }) {
+  const total = want.readyAt - want.parkedAt;
+  const frac = ready || total <= 0 ? 1 : Math.min(1, Math.max(0, (now - want.parkedAt) / total));
+  const name = want.what || `Something from ${want.app}`;
   return (
     <Pressable
       onPress={() => ready && router.push({ pathname: '/decide', params: { id: want.id } })}
       disabled={!ready}
       accessibilityRole={ready ? 'button' : undefined}
-      accessibilityHint={ready ? 'Decide whether you still want it' : undefined}
+      accessibilityLabel={ready ? `${name}. Ready. Decide now` : `${name}. ${formatDuration(want.readyAt - now)} left, ready ${formatReady(want.readyAt, now)}`}
     >
-      <View style={{ backgroundColor: color.paper, borderRadius: 18, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#2C24A3', alignItems: 'center', justifyContent: 'center' }}>
-          <IconMoon size={22} color="#C4B5FD" />
+      <View style={{ backgroundColor: color.paper, borderRadius: 18, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <View style={{ width: 56, height: 56, alignItems: 'center', justifyContent: 'center' }}>
+          <TagRing frac={frac} ready={!!ready} />
+          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: '#2C24A3', alignItems: 'center', justifyContent: 'center' }}>
+            <IconMoon size={19} color="#C4B5FD" />
+          </View>
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: font.display, fontSize: 18, color: color.inkOnBright }}>{want.what || `Something from ${want.app}`}</Text>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ fontFamily: font.display, fontSize: 18, color: color.inkOnBright }}>{name}</Text>
           <Text style={{ fontFamily: font.bodyBold, fontSize: 13.5, color: color.paperLabel }}>
             {want.app} · {BAND_LABEL[want.band]}
           </Text>
-        </View>
-        <View
-          style={{
-            transform: [{ rotate: '-6deg' }],
-            borderWidth: 2.5,
-            borderColor: ready ? '#1FA67A' : color.blue,
-            borderRadius: 9,
-            paddingHorizontal: 8,
-            paddingVertical: 3,
-          }}
-        >
-          <Text style={{ fontFamily: font.display, fontSize: 13.5, color: ready ? '#1FA67A' : color.blue }}>
-            {ready ? 'Decide now' : `Decide ${formatReady(want.readyAt, now)}`}
-          </Text>
+          {ready ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 13.5, color: '#1FA67A' }}>Ready. Still want it?</Text>
+              <View style={{ backgroundColor: color.blue, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 }}>
+                <Text style={{ fontFamily: font.display, fontSize: 14, color: '#FFFFFF' }}>Decide</Text>
+              </View>
+            </View>
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 13.5, color: color.blue, fontVariant: ['tabular-nums'] }}>{formatDuration(want.readyAt - now)} left</Text>
+              <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: color.paperLabel }}>{formatReady(want.readyAt, now)}</Text>
+            </View>
+          )}
         </View>
       </View>
     </Pressable>

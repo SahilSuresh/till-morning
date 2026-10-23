@@ -4,6 +4,7 @@ import { type ReactNode, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { budgetSummary, lockDays } from '../../lib/budget';
 import { config, links } from '../../lib/config';
 import { applyShieldLook, liftAllShields, protectedCount, shieldChosenApps, syncShields, turnOffTillTomorrow } from '../../lib/core';
 import { sendTestEvent } from '../../lib/crashes';
@@ -250,7 +251,7 @@ export default function Settings() {
           <Pressable onPress={() => setMore((v) => !v)} accessibilityRole="button" accessibilityState={{ expanded: more }} style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ flex: 1 }}>
               <Text style={type.title}>More options</Text>
-              <Text style={type.small}>Shield message, cool-off and more</Text>
+              <Text style={type.small}>Budget, shield message, cool-off and more</Text>
             </View>
             <View style={{ transform: [{ rotate: more ? '90deg' : '0deg' }] }}>
               <IconCaret />
@@ -258,6 +259,14 @@ export default function Settings() {
           </Pressable>
           {more && (
             <>
+              <Divider />
+              <Row label="Monthly budget" sub={budgetSummary()} onPress={() => router.push('/budget')} />
+              <Divider />
+              <Row
+                label="Bank limit"
+                sub={s.bankLock ? `Set ${lockDays()} day${lockDays() === 1 ? '' : 's'} ago, self-reported` : 'Optional: a card limit your bank enforces'}
+                onPress={() => router.push('/bank')}
+              />
               <Divider />
               <View style={{ paddingVertical: 12 }}>
                 <Text style={type.title}>Your shield message</Text>
@@ -328,6 +337,18 @@ export default function Settings() {
         </Card>
 
         <Section title="Subscription and privacy">
+          <Row
+            label={s.lapsed ? 'Protection is paused' : `Till Morning ${s.plan === 'yearly' ? 'yearly' : 'monthly'}`}
+            sub={
+              s.lapsed
+                ? 'Your plan has ended. Tap to turn protection back on.'
+                : s.trialAt && Date.now() - s.trialAt < 7 * 86400000
+                  ? `Free week, day ${Math.floor((Date.now() - s.trialAt) / 86400000) + 1} of 7. Cancel any time in your Apple account.`
+                  : 'Manage or cancel in your Apple account'
+            }
+            onPress={() => (s.lapsed ? router.push('/paywall') : Linking.openURL('https://apps.apple.com/account/subscriptions'))}
+          />
+          <Divider />
           <Row label="Restore purchases" onPress={onRestore} />
           <Divider />
           <Row label="Privacy policy" onPress={() => Linking.openURL(links.privacy)} />

@@ -8,12 +8,12 @@ import { useEffect } from 'react';
 import { AppState, View } from 'react-native';
 
 import { initAnalytics } from '../lib/analytics';
-import { processShieldLog, syncShields, tick } from '../lib/core';
+import { pauseProtection, processShieldLog, syncShields, tick } from '../lib/core';
 import { initCrashReporting, Sentry } from '../lib/crashes';
 import { Notifications } from '../lib/notify';
 import { checkGoals, goalToast, rollDay } from '../lib/progress';
-import { initPurchases } from '../lib/purchases';
-import { loadState, useAppState, useLoaded } from '../lib/store';
+import { initPurchases, isSubscribed, onSubscriptionChange } from '../lib/purchases';
+import { getState, loadState, setState, useAppState, useLoaded } from '../lib/store';
 import { rankFor } from '../lib/xp';
 import { toast, ToastHost } from '../ui/components';
 import { color } from '../ui/theme';
@@ -31,6 +31,26 @@ function onForeground() {
   const goal = goalToast(checkGoals());
   if (toasts.length) toast(toasts[toasts.length - 1]);
   if (goal) setTimeout(() => toast(goal), toasts.length ? 2800 : 0);
+}
+
+/** The App Store's answer on the plan. Lifts every shield once a plan we've seen active has ended. */
+function onPlan(active: boolean) {
+  const s = getState();
+  if (active) {
+    const wasLapsed = s.lapsed;
+    if (!s.proSeen || s.lapsed || !s.subscribed) setState({ proSeen: true, lapsed: false, subscribed: true });
+    if (wasLapsed) syncShields();
+    return;
+  }
+  // Test builds can skip the paywall without buying; those never lapse.
+  if (s.proSeen && s.subscribed && !s.lapsed) {
+    pauseProtection();
+    router.push('/paused');
+  }
+}
+
+function checkPlan() {
+  isSubscribed().then(onPlan).catch(() => {});
 }
 
 const handledResponses = new Set<string>();
@@ -58,14 +78,23 @@ function RootLayout() {
   const lastResponse = Notifications.useLastNotificationResponse();
 
   useEffect(() => {
-    loadState().then(onForeground);
-    const sub = AppState.addEventListener('change', (s) => s === 'active' && onForeground());
+    loadState().then(() => {
+      onForeground();
+      checkPlan();
+    });
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s !== 'active') return;
+      onForeground();
+      checkPlan();
+    });
+    const offPlan = onSubscriptionChange(onPlan);
     const timer = setInterval(() => {
       const ended = tick();
       if (ended) toast(ended);
     }, 1000);
     return () => {
       sub.remove();
+      offPlan();
       clearInterval(timer);
     };
   }, []);
@@ -114,6 +143,8 @@ function RootLayout() {
         <Stack.Screen name="urgent" options={{ animation: 'fade', gestureEnabled: false }} />
         <Stack.Screen name="rankup" options={{ animation: 'fade' }} />
         <Stack.Screen name="paywall" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="paused" options={{ animation: 'fade', gestureEnabled: false }} />
+        <Stack.Screen name="bankseal" options={{ animation: 'fade' }} />
       </Stack>
       <ToastHost />
     </View>

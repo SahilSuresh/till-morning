@@ -36,6 +36,7 @@ export async function getOfferings() {
 }
 
 export function onSubscriptionChange(listener: (active: boolean) => void) {
+  if (!configured) return () => {};
   const handler = (info: CustomerInfo) => listener(hasPro(info));
   Purchases.addCustomerInfoUpdateListener(handler);
   return () => Purchases.removeCustomerInfoUpdateListener(handler);

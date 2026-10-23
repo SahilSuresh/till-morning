@@ -19,7 +19,7 @@ Last updated: 23 Oct 2026.
 | ✅ | Tour slide "Park it till morning" (L1184) | |
 | ✅ | Paywall "Your free week" (L1383) | live App Store prices via RevenueCat, day-5 reminder notification, restore; "Skip" only in test builds |
 | ✅ | Post-purchase coach tour (L2252) | 4 tips as a paper card (no spotlight cut-out) |
-| ⬜ | Protection paused (plan lapsed) (L1685) | lifts every shield when the subscription ends |
+| ✅ | Protection paused (plan lapsed) (L1685) | when RevenueCat reports a plan we've seen active has ended: every shield lifts, the Paused page shows, Today and Settings say so; resubscribing keeps week one as it was. Test-build skips never lapse |
 | ✅ | Notifications permission | real-app addition, needed for "Tap to start your pause" |
 
 ## 2. Tabs
@@ -29,8 +29,9 @@ Last updated: 23 Oct 2026.
 | 🟡 | Today: greeting, shields chip, check-in nudge, live pass, status card, wait card, Need-to-shop pill | status card variants: access lost ⬜, off till tomorrow ⬜, app list text ⬜; "checked N min ago" ⬜ |
 | ✅ | Today: sale banner, week-one "New · day N" cards, Sunday recap row | |
 | ✅ | Today: "A parcel to open" row | |
+| ✅ | Today: Finish setting up card (budget, Shopping Pass intro, bank limit; Hide) and bank seal card (L1715, L2074) | note item ⬜🔧, habits item needs per-app tokens |
 | ⬜ | Which-app sheet for "Need to shop?" (L2213) | iOS doesn't give app names up front; currently opens the pause for "your shop apps" |
-| ✅ | Waiting room: segments, tags, let-go shelf, empty states | per-tag progress ring + live countdown ⬜, Share button ⬜🔧 |
+| ✅ | Waiting room: segments, tags, let-go shelf, empty states, countdown ring + time left on each tag | Share button ⬜🔧 |
 | ✅ | Me: rank card, Morning card, sticker goals, How XP works, recent decisions | note card ⬜🔧 |
 | 🟡 | Ranks page (L2010) | built as a collapsible list on Me; medals ⬜ |
 | ✅ | Your rules page (L2131) | challenge, treat nights (with a takeaway-apps picker), wait rule + try a price, when to shield, sale seasons, hours of work. Ask a friend ⬜🔧 |
@@ -41,7 +42,7 @@ Last updated: 23 Oct 2026.
 |---|---|---|
 | ✅ | Shield normal / cool-off | custom Swift in targets/ |
 | ✅ | Shield late (22:00–05:00) and night-lock shield | drawn by the Swift extension from the app's night-lock times; "You left it N of the last M" |
-| 🟡 | Shield message priority: own message → challenge → goal → habit; second line budget/meals | ✅ except habit lines, budget and meals lines |
+| 🟡 | Shield message priority: own message → challenge → goal → habit; second line budget/meals | ✅ total budget line; habit, per-app budget and meals lines ⬜🔧 |
 | ✅ | Pause: ring, facts, three choices, walk-away XP, "What's this one about?" + coach, challenge button, night-lock version | note playback ⬜🔧, takeaway meals card ⬜ |
 | ✅ | Park sheet short + full, parked screen | Snap your basket ⬜🔧, Ask Sam ⬜ |
 | ✅ | Decide screen | |
@@ -56,15 +57,15 @@ Last updated: 23 Oct 2026.
 |---|---|---|
 | ✅ | Turn off till tomorrow (L2264) | DeviceActivity schedule turns them back on at 07:00 |
 | ✅ | Delete all data dialog (L2265) | |
-| ⬜ | App Store rating prompt rules (L1830) | expo-store-review is installed |
+| ✅ | App Store rating prompt rules (L1830) | Apple's pop-up after a let-go: subscribed, day 4+, 2+ let-gos, calm day, no rank-up, max 3 a year 120 days apart |
 | ✅ | First-visit tab tips (L2243) | |
 | ✅ | Sticker goal pages (v25–26) incl. "What's a calm day?" | |
 | ✅ | Parcel opening | tear animation simplified to a tap |
 | ⬜ | Note from calm you (L1673) | 🔧 expo-audio for recording/playback |
 | ✅ | Week-one feature cards (L1552) | days 2–7 |
 | ✅ | Sunday recap (L1562) | share as text |
-| ⬜ | Bank limit guide + seal (L1314, L1334) | seal tiers Committed / Week strong / Month proof / Vault |
-| ⬜ | Monthly budget page (L1289) | |
+| ✅ | Bank limit guide + seal (L1314, L1334) | 5 steps, seal page with confetti, 4 tiers, seal card with days on Today, "I removed my card limit" |
+| ✅ | Monthly budget page (L1289) | total, £50–£200 chips, one pot / even / I'll choose (+/− £5 per app; apps appear by name once they've hit a shield). Shield line uses the total; per-app line ⬜🔧 (written to tm_budget::Name for the Swift shield) |
 | ⬜ | Safari checkout sheet (L2232) | 🔧 Safari Web Extension — later |
 
 ## 5. Settings
@@ -77,12 +78,12 @@ Last updated: 23 Oct 2026.
 | ✅ | Night lock switch, starts 22/23/00, ends 06/07/08 | |
 | ✅ | Backup dinner link | |
 | ✅ | Pause length 10/15/30/60 s | |
-| 🟡 | More options: monthly budget, shield message (60), what you're saving for (40) | budget ⬜ |
+| ✅ | More options: monthly budget, bank limit, shield message (60), what you're saving for (40) | |
 | ✅ | Cool-off Off/5/10/30 | |
 | ✅ | Ask "What's this one about?" switch | |
 | ✅ | Shopping Pass lengths (3 fields) | |
-| ⬜ | Bank limit | |
-| 🟡 | Subscription and privacy | restore ✅; plan + trial day ⬜ |
+| ✅ | Bank limit | in More options |
+| ✅ | Subscription and privacy | plan + free-week day, opens Apple subscriptions; restore |
 | ✅ | Rate Till Morning | |
 | ✅ | Delete all data | |
 
@@ -94,7 +95,7 @@ Last updated: 23 Oct 2026.
 | ✅ | Morning card / calm days / breakDay / +50 card fill | |
 | ✅ | 9 sticker goals + parcels | receipt/wallet need checkout proof; legend needs challenges |
 | ✅ | Let-go shelf | |
-| ⬜ | Bank seals | |
+| ✅ | Bank seals | Committed / Week strong / Month proof / Vault |
 
 ## 7. Rules
 | | Item | Notes |

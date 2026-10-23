@@ -5,6 +5,7 @@ import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { endPass, formatReady, protectedCount, readyWants, shieldChosenApps } from '../../lib/core';
+import { lockDays, TIERS, tierFor } from '../../lib/budget';
 import { hh, nightOn, pauseSeconds, risky } from '../../lib/rules';
 import { setState, useAppState } from '../../lib/store';
 import { COACH_TIPS, nextUnlock, recapDue } from '../../lib/week';
@@ -15,6 +16,7 @@ import { Button, Card, Chip, Rise, toast } from '../../ui/components';
 import { IconCaret, IconHourglass, IconMoon, IconShield, IconTicket } from '../../ui/icons';
 import { useTabBarSpace } from '../../ui/layout';
 import { RankCard } from '../../ui/RankCard';
+import { Seal } from '../../ui/Seal';
 import { color, font, gradient, type } from '../../ui/theme';
 
 const greeting = () => {
@@ -36,6 +38,34 @@ function useNow(ms = 250) {
   return now;
 }
 
+/** Bank limit seal on Today: tier, days and progress to the next seal. */
+function BankSealCard({ at }: { at: number }) {
+  const d = lockDays(at);
+  const ti = tierFor(d);
+  const t = TIERS[ti];
+  const nx = TIERS[ti + 1];
+  const pct = nx ? Math.round(((d - t.from) / (nx.from - t.from)) * 100) : 100;
+  return (
+    <Pressable onPress={() => router.push('/bank')} accessibilityRole="button" accessibilityLabel={`${t.name} seal, day ${d}`}>
+      <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Seal size={52} tier={ti} />
+        <View style={{ flex: 1 }}>
+          <Text style={type.title}>{t.name} seal</Text>
+          <Text style={type.small}>Bank limit, self-reported</Text>
+          <View style={{ marginTop: 6, height: 6, borderRadius: 3, backgroundColor: '#23275E', overflow: 'hidden' }}>
+            <LinearGradient colors={[t.c[1], t.c[2]]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 6, width: `${pct}%` }} />
+          </View>
+          <Text style={[type.small, { marginTop: 4 }]}>{nx ? `${nx.from - d} day${nx.from - d === 1 ? '' : 's'} to ${nx.name}` : 'Top seal reached'}</Text>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={{ fontFamily: font.display, fontSize: 26, color: t.c[1] }}>{d}</Text>
+          <Text style={{ fontFamily: font.bodyBold, fontSize: 12, color: color.text2 }}>day{d === 1 ? '' : 's'}</Text>
+        </View>
+      </Card>
+    </Pressable>
+  );
+}
+
 export default function Today() {
   const insets = useSafeAreaInsets();
   const s = useAppState((st) => st);
@@ -48,6 +78,12 @@ export default function Today() {
   const waiting = s.parked.filter((w) => !w.decided && w.readyAt > now);
   const unlock = nextUnlock();
   const coach = s.coachStep >= 0 && s.coachStep < COACH_TIPS.length ? COACH_TIPS[s.coachStep] : null;
+  const setup: ['/budget' | '/passintro' | '/bank', string, string, boolean][] = [
+    ['/budget', 'Set a monthly budget', 'One total, split across your apps', s.budgetTotal > 0 || s.budgetSkipped],
+    ['/passintro', 'Meet the Shopping Pass', 'How to shop on purpose, and your usual pass length', s.passSet],
+    ['/bank', 'Add a bank limit (optional)', 'An extra barrier your bank enforces', !!s.bankLock],
+  ];
+  const setupLeft = s.subscribed ? setup.filter((x) => !x[3]).length : 0;
 
   return (
     <View style={{ flex: 1 }}>
@@ -128,7 +164,15 @@ export default function Today() {
         <Rise delay={40}>
           <Card style={{ alignItems: 'center', paddingVertical: 22 }}>
             <Image source={require('../../../assets/mascots/shieldm.webp')} style={{ width: 84, height: 84 }} resizeMode="contain" />
-            {s.shieldsOn && s.offUntil > now ? (
+            {s.lapsed ? (
+              <>
+                <Text style={[type.h2, { marginTop: 10, textAlign: 'center' }]}>Protection is paused</Text>
+                <Text style={[type.small, { textAlign: 'center', marginTop: 4 }]}>Your plan has ended, so every shield is lifted.</Text>
+                <View style={{ alignSelf: 'stretch', marginTop: 14 }}>
+                  <Button label="Turn protection back on" onPress={() => router.push('/paywall')} />
+                </View>
+              </>
+            ) : s.shieldsOn && s.offUntil > now ? (
               <>
                 <Text style={[type.h2, { marginTop: 10, textAlign: 'center' }]}>Shields are off till tomorrow</Text>
                 <Text style={[type.small, { textAlign: 'center', marginTop: 4 }]}>They come back on by themselves at 07:00 tomorrow.</Text>
@@ -293,6 +337,63 @@ export default function Today() {
         <Rise delay={120}>
           <RankCard />
         </Rise>
+
+        {/* Bank limit seal, or the offer to add one once setup is done */}
+        {s.bankLock ? (
+          <Rise delay={140}>
+            <BankSealCard at={s.bankLock.at} />
+          </Rise>
+        ) : s.subscribed && (setupLeft === 0 || s.setupHidden) ? (
+          <Rise delay={140}>
+            <Pressable onPress={() => router.push('/bank')} accessibilityRole="button">
+              <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Seal size={48} tier={-1} />
+                <View style={{ flex: 1 }}>
+                  <Text style={type.title}>Add a bank limit</Text>
+                  <Text style={type.small}>An optional extra barrier your bank enforces</Text>
+                </View>
+                <IconCaret />
+              </Card>
+            </Pressable>
+          </Rise>
+        ) : null}
+
+        {/* Things moved out of setup, discovered here one at a time */}
+        {!s.setupHidden && setupLeft > 0 && (
+          <Rise delay={150}>
+            <Card style={{ paddingVertical: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 12, paddingBottom: 8 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={type.h2}>Finish setting up</Text>
+                  <Text style={type.small}>
+                    {setup.length - setupLeft} of {setup.length} done, at your own pace
+                  </Text>
+                </View>
+                <Pressable onPress={() => setState({ setupHidden: true })} accessibilityRole="button" hitSlop={8}>
+                  <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: color.text3, textDecorationLine: 'underline' }}>Hide</Text>
+                </Pressable>
+              </View>
+              {setup.map(([path, t, d, ok], i) => (
+                <Pressable
+                  key={path}
+                  onPress={() => router.push(path)}
+                  accessibilityRole="button"
+                  accessibilityState={{ checked: ok }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: 1.5, borderColor: color.divider }}
+                >
+                  <View style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: ok ? color.mint : '#23275E' }}>
+                    {ok ? <Text style={{ fontFamily: font.display, color: color.inkOnBright }}>✓</Text> : <Text style={{ fontFamily: font.display, fontSize: 15, color: color.text2 }}>{i + 1}</Text>}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[type.title, ok && { color: color.text2, textDecorationLine: 'line-through' }]}>{t}</Text>
+                    <Text style={type.small}>{d}</Text>
+                  </View>
+                  <IconCaret />
+                </Pressable>
+              ))}
+            </Card>
+          </Rise>
+        )}
       </ScrollView>
 
       {/* Fixed footer above the tab bar: Need to shop? */}

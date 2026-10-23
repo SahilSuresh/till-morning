@@ -43,8 +43,9 @@ export function shieldSubtitle() {
         ? `You’re saving for ${s.goal.trim()}.`
         : 'Is this a planned purchase?';
   const waiting = s.parked.filter((w) => !w.decided).length;
-  const line2 =
-    waiting === 1
+  const line2 = s.budgetTotal
+    ? `Shopping budget: £${Number.isInteger(s.budgetTotal) ? s.budgetTotal : s.budgetTotal.toFixed(2)} a month`
+    : waiting === 1
       ? '1 thing is already in your waiting room.'
       : waiting > 1
         ? `${waiting} things are already in your waiting room.`
@@ -121,7 +122,7 @@ export async function syncShields() {
   DA.stopMonitoring([...SCHED, ...TREATS, OFFTILL]);
   DA.resetBlocks();
   DA.clearWhitelist();
-  if (!s.shieldsOn || !s.onboarded) return;
+  if (!s.shieldsOn || !s.onboarded || s.lapsed) return;
 
   if (s.offUntil > now) {
     // Back on by itself at 07:00, even if Till Morning stays closed.
@@ -186,6 +187,15 @@ export function liftAllShields(why = 'your shields went off') {
   setState({ shieldsOn: false, offUntil: 0 });
   syncShields();
   if (getState().onboarded) breakDay(why);
+}
+
+/** The plan ended: every shield lifts and stays lifted until they resubscribe (V.paused). Not a slip, so no XP or stamp lost. */
+export function pauseProtection() {
+  if (ios) DA.stopMonitoring([PASS_ACTIVITY]);
+  const p = getState().pass;
+  if (p) cancelPassEnd(p);
+  setState({ subscribed: false, lapsed: true, pass: null, pendingCheckIn: null });
+  syncShields();
 }
 
 /** "Turn off till tomorrow": every shield comes off and returns by itself at 07:00. No XP lost. */

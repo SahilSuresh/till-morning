@@ -3,6 +3,7 @@ import { Image, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { decideWant, formatDuration, readyWants } from '../lib/core';
+import { maybeAskReview } from '../lib/review';
 import { useAppState } from '../lib/store';
 import { award, xpToast } from '../lib/xp';
 import { PauseBackground } from '../ui/backgrounds';
@@ -35,6 +36,7 @@ export default function Decide() {
     if (d === 'let_go') {
       router.replace('/');
       setTimeout(() => toast(xpToast(r, 'Let go')), 400);
+      if (!goal) maybeAskReview();
     } else {
       // You waited, so this one's on purpose: straight to a pass, no pause.
       router.replace({ pathname: '/pass', params: { app: want.app } });

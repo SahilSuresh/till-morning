@@ -98,6 +98,20 @@ export type AppState = {
   cnt: Partial<Record<'leave' | 'decided' | 'checkin' | 'underLimit', number>>;
   got: string[];
   queue: string[];
+  // Monthly budget and the bank limit (self-reported)
+  budgetTotal: number; // £ a month, 0 = no budget
+  split: 'shared' | 'even' | 'custom';
+  budgets: Record<string, number>; // app name -> £ a month, for "I'll choose"
+  budgetSkipped: boolean;
+  bankSteps: number[];
+  bankLock: { at: number; amount: number } | null;
+  // Finish setting up card on Today
+  passSet: boolean;
+  setupHidden: boolean;
+  // Subscription lifecycle and review requests
+  proSeen: boolean; // the store has confirmed an active plan at least once
+  lapsed: boolean; // plan ended: every shield lifted until they resubscribe
+  rateAsked: number[];
 };
 
 export const initialState: AppState = {
@@ -157,6 +171,17 @@ export const initialState: AppState = {
   cnt: {},
   got: [],
   queue: [],
+  budgetTotal: 0,
+  split: 'shared',
+  budgets: {},
+  budgetSkipped: false,
+  bankSteps: [],
+  bankLock: null,
+  passSet: false,
+  setupHidden: false,
+  proSeen: false,
+  lapsed: false,
+  rateAsked: [],
 };
 
 const KEY = 'tm_state_v1';

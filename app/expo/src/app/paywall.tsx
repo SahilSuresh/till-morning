@@ -7,7 +7,7 @@ import { config, links } from '../lib/config';
 import { protectedCount, shieldChosenApps } from '../lib/core';
 import { Notifications } from '../lib/notify';
 import { buy, getPlans, type Plans, restorePurchases } from '../lib/purchases';
-import { setState, useAppState } from '../lib/store';
+import { getState, setState, useAppState } from '../lib/store';
 import { TopGlow } from '../ui/backgrounds';
 import { Button, Rise, TextLink, toast } from '../ui/components';
 import { color, font, type } from '../ui/theme';
@@ -39,7 +39,9 @@ export default function Paywall() {
 
   const done = async () => {
     const now = Date.now();
-    setState({ subscribed: true, onboarded: true, appsChosen: true, trialAt: now, day: '', coachStep: 0 });
+    // Coming back after a lapse keeps the first week, tips and tour as they were.
+    const returning = getState().lapsed || getState().trialAt > 0;
+    setState({ subscribed: true, lapsed: false, onboarded: true, appsChosen: true, ...(returning ? {} : { trialAt: now, day: '', coachStep: 0 }) });
     shieldChosenApps();
     if (remind) {
       const when = new Date(now + 5 * 86400000);
