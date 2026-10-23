@@ -194,6 +194,7 @@ function Welcome({ onNext }: { onNext: () => void }) {
   const insets = useSafeAreaInsets();
   const hold = useRef(new Animated.Value(0)).current;
   const jiggle = useRef(new Animated.Value(0)).current;
+  const noise = useRef(new Animated.Value(1)).current; // the sale pills' opacity (native side)
   const [phase, setPhase] = useState<'idle' | 'holding' | 'early' | 'paused' | 'welcome'>('idle');
   const anim = useRef<Animated.CompositeAnimation | null>(null);
 
@@ -210,7 +211,12 @@ function Welcome({ onNext }: { onNext: () => void }) {
 
   const start = () => {
     setPhase('holding');
-    anim.current = Animated.timing(hold, { toValue: 1, duration: 2500, easing: Easing.linear, useNativeDriver: false });
+    // Two values on purpose: the SVG ring can only animate on the JS side, while the pills
+    // also wiggle on the native side. Sharing one value between them crashes React Native.
+    anim.current = Animated.parallel([
+      Animated.timing(hold, { toValue: 1, duration: 2500, easing: Easing.linear, useNativeDriver: false }),
+      Animated.timing(noise, { toValue: 0, duration: 2500, easing: Easing.linear, useNativeDriver: true }),
+    ]);
     anim.current.start(({ finished }) => {
       if (!finished) return;
       setPhase('paused');
@@ -221,7 +227,10 @@ function Welcome({ onNext }: { onNext: () => void }) {
   const release = () => {
     if (phase !== 'holding') return;
     anim.current?.stop();
-    Animated.timing(hold, { toValue: 0, duration: 300, useNativeDriver: false }).start();
+    Animated.parallel([
+      Animated.timing(hold, { toValue: 0, duration: 300, useNativeDriver: false }),
+      Animated.timing(noise, { toValue: 1, duration: 300, useNativeDriver: true }),
+    ]).start();
     setPhase('early');
   };
 
@@ -253,7 +262,7 @@ function Welcome({ onNext }: { onNext: () => void }) {
   }
 
   const C = 2 * Math.PI * 92;
-  const noiseOpacity = hold.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+  const noiseOpacity = noise;
   return (
     <View style={{ flex: 1, backgroundColor: color.night }}>
       {PILLS.map((p, i) => (

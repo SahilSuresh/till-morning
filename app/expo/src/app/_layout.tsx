@@ -26,6 +26,8 @@ function onForeground() {
   if (toasts.length) toast(toasts[toasts.length - 1]);
 }
 
+const handledResponses = new Set<string>();
+
 function openFromUrl(url?: unknown) {
   if (typeof url !== 'string') return;
   const path = url.replace(/^tillmorning:\/\//, '/');
@@ -66,7 +68,12 @@ function RootLayout() {
   // Tapping "Tap to start your pause", "pass ended" or "is ready" opens the right screen.
   useEffect(() => {
     if (!ready || !lastResponse) return;
+    const id = `${lastResponse.notification.request.identifier}:${lastResponse.notification.date}`;
+    if (handledResponses.has(id)) return;
+    handledResponses.add(id);
     openFromUrl(lastResponse.notification.request.content.data?.url);
+    // So a notification tapped once doesn't reopen the same screen on the next launch.
+    Notifications.clearLastNotificationResponseAsync?.().catch(() => {});
   }, [ready, lastResponse]);
 
   if (!ready) return <View style={{ flex: 1, backgroundColor: color.night }} />;
