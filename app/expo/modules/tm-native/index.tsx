@@ -7,6 +7,9 @@ type TmNativeModule = {
   saveAppsSelection(keys: string[], id: string): boolean;
   editApps(selectionId: string, add: string[], remove: string[]): number;
   recognizeText(uri: string): Promise<string[]>;
+  startPassActivity?(title: string, need: string, startedAt: number, endsAt: number): boolean;
+  endPassActivities?(): void;
+  reloadWidgets?(): void;
 };
 
 const native = requireOptionalNativeModule<TmNativeModule>('TmNative');
@@ -35,6 +38,31 @@ export function editApps(selectionId: string, add: string[], remove: string[]) {
     return native?.editApps(selectionId, add, remove) ?? -1;
   } catch {
     return -1;
+  }
+}
+
+/** Shopping Pass countdown on the Lock Screen and Dynamic Island. No-op on older installs. */
+export function startPassActivity(title: string, need: string, startedAt: number, endsAt: number) {
+  try {
+    return native?.startPassActivity?.(title, need, startedAt, endsAt) ?? false;
+  } catch {
+    return false;
+  }
+}
+
+export function endPassActivities() {
+  try {
+    native?.endPassActivities?.();
+  } catch {
+    // Older install without Live Activities.
+  }
+}
+
+export function reloadWidgets() {
+  try {
+    native?.reloadWidgets?.();
+  } catch {
+    // Older install without widgets.
   }
 }
 

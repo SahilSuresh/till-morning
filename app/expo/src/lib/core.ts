@@ -6,6 +6,7 @@ import { cancelPassEnd, scheduleParkedReady, schedulePassEnd } from './notify';
 import { breakDay, bump, FREE_PASSES } from './progress';
 import { activeChallenge, inSchedule, isTreatNight, saleOn } from './rules';
 import { dayKey, getState, type ParkedWant, type PriceBand, setState, type ShoppingPass } from './store';
+import { endPassActivities, reloadWidgets, startPassActivity } from '../../modules/tm-native';
 import { shieldLine1, shieldLine2, writeAppLines } from './apps';
 import { award } from './xp';
 
@@ -68,6 +69,25 @@ export function applyShieldLook() {
   DA.userDefaultsSet('tm_nl_from', st.nlFrom);
   DA.userDefaultsSet('tm_nl_to', st.nlTo);
   writeAppLines();
+  writeWidget();
+}
+
+let lastWidget = '';
+/** Data for the Home Screen and Lock Screen widgets (targets/TillMorningWidget). */
+export function writeWidget() {
+  if (!ios) return;
+  const s = getState();
+  const json = JSON.stringify({
+    readyAts: s.parked.filter((w) => !w.decided).map((w) => w.readyAt),
+    subscribed: s.subscribed && !s.lapsed,
+    nlOn: s.settings.nlOn,
+    nlFrom: s.settings.nlFrom,
+    nlTo: s.settings.nlTo,
+  });
+  if (json === lastWidget) return;
+  lastWidget = json;
+  DA.userDefaultsSet('tm_widget', json);
+  reloadWidgets();
 }
 
 export function protectedCount() {
@@ -182,6 +202,7 @@ export function pauseProtection() {
   if (ios) DA.stopMonitoring([PASS_ACTIVITY]);
   const p = getState().pass;
   if (p) cancelPassEnd(p);
+  endPassActivities();
   setState({ subscribed: false, lapsed: true, pass: null, pendingCheckIn: null });
   syncShields();
 }
@@ -325,6 +346,13 @@ export async function startPass(draft: Omit<ShoppingPass, 'id' | 'startedAt' | '
     track('shopping_pass_started', { minutes: pass.minutes });
   }
   schedulePassEnd(pass).catch(() => {});
+  // The countdown you can keep an eye on from inside the shop: Lock Screen and Dynamic Island.
+  startPassActivity(
+    pass.urgent ? 'Urgent · 10 minutes' : knownApp(pass.app) ? `${pass.app} pass` : 'Shopping pass',
+    pass.need || { specific: 'Something specific', browsing: 'Just browsing', unsure: 'Not sure yet' }[pass.reason] || '',
+    pass.startedAt,
+    pass.endsAt,
+  );
   return pass;
 }
 
@@ -337,6 +365,7 @@ export function endPass(early = false) {
     DA.stopMonitoring([PASS_ACTIVITY]);
   }
   if (early) cancelPassEnd(pass);
+  endPassActivities();
   setState({ pass: null, pendingCheckIn: pass.urgent ? getState().pendingCheckIn : pass });
   return pass.urgent ? (knownApp(pass.app) ? `${pass.app} is locked again. Sleep well.` : 'Locked again. Sleep well.') : null;
 }

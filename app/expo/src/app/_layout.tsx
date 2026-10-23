@@ -61,6 +61,7 @@ function openFromUrl(url?: unknown) {
   if (path.startsWith('/pause')) router.push('/pause');
   else if (path.startsWith('/checkin')) router.push('/checkin');
   else if (path.startsWith('/decide')) router.push(path as '/decide');
+  else if (path.startsWith('/waiting')) router.push('/waiting');
 }
 
 function RootLayout() {

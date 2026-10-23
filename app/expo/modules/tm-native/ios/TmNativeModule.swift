@@ -126,6 +126,20 @@ public class TmNativeModule: Module {
       }
     }
 
+    // Shopping Pass countdown on the Lock Screen / Dynamic Island (times in ms since 1970).
+    Function("startPassActivity") { (title: String, need: String, startedAt: Double, endsAt: Double) -> Bool in
+      return TmLive.start(title: title, need: need, startedAt: startedAt, endsAt: endsAt)
+    }
+
+    Function("endPassActivities") {
+      TmLive.endAll()
+    }
+
+    // Widgets read "tm_widget" from the App Group; this asks iOS to redraw them now.
+    Function("reloadWidgets") {
+      TmLive.reloadWidgets()
+    }
+
     // Apple's own app name and icon for a token. Only iOS can draw these; the app never sees the name.
     View(TmAppLabelView.self) {
       Prop("appKey") { (view: TmAppLabelView, key: String?) in
