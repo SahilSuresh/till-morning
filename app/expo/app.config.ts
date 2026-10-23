@@ -36,6 +36,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         {
           appleTeamId: process.env.APPLE_TEAM_ID,
           appGroup: APP_GROUP,
+          // targets/ holds Till Morning's customised shield extensions; don't let the
+          // plugin overwrite them with the library's stock copies on prebuild.
+          copyToTargetFolder: false,
         },
       ],
       [

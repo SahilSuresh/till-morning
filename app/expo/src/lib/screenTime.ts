@@ -10,6 +10,12 @@ export function isScreenTimeAvailable() {
 
 export async function requestScreenTimeAccess() {
   await DeviceActivity.requestAuthorization('individual');
+  // The status can read "not determined" for a moment after the person answers, so poll briefly.
+  for (let i = 0; i < 10; i++) {
+    const status = DeviceActivity.getAuthorizationStatus();
+    if (status !== 0) return status;
+    await new Promise((r) => setTimeout(r, 200));
+  }
   return DeviceActivity.getAuthorizationStatus();
 }
 

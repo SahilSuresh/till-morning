@@ -1,0 +1,468 @@
+import * as Haptics from 'expo-haptics';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Animated,
+  AppState,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { track } from '../lib/analytics';
+import {
+  BAND_LABEL,
+  formatDuration,
+  formatReady,
+  logPause,
+  parkWant,
+  recentShieldedApp,
+  startCoolOff,
+  waitFor,
+} from '../lib/core';
+import { getState, type ParkedWant, type PriceBand } from '../lib/store';
+import { award, xpToast } from '../lib/xp';
+import { PauseBackground } from '../ui/backgrounds';
+import { BreathRing } from '../ui/BreathRing';
+import { Button, Chip, springOut, Tag, TextLink, toast, useReduceMotion } from '../ui/components';
+import { IconClock, IconHourglass, IconMoon, IconTimer } from '../ui/icons';
+import { color, font, type } from '../ui/theme';
+
+const hhmm = (at: number) => {
+  const d = new Date(at);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
+
+/** One true fact for this pause (pauseFact() in the prototype). Bold parts are wrapped in **. */
+function pauseFact(app: string) {
+  const s = getState();
+  const now = Date.now();
+  const forApp = s.pauseLog.filter((p) => p.app === app).slice(-5);
+  const left = forApp.filter((p) => p.outcome === 'left' || p.outcome === 'walked' || p.outcome === 'parked').length;
+  if (forApp.length >= 2 && left >= 1) return `You left ${app} **${left} of the last ${forApp.length} times**.`;
+  const waiting = s.parked.filter((w) => !w.decided);
+  if (waiting.length === 1) return `**1 thing** is already parked, ready at ${hhmm(waiting[0].readyAt)}.`;
+  if (waiting.length > 1) return `**${waiting.length} things** are parked, waiting their turn.`;
+  const h = new Date(now).getHours();
+  if (h >= 22 || h < 5) return `It’s **${hhmm(now)}**. A want made this late can wait till 8.`;
+  return 'Most wants fade in a few minutes. **Watch this one.**';
+}
+
+function Bold({ text, style }: { text: string; style: object }) {
+  const parts = text.split('**');
+  return (
+    <Text style={style}>
+      {parts.map((p, i) => (
+        <Text key={i} style={i % 2 ? { fontFamily: font.bodyHeavy, color: '#FFFFFF' } : undefined}>
+          {p}
+        </Text>
+      ))}
+    </Text>
+  );
+}
+
+export default function Pause() {
+  const insets = useSafeAreaInsets();
+  const rm = useReduceMotion();
+  const params = useLocalSearchParams<{ app?: string }>();
+
+  // Which app is this about? From Home it's passed in; from the shield, the extension recorded it.
+  const { app, key } = useMemo(() => {
+    if (params.app) return { app: params.app, key: null as string | null };
+    const recent = recentShieldedApp();
+    return { app: recent?.name ?? 'your shop apps', key: recent?.key ?? null };
+  }, [params.app]);
+
+  const total = useMemo(() => {
+    const base = getState().settings.pauseSeconds;
+    const h = new Date().getHours();
+    return h >= 22 ? Math.max(45, base) : base; // risky hour: at least 45 s
+  }, []);
+  const lateNight = useMemo(() => {
+    const h = new Date().getHours();
+    return h >= 22 || h < 5;
+  }, []);
+  const fact = useMemo(() => pauseFact(app), [app]);
+
+  const startedAt = useRef(Date.now()).current;
+  const [left, setLeft] = useState(total);
+  const done = left <= 0;
+  const [sheet, setSheet] = useState<null | 'quick' | 'full'>(null);
+  const [parked, setParked] = useState<ParkedWant | null>(null);
+  const finished = useRef(false);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      const l = Math.max(0, total - (Date.now() - startedAt) / 1000);
+      setLeft(l);
+      if (l <= 0) clearInterval(t);
+    }, 250);
+    return () => clearInterval(t);
+  }, [total, startedAt]);
+
+  useEffect(() => {
+    if (done) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+  }, [done]);
+
+  // Walking away mid-pause counts as leaving (+10 XP).
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s !== 'background' || finished.current || done) return;
+      finished.current = true;
+      const r = award(10, `Walked away from ${app} during the pause`, { app, gap: true });
+      logPause(app, 'walked');
+      startCoolOff(app, key);
+      track('pause_completed', { outcome: 'walked' });
+      router.replace('/');
+      setTimeout(() => toast(xpToast(r, 'You walked away')), 600);
+    });
+    return () => sub.remove();
+  }, [app, key, done]);
+
+  // Choices unlock one after another with a bounce.
+  const unlock = useRef([0, 1, 2].map(() => new Animated.Value(0))).current;
+  useEffect(() => {
+    if (!done) return;
+    if (rm) {
+      unlock.forEach((v) => v.setValue(1));
+      return;
+    }
+    Animated.stagger(
+      90,
+      unlock.map((v) => Animated.timing(v, { toValue: 1, duration: 500, easing: springOut, useNativeDriver: true })),
+    ).start();
+  }, [done, rm, unlock]);
+  const unlockStyle = (i: number) =>
+    done
+      ? { transform: [{ scale: unlock[i].interpolate({ inputRange: [0, 0.6, 1], outputRange: [0.95, 1.04, 1] }) }] }
+      : undefined;
+
+  const leave = () => {
+    finished.current = true;
+    const r = award(10, `Left ${app} after the pause`, { app, gap: true });
+    logPause(app, 'left');
+    startCoolOff(app, key);
+    track('pause_completed', { outcome: 'left' });
+    router.replace('/');
+    setTimeout(() => toast(xpToast(r, `You left ${app}`)), 400);
+  };
+
+  const shop = () => {
+    finished.current = true;
+    logPause(app, 'shop');
+    track('pause_completed', { outcome: 'shop' });
+    router.replace({ pathname: '/pass', params: { app } });
+  };
+
+  const park = (what: string, band: PriceBand) => {
+    finished.current = true;
+    const want = parkWant(app, what, band, key);
+    award(5, `Parked a want from ${app}`, { app });
+    logPause(app, 'parked');
+    track('pause_completed', { outcome: 'parked' });
+    setSheet(null);
+    setParked(want);
+  };
+
+  if (parked) return <ParkedScreen want={parked} />;
+
+  return (
+    <View style={{ flex: 1 }}>
+      <PauseBackground />
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 12, paddingHorizontal: 28, alignItems: 'center' }}
+        bounces={false}
+      >
+        <Chip
+          tone="glass"
+          size={13}
+          icon={<IconTimer size={14} />}
+          label={`${total}-second pause · ${app}${lateNight ? ' · late night' : new Date().getHours() >= 22 ? ' · risky hour' : ''}`}
+        />
+        <View style={{ marginTop: 16 }}>
+          <BreathRing total={total} left={left} done={done} />
+        </View>
+
+        <Text style={[type.h1, { color: '#FFFFFF', textAlign: 'center', marginTop: 18 }]}>
+          Take a breath. Do you still want it?
+        </Text>
+
+        <View
+          style={{
+            marginTop: 16,
+            flexDirection: 'row',
+            gap: 10,
+            alignItems: 'flex-start',
+            backgroundColor: 'rgba(13,15,46,0.32)',
+            borderRadius: 18,
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+            maxWidth: 330,
+          }}
+        >
+          <View style={{ marginTop: 2 }}>
+            <IconClock size={16} color="rgba(255,255,255,0.82)" />
+          </View>
+          <Bold text={fact} style={{ fontFamily: font.bodySemi, fontSize: 15, lineHeight: 21, color: color.white82, flexShrink: 1 }} />
+        </View>
+
+        <View style={{ flex: 1, minHeight: 20 }} />
+
+        <View style={{ alignSelf: 'stretch', paddingBottom: insets.bottom + 20, gap: 12 }}>
+          <Text style={{ fontFamily: font.bodySemi, fontSize: 14, color: 'rgba(243,242,255,0.75)', textAlign: 'center' }}>
+            {done ? 'Whatever you pick is fine' : 'Just breathe. Choices come in a moment.'}
+          </Text>
+          <Animated.View style={unlockStyle(0)}>
+            <Button variant="white" label="I’ll leave it" onPress={leave} disabled={!done} />
+          </Animated.View>
+          <Animated.View style={unlockStyle(1)}>
+            <Button
+              variant="ghost"
+              label="Park it till morning"
+              icon={<IconHourglass size={18} />}
+              onPress={() => setSheet('quick')}
+              disabled={!done}
+            />
+          </Animated.View>
+          <Animated.View style={[unlockStyle(2), { opacity: done ? 1 : 0.38 }]}>
+            <Pressable onPress={shop} disabled={!done} accessibilityRole="button" style={{ paddingVertical: 8 }}>
+              <Text
+                style={{
+                  fontFamily: font.bodyBold,
+                  fontSize: 15,
+                  color: 'rgba(243,242,255,0.8)',
+                  textAlign: 'center',
+                  textDecorationLine: 'underline',
+                }}
+              >
+                I need it now
+              </Text>
+            </Pressable>
+          </Animated.View>
+        </View>
+      </ScrollView>
+
+      <ParkSheet app={app} mode={sheet} onMode={setSheet} onPark={park} />
+    </View>
+  );
+}
+
+// ---- Park it till morning: quick and expanded sheet ----------------------
+
+const BANDS: PriceBand[] = ['unsure', 'under20', '20to50', '50to100', 'over100'];
+
+function ParkSheet({
+  app,
+  mode,
+  onMode,
+  onPark,
+}: {
+  app: string;
+  mode: null | 'quick' | 'full';
+  onMode: (m: null | 'quick' | 'full') => void;
+  onPark: (what: string, band: PriceBand) => void;
+}) {
+  const insets = useSafeAreaInsets();
+  const [what, setWhat] = useState('');
+  const [band, setBand] = useState<PriceBand>('unsure');
+  const { readyAt, chips } = waitFor(band);
+  const now = Date.now();
+
+  return (
+    <Modal visible={mode !== null} transparent animationType="slide" onRequestClose={() => onMode(null)}>
+      <Pressable style={{ flex: 1, backgroundColor: 'rgba(6,6,28,0.5)' }} onPress={() => onMode(null)} accessibilityLabel="Close" />
+      <KeyboardAvoidingView behavior="padding">
+        <View
+          style={{
+            backgroundColor: color.sheet,
+            borderTopWidth: 1.5,
+            borderColor: '#2E3374',
+            borderTopLeftRadius: 30,
+            borderTopRightRadius: 30,
+            paddingHorizontal: 24,
+            paddingTop: 10,
+            paddingBottom: insets.bottom + 16,
+          }}
+        >
+          <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: '#3A3F86', marginBottom: 16 }} />
+          <Text style={[type.h1, { fontSize: 24, lineHeight: 28 }]}>Park it till morning</Text>
+
+          {mode === 'quick' ? (
+            <>
+              <Text style={[type.body, { marginTop: 8 }]}>
+                You don’t need to know what it is or what it costs. {app} stays shielded, and you decide with a clear head.
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                  marginTop: 16,
+                  backgroundColor: '#1C2057',
+                  borderRadius: 22,
+                  padding: 16,
+                }}
+              >
+                <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(167,139,250,0.19)', alignItems: 'center', justifyContent: 'center' }}>
+                  <IconMoon size={22} color="#CBBBFF" />
+                </View>
+                <View>
+                  <Text style={type.label}>Ready</Text>
+                  <Text style={[type.h2]}>{formatReady(waitFor('unsure', now).readyAt, now)}</Text>
+                </View>
+              </View>
+              <View style={{ marginTop: 18, gap: 4 }}>
+                <Button label="Park it" icon={<IconHourglass size={18} />} onPress={() => onPark('', 'unsure')} />
+                <TextLink label="Add what it is or a rough price" onPress={() => onMode('full')} />
+                <TextLink label="Cancel" style={{ color: color.text3 }} onPress={() => onMode(null)} />
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={[type.body, { marginTop: 8 }]}>All of this is optional. {app} stays shielded while it waits.</Text>
+              <Text style={[type.label, { marginTop: 16 }]}>What is it? (optional)</Text>
+              <TextInput
+                value={what}
+                onChangeText={setWhat}
+                maxLength={40}
+                placeholder={`Something from ${app}`}
+                placeholderTextColor={color.placeholder}
+                style={{
+                  marginTop: 8,
+                  backgroundColor: color.field,
+                  borderColor: color.fieldBorder,
+                  borderWidth: 1.5,
+                  borderRadius: 16,
+                  paddingHorizontal: 14,
+                  paddingVertical: 13,
+                  fontFamily: font.bodySemi,
+                  fontSize: 16.5,
+                  color: color.text,
+                }}
+              />
+              <Text style={[type.label, { marginTop: 16 }]}>Roughly how much?</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                {BANDS.map((b) => (
+                  <Tag key={b} label={BAND_LABEL[b]} selected={band === b} onPress={() => setBand(b)} />
+                ))}
+              </View>
+              <View style={{ marginTop: 16, backgroundColor: '#1C2057', borderRadius: 22, padding: 16 }}>
+                <Text style={type.label}>It waits</Text>
+                <Text style={{ fontFamily: font.display, fontSize: 26, color: color.blueLight }}>{formatDuration(readyAt - now)}</Text>
+                <Text style={[type.small, { marginTop: 2 }]}>Ready {formatReady(readyAt, now)}</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                  {chips.map((c) => (
+                    <Chip key={c} tone="lilac" label={c} />
+                  ))}
+                </View>
+              </View>
+              <View style={{ marginTop: 18, gap: 4 }}>
+                <Button label="Park it" icon={<IconHourglass size={18} />} onPress={() => onPark(what, band)} />
+                <TextLink label="Cancel" style={{ color: color.text3 }} onPress={() => onMode(null)} />
+              </View>
+            </>
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+// ---- After parking -------------------------------------------------------
+
+function ParkedScreen({ want }: { want: ParkedWant }) {
+  const insets = useSafeAreaInsets();
+  const rm = useReduceMotion();
+  const drop = useRef(new Animated.Value(rm ? 1 : 0)).current;
+  const stamp = useRef(new Animated.Value(rm ? 1 : 0)).current;
+  const morning = new Date(want.readyAt).getHours() === 8 && new Date(want.readyAt).getMinutes() === 0;
+  const when = formatReady(want.readyAt);
+
+  useEffect(() => {
+    if (rm) return;
+    Animated.sequence([
+      Animated.timing(drop, { toValue: 1, duration: 550, easing: springOut, useNativeDriver: true }),
+      Animated.timing(stamp, { toValue: 1, duration: 500, easing: springOut, useNativeDriver: true }),
+    ]).start();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+  }, [rm, drop, stamp]);
+
+  return (
+    <View style={{ flex: 1 }}>
+      <PauseBackground />
+      <View style={{ flex: 1, paddingTop: insets.top + 40, paddingHorizontal: 28, alignItems: 'center' }}>
+        <Animated.View
+          style={{
+            opacity: drop,
+            transform: [
+              { translateY: drop.interpolate({ inputRange: [0, 1], outputRange: [-60, 0] }) },
+              { rotate: '-3deg' },
+            ],
+            width: 240,
+            backgroundColor: color.paper,
+            borderRadius: 18,
+            padding: 18,
+            alignItems: 'center',
+            shadowColor: '#020312',
+            shadowOpacity: 0.5,
+            shadowRadius: 16,
+            shadowOffset: { width: 0, height: 8 },
+          }}
+        >
+          <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#2C24A3', marginBottom: 12 }} />
+          <Image source={require('../../assets/mascots/bubble.webp')} style={{ width: 96, height: 96 }} resizeMode="contain" />
+          <Text style={{ fontFamily: font.display, fontSize: 20, color: color.inkOnBright, marginTop: 8, textAlign: 'center' }}>
+            {want.what || `Something from ${want.app}`}
+          </Text>
+          <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: color.paperLabel, marginTop: 2 }}>
+            {want.app} · {BAND_LABEL[want.band]}
+          </Text>
+          <Animated.View
+            style={{
+              marginTop: 14,
+              opacity: stamp,
+              transform: [
+                { scale: stamp.interpolate({ inputRange: [0, 1], outputRange: [2.2, 1] }) },
+                { rotate: stamp.interpolate({ inputRange: [0, 1], outputRange: ['-10deg', '-6deg'] }) },
+              ],
+              borderWidth: 3,
+              borderColor: color.blue,
+              borderRadius: 10,
+              paddingHorizontal: 12,
+              paddingVertical: 4,
+            }}
+          >
+            <Text style={{ fontFamily: font.display, fontSize: 18, color: color.blue }}>Decide {when}</Text>
+          </Animated.View>
+        </Animated.View>
+
+        <Text style={[type.display, { color: '#FFFFFF', textAlign: 'center', marginTop: 32 }]}>
+          {morning ? 'Parked. Sleep on it.' : 'Parked. Give it time.'}
+        </Text>
+        <Text style={[type.body, { color: color.white82, textAlign: 'center', marginTop: 10 }]}>
+          {want.app} stays shielded. Morning-you gets the final say. We’ll let you know when it’s ready.
+        </Text>
+        <View style={{ marginTop: 14 }}>
+          <Chip tone="mint" label="+5 XP" />
+        </View>
+        <View style={{ flex: 1 }} />
+        <View style={{ alignSelf: 'stretch', paddingBottom: insets.bottom + 20 }}>
+          <Button
+            variant="white"
+            label="Done"
+            onPress={() => {
+              router.replace('/');
+              setTimeout(() => toast(`Parked till ${when}`), 400);
+            }}
+          />
+        </View>
+      </View>
+    </View>
+  );
+}
