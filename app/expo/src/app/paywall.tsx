@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
+import { BellRinging } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Switch, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Line } from 'react-native-svg';
 
 import { config, links } from '../lib/config';
 import { protectedCount, shieldChosenApps } from '../lib/core';
@@ -10,19 +11,35 @@ import { buy, getPlans, type Plans, restorePurchases } from '../lib/purchases';
 import { getState, setState, useAppState } from '../lib/store';
 import { TopGlow } from '../ui/backgrounds';
 import { Button, Rise, TextLink, toast } from '../ui/components';
+import { useObSpace } from '../ui/onboarding/space';
 import { color, font, type } from '../ui/theme';
 
 const dt = (days: number) => new Date(Date.now() + days * 86400000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
-/** "Your free week" (V.paywall, L1383). The billed price stays the biggest number (Apple's rule). */
+// The prices set in App Store Connect, shown only until the App Store's own strings arrive.
+const FALLBACK = { yearly: '£29.99', monthly: '£4.99', perMonth: `£${(29.99 / 12).toFixed(2)}` };
+
+const INK = '#14163A';
+const SUB = '#4A4E7A'; // .pw-sub / .pw-due
+
+/** What "Today" shields: apps and whole categories are counted apart (a category isn't one app). */
+function shieldsLine(apps: number, categories: number) {
+  const a = `${apps} app${apps === 1 ? '' : 's'}`;
+  const c = `${categories} ${categories === 1 ? 'category' : 'categories'}`;
+  if (apps && categories) return `Shields go up on ${a} and ${c}`;
+  if (apps) return `Shields go up on ${a}`;
+  if (categories) return `Shields go up on ${categories === 1 ? 'a whole category' : c} of apps`;
+  return 'Shields go up on your apps';
+}
+
+/** "Your free week" (V.paywall, P:L1383; CSS P:L1780–1792). The billed price stays the biggest number (Apple's rule). */
 export default function Paywall() {
-  const insets = useSafeAreaInsets();
+  const sp = useObSpace();
   const plan = useAppState((s) => s.plan);
   const [remind, setRemind] = useState(true);
   const [plans, setPlans] = useState<Plans | null>(null);
   const [busy, setBusy] = useState(false);
   const count = protectedCount();
-  const apps = count.apps + count.categories;
 
   useEffect(() => {
     getPlans()
@@ -30,10 +47,10 @@ export default function Paywall() {
       .catch(() => setPlans({}));
   }, []);
 
-  // Live App Store prices, with the planned prices as a fallback while they load.
-  const yearlyPrice = plans?.yearly?.product.priceString ?? '£29.99';
-  const monthlyPrice = plans?.monthly?.product.priceString ?? '£4.99';
-  const perMonth = plans?.yearly?.product.pricePerMonthString ?? `£${(29.99 / 12).toFixed(2)}`;
+  // Live App Store prices, with the App Store Connect prices as a fallback while they load.
+  const yearlyPrice = plans?.yearly?.product.priceString ?? FALLBACK.yearly;
+  const monthlyPrice = plans?.monthly?.product.priceString ?? FALLBACK.monthly;
+  const perMonth = plans?.yearly?.product.pricePerMonthString ?? FALLBACK.perMonth;
   const yearly = plan === 'yearly';
   const price = yearly ? `${yearlyPrice} a year` : `${monthlyPrice} a month`;
 
@@ -60,6 +77,7 @@ export default function Paywall() {
   };
 
   const start = async () => {
+    if (busy) return;
     setBusy(true);
     let pkg = yearly ? plans?.yearly : plans?.monthly;
     if (!pkg) {
@@ -94,16 +112,18 @@ export default function Paywall() {
     }
   };
 
+  // .pw-step: dot, bold title, grey line
   const step = (dot: string, title: string, sub: string) => (
-    <View style={{ flexDirection: 'row', gap: 12 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 11 }}>
       <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: dot, marginTop: 5 }} />
       <View style={{ flex: 1 }}>
-        <Text style={{ fontFamily: font.bodyHeavy, fontSize: 15, color: color.inkOnBright }}>{title}</Text>
-        <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, color: color.paperLabel }}>{sub}</Text>
+        <Text style={{ fontFamily: font.bodyHeavy, fontSize: 15.5, lineHeight: 20, color: INK }}>{title}</Text>
+        <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, lineHeight: 18, color: SUB }}>{sub}</Text>
       </View>
     </View>
   );
 
+  // .pw-plan + .pw-radio
   const planRow = (id: 'yearly' | 'monthly', name: string, amount: string) => {
     const on = plan === id;
     return (
@@ -111,28 +131,35 @@ export default function Paywall() {
         onPress={() => setState({ plan: id })}
         accessibilityRole="radio"
         accessibilityState={{ checked: on }}
+        accessibilityLabel={`${name}, ${amount}`}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
           gap: 12,
-          borderRadius: 18,
-          borderWidth: on ? 2.5 : 1.5,
-          borderColor: on ? '#5B76FF' : color.cardEdge,
-          backgroundColor: on ? '#1C2468' : color.card,
+          borderRadius: 16,
+          borderWidth: 1.5,
+          borderColor: on ? '#93A5FF' : '#2E3374',
+          backgroundColor: on ? '#1C2160' : color.card,
           paddingHorizontal: 16,
           paddingVertical: 15,
         }}
       >
-        <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: on ? '#5B76FF' : '#3A3F86', alignItems: 'center', justifyContent: 'center' }}>
-          {on && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#5B76FF' }} />}
+        <View
+          style={{
+            width: 20,
+            height: 20,
+            borderRadius: 10,
+            borderWidth: 2,
+            borderColor: on ? '#93A5FF' : '#5A5F9E',
+            backgroundColor: on ? '#1C2160' : 'transparent',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {on && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#93A5FF' }} />}
         </View>
-        <Text style={[type.title, { flex: 1 }]}>{name}</Text>
-        {id === 'yearly' && (
-          <View style={{ backgroundColor: color.sun, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
-            <Text style={{ fontFamily: font.bodyHeavy, fontSize: 11, color: color.inkOnBright }}>Best value</Text>
-          </View>
-        )}
-        <Text style={{ fontFamily: font.bodyHeavy, fontSize: 16.5, color: color.text }}>{amount}</Text>
+        <Text style={{ flex: 1, fontFamily: font.bodyBold, fontSize: 16, lineHeight: 24, color: color.text }}>{name}</Text>
+        <Text style={{ fontFamily: font.bodyHeavy, fontSize: 16, lineHeight: 24, color: color.text, fontVariant: ['tabular-nums'] }}>{amount}</Text>
       </Pressable>
     );
   };
@@ -140,41 +167,69 @@ export default function Paywall() {
   return (
     <View style={{ flex: 1 }}>
       <TopGlow />
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 30, paddingHorizontal: 24, paddingBottom: 16 }}>
-        <Rise>
+      <ScrollView contentContainerStyle={{ paddingTop: sp.top(56), paddingHorizontal: 24, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
+        <Rise delay={40}>
           <Text style={[type.h1, { textAlign: 'center' }]}>Your free week</Text>
         </Rise>
-        <Rise delay={60} style={{ marginTop: 20 }}>
-          <View style={{ backgroundColor: '#F4F3FF', borderRadius: 22, padding: 18, gap: 14 }}>
-            {step('#4361FF', 'Today', `Shields go up on ${apps || 'your'} app${apps === 1 ? '' : 's'}`)}
-            {step('#8B5CF6', `Day 5 · ${dt(5)}`, remind ? 'We remind you the plan starts soon' : 'No reminder. You turned it off below.')}
-            {step('#14163A', `Day 7 · ${dt(7)}`, `${price} starts. Cancel any time before.`)}
-            <View style={{ borderTopWidth: 1.5, borderStyle: 'dashed', borderColor: '#C9C8E6' }} />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 19, color: color.inkOnBright }}>Total</Text>
-              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 19, color: color.inkOnBright }}>{price}</Text>
+        <Rise delay={100} style={{ marginTop: 20 }}>
+          <View accessibilityLabel="Your free week" style={{ backgroundColor: '#F4F3FF', borderRadius: 22, paddingTop: 18, paddingHorizontal: 18, paddingBottom: 14 }}>
+            <View style={{ gap: 14 }}>
+              {step('#4361FF', 'Today', shieldsLine(count.apps, count.categories))}
+              {step('#8B5CF6', `Day 5 · ${dt(5)}`, remind ? 'We remind you the plan starts soon' : 'No reminder. You turned it off below.')}
+              {step(INK, `Day 7 · ${dt(7)}`, `${price} starts. Cancel any time before.`)}
             </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: -8 }}>
-              <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, color: color.paperLabel }}>Due today</Text>
-              <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, color: color.paperLabel }}>£0.00</Text>
+            {/* .pw-rule: dashed, drawn as a line (one-sided dashed borders render solid on iOS) */}
+            <Svg height={1.5} width="100%" style={{ marginTop: 16, marginBottom: 10 }}>
+              <Line x1="0" y1="0.75" x2="100%" y2="0.75" stroke="#C9C8E6" strokeWidth={1.5} strokeDasharray="4 3" />
+            </Svg>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 19, lineHeight: 26, color: INK }}>Total</Text>
+              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 19, lineHeight: 26, color: INK }}>{price}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+              <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, lineHeight: 19, color: SUB }}>Due today</Text>
+              <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, lineHeight: 19, color: SUB }}>£0.00</Text>
             </View>
           </View>
         </Rise>
-        <Rise delay={120} style={{ marginTop: 16, gap: 10 }}>
-          {planRow('yearly', `Yearly · ${perMonth} a month`, yearlyPrice)}
-          {planRow('monthly', 'Monthly', monthlyPrice)}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 18, borderWidth: 1.5, borderColor: color.cardEdge, backgroundColor: color.card, paddingHorizontal: 16, paddingVertical: 10 }}>
-            <Text style={{ fontSize: 18 }}>🔔</Text>
-            <Text style={[type.title, { flex: 1 }]}>Remind me on day 5</Text>
-            <Switch value={remind} onValueChange={setRemind} trackColor={{ true: color.blue, false: '#2B2F69' }} ios_backgroundColor="#2B2F69" />
+        <Rise delay={160} style={{ marginTop: 16 }}>
+          <View accessibilityRole="radiogroup" accessibilityLabel="Choose a plan" style={{ gap: 10 }}>
+            {planRow('yearly', `Yearly · ${perMonth} a month`, yearlyPrice)}
+            {planRow('monthly', 'Monthly', monthlyPrice)}
+          </View>
+        </Rise>
+        <Rise delay={200} style={{ marginTop: 10 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              borderRadius: 16,
+              borderWidth: 1.5,
+              borderColor: '#2E3374',
+              backgroundColor: color.card,
+              paddingHorizontal: 16,
+              paddingVertical: 15,
+            }}
+          >
+            <BellRinging size={20} weight="bold" color={color.sun} />
+            <Text style={{ flex: 1, fontFamily: font.bodyBold, fontSize: 16, lineHeight: 24, color: color.text }}>Remind me on day 5</Text>
+            <Switch
+              value={remind}
+              onValueChange={setRemind}
+              accessibilityLabel="Remind me on day 5"
+              trackColor={{ true: color.blue, false: '#2B2F69' }}
+              ios_backgroundColor="#2B2F69"
+            />
           </View>
         </Rise>
       </ScrollView>
 
-      <View style={{ paddingHorizontal: 28, paddingTop: 10, paddingBottom: insets.bottom + 16, alignItems: 'center', gap: 8 }}>
-        {busy ? <ActivityIndicator color="#FFFFFF" style={{ height: 60 }} /> : <Button label="Start my free week" onPress={start} disabled={!plans} />}
+      <View style={{ paddingHorizontal: 28, paddingTop: 12, paddingBottom: sp.bottom(40), alignItems: 'center', gap: 8 }}>
+        {/* Never greyed out while the plans load: tapping fetches them if they aren't in yet. */}
+        <Button label="Start my free week" onPress={start} icon={busy ? <ActivityIndicator color="#FFFFFF" /> : undefined} accessibilityHint={busy ? 'Opening the App Store' : undefined} />
         <Text style={{ fontFamily: font.bodySemi, fontSize: 12.5, lineHeight: 17, color: color.text2, textAlign: 'center' }}>
-          Cancel anytime in Settings at least 24 hours before your trial ends.
+          No payment today. Cancel anytime in Settings at least 24 hours before your trial ends.
         </Text>
         <View style={{ flexDirection: 'row', gap: 16 }}>
           {[
