@@ -102,6 +102,7 @@ function RootLayout() {
         <Stack.Screen name="checkin" options={{ animation: 'fade' }} />
         <Stack.Screen name="decide" options={{ animation: 'fade' }} />
         <Stack.Screen name="parcel" options={{ animation: 'fade' }} />
+        <Stack.Screen name="urgent" options={{ animation: 'fade', gestureEnabled: false }} />
       </Stack>
       <ToastHost />
     </View>

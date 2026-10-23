@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Image, Pressable, Text, View } from 'react-native';
 
 import { readyWants } from '../lib/core';
+import { activeChallenge } from '../lib/rules';
 import { useAppState } from '../lib/store';
 import { IconCheck, IconX } from './icons';
 import { font } from './theme';
@@ -14,6 +15,7 @@ export function MorningCard() {
   const ready = readyWants().length;
   const waiting = s.parked.filter((w) => !w.decided).length;
   const risky = new Date().getHours() >= 22;
+  const ch = activeChallenge();
 
   const say = ready
     ? `Morning-you has ${ready} thing${ready > 1 ? 's' : ''} to decide.`
@@ -43,7 +45,7 @@ export function MorningCard() {
                 <View style={{ backgroundColor: 'rgba(13,15,46,0.35)', borderRadius: 14, borderBottomLeftRadius: 4, paddingHorizontal: 10, paddingVertical: 8 }}>
                   <Text style={{ fontFamily: font.bodyBold, fontSize: 13.5, lineHeight: 18, color: '#FFFFFF' }}>{say}</Text>
                 </View>
-                <Text style={{ fontFamily: font.display, fontSize: 20, color: '#FFFFFF' }}>Shop on purpose</Text>
+                <Text style={{ fontFamily: font.display, fontSize: 20, color: '#FFFFFF' }}>{ch ? `${ch.name} · day ${ch.day}` : 'Shop on purpose'}</Text>
               </View>
             </View>
 

@@ -33,29 +33,29 @@ Last updated: 23 Oct 2026.
 | ✅ | Waiting room: segments, tags, let-go shelf, empty states | per-tag progress ring + live countdown ⬜, Share button ⬜🔧 |
 | ✅ | Me: rank card, Morning card, sticker goals, How XP works, recent decisions | note card ⬜🔧 |
 | 🟡 | Ranks page (L2010) | built as a collapsible list on Me; medals ⬜ |
-| ⬜ | Your rules page (L2131) | challenge, treat nights, wait rule + price slider, when to shield, sale seasons, hours of work, ask a friend |
+| ✅ | Your rules page (L2131) | challenge, treat nights (with a takeaway-apps picker), wait rule + try a price, when to shield, sale seasons, hours of work. Ask a friend ⬜🔧 |
 | ⬜ | Your apps page (L2082) | per-app switch, habit tags, budgets — needs per-app tokens |
 
 ## 3. Core loop
 | | Item | Notes |
 |---|---|---|
 | ✅ | Shield normal / cool-off | custom Swift in targets/ |
-| ⬜ | Shield late (22:00–05:00) and night-lock shield | 🔧 shield text is set from the app; night lock needs a schedule + Swift copy |
-| ⬜ | Shield message priority: own message → challenge → goal → habit; second line budget/meals | goal ✅, waiting-room line ✅ |
-| ✅ | Pause: ring, facts, three choices, walk-away XP | "What's this one about?" question + coach ⬜, note playback ⬜, takeaway meals card ⬜ |
+| ✅ | Shield late (22:00–05:00) and night-lock shield | drawn by the Swift extension from the app's night-lock times; "You left it N of the last M" |
+| 🟡 | Shield message priority: own message → challenge → goal → habit; second line budget/meals | ✅ except habit lines, budget and meals lines |
+| ✅ | Pause: ring, facts, three choices, walk-away XP, "What's this one about?" + coach, challenge button, night-lock version | note playback ⬜🔧, takeaway meals card ⬜ |
 | ✅ | Park sheet short + full, parked screen | Snap your basket ⬜🔧, Ask Sam ⬜ |
 | ✅ | Decide screen | |
 | ✅ | Shopping Pass + tear ticket + 3rd-pass wait | "fromRoom" notice ⬜ |
 | ✅ | Live pass + re-lock | Live Activity ⬜🔧 |
 | ✅ | Check-in + Did this pause help? | checkout proof screenshot + OCR ⬜🔧 |
-| ⬜ | Urgent door (night lock "It's urgent") (L1477) | 60 s wait, reason, 10-minute pass |
+| ✅ | Urgent door (night lock "It's urgent") (L1477) | 60 s wait, reason, 10-minute pass, no check-in |
 | ⬜ | Rank-up celebration (L1603) | confetti, medal, "Keep going" |
 
 ## 4. Sheets and pages
 | | Item | Notes |
 |---|---|---|
-| ⬜ | Turn off till tomorrow (L2264) | lifts shields, DeviceActivity schedule turns them back on at 07:00 |
-| ⬜ | Delete all data dialog (L2265) | dev "Start setup again" exists |
+| ✅ | Turn off till tomorrow (L2264) | DeviceActivity schedule turns them back on at 07:00 |
+| ✅ | Delete all data dialog (L2265) | |
 | ⬜ | App Store rating prompt rules (L1830) | expo-store-review is installed |
 | ⬜ | First-visit tab tips (L2243) | |
 | ✅ | Sticker goal pages (v25–26) incl. "What's a calm day?" | |
@@ -71,20 +71,20 @@ Last updated: 23 Oct 2026.
 | | Item | Notes |
 |---|---|---|
 | ✅ | Shield my apps switch (−10 / +5 once a day, breaks the day) | |
-| ⬜ | Turn off till tomorrow | |
+| ✅ | Turn off till tomorrow | |
 | 🟡 | Your apps | "Choose apps" opens the picker |
-| ⬜ | Your rules | |
-| ⬜ | Night lock switch, starts 22/23/00, ends 06/07/08 | |
+| ✅ | Your rules | |
+| ✅ | Night lock switch, starts 22/23/00, ends 06/07/08 | |
 | ⬜ | Backup dinner link | |
 | ✅ | Pause length 10/15/30/60 s | |
-| ⬜ | More options: monthly budget, shield message (60), what you're saving for (40) | |
+| 🟡 | More options: monthly budget, shield message (60), what you're saving for (40) | budget ⬜ |
 | ✅ | Cool-off Off/5/10/30 | |
-| ⬜ | Ask "What's this one about?" switch | |
-| ⬜ | Shopping Pass lengths (3 fields) | |
+| ✅ | Ask "What's this one about?" switch | |
+| ✅ | Shopping Pass lengths (3 fields) | |
 | ⬜ | Bank limit | |
 | 🟡 | Subscription and privacy | restore ✅; plan + trial day ⬜ |
-| ⬜ | Rate Till Morning | |
-| ⬜ | Delete all data | |
+| ✅ | Rate Till Morning | |
+| ✅ | Delete all data | |
 
 ## 6. Gamification
 | | Item | Notes |
@@ -99,13 +99,13 @@ Last updated: 23 Oct 2026.
 ## 7. Rules
 | | Item | Notes |
 |---|---|---|
-| ⬜ | Challenges: no-buy, low-buy, takeaway-free weekdays | shield line + pause third button |
-| ⬜ | Treat nights | takeaway apps unshielded on that night — needs per-app tokens |
-| ⬜ | Night lock 23:00–07:00 | passes sleep, urgent door, shield copy |
-| 🟡 | Risky hour | pause ≥45 s ✅, chip ✅; late shield ⬜ |
-| ⬜ | Sale week ×2 waits, +15 s pause | |
+| ✅ | Challenges: no-buy, low-buy, takeaway-free weekdays | shield line, pause button, pause fact, Morning card title, legend sticker |
+| ✅ | Treat nights | you pick your takeaway apps once; weekly DeviceActivity schedules open them on treat nights |
+| ✅ | Night lock 23:00–07:00 | passes sleep, urgent door, shield copy |
+| ✅ | Risky hour | pause ≥45 s, chip, late shield, status line |
+| ✅ | Sale week ×2 waits, +15 s pause, Today banner | |
 | 🟡 | Wait rule | bands ✅, exact price ⬜, hours of work ⬜ |
-| ⬜ | When to shield: all / evenings / weekends | DeviceActivity schedule |
+| ✅ | When to shield: all / evenings / weekends | DeviceActivity schedules |
 
 ## 8. Native extras (need a new install)
 | | Item |

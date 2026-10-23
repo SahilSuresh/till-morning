@@ -1,5 +1,6 @@
 import type { ImageSourcePropType } from 'react-native';
 
+import { activeChallenge, challengeDay } from './rules';
 import { dayKey, getState, setState } from './store';
 import { award } from './xp';
 
@@ -94,7 +95,7 @@ export const GOALS: { k: StickerKey; task: string; n: number; get: () => number;
   { k: 'bubble', task: 'Let go of 15 things', n: 15, get: letGoCount },
   { k: 'receipt', task: 'Prove you stayed under your limit', n: 1, get: () => cnt('underLimit'), special: true },
   { k: 'wallet', task: 'Prove it 5 times: under your limit, with a screenshot', n: 5, get: () => cnt('underLimit'), special: true },
-  { k: 'legend', task: 'Finish a 30-day challenge', n: 30, get: () => 0 },
+  { k: 'legend', task: 'Finish a 30-day challenge', n: 30, get: () => (activeChallenge() ? Math.max(0, challengeDay() - 1) : 0) },
 ];
 
 const PASS_STEPS = [
@@ -157,7 +158,10 @@ export const GOAL_HOW: Record<
   legend: {
     what: 'Pick a 30-day challenge in Your rules, like a no-buy month, and reach day 30.',
     steps: ['Open Your rules and pick a challenge', 'Keep going, one day at a time', 'Day 30 earns the sticker'],
-    today: () => 'No challenge picked yet.',
+    today: () => {
+      const ch = activeChallenge();
+      return ch ? `You’re on day ${ch.day} of your ${ch.name.toLowerCase()}.` : 'No challenge picked yet.';
+    },
     cta: ['Pick a challenge', 'settings'],
   },
 };

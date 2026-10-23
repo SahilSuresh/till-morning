@@ -26,7 +26,7 @@ export default function Goal() {
     const [, to] = how.cta;
     if (to === 'waiting' || to === 'ready') router.replace('/waiting');
     else if (to === 'pass') router.replace({ pathname: '/pause', params: { app: 'your shop apps' } });
-    else if (to === 'settings') router.replace('/settings');
+    else if (to === 'settings') router.replace('/rules');
     else back();
   };
 

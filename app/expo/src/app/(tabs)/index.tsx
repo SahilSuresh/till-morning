@@ -5,6 +5,7 @@ import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { endPass, formatReady, protectedCount, readyWants, shieldChosenApps } from '../../lib/core';
+import { hh, nightOn, pauseSeconds, risky } from '../../lib/rules';
 import { useAppState } from '../../lib/store';
 import { TopGlow } from '../../ui/backgrounds';
 import { xpToast } from '../../lib/xp';
@@ -123,7 +124,21 @@ export default function Today() {
         <Rise delay={40}>
           <Card style={{ alignItems: 'center', paddingVertical: 22 }}>
             <Image source={require('../../../assets/mascots/shieldm.webp')} style={{ width: 84, height: 84 }} resizeMode="contain" />
-            {!s.shieldsOn ? (
+            {s.shieldsOn && s.offUntil > now ? (
+              <>
+                <Text style={[type.h2, { marginTop: 10, textAlign: 'center' }]}>Shields are off till tomorrow</Text>
+                <Text style={[type.small, { textAlign: 'center', marginTop: 4 }]}>They come back on by themselves at 07:00 tomorrow.</Text>
+                <View style={{ alignSelf: 'stretch', marginTop: 14 }}>
+                  <Button
+                    label="Turn them back on now"
+                    onPress={() => {
+                      const r = shieldChosenApps();
+                      toast(r ? xpToast(r, 'Shields are back on') : 'Shields are back on');
+                    }}
+                  />
+                </View>
+              </>
+            ) : !s.shieldsOn ? (
               <>
                 <Text style={[type.h2, { marginTop: 10, textAlign: 'center' }]}>Shields are off</Text>
                 <View style={{ alignSelf: 'stretch', marginTop: 14 }}>
@@ -152,7 +167,13 @@ export default function Today() {
                       ? '1 app is shielded'
                       : `${counts.apps} apps are shielded`}
                 </Text>
-                <Text style={[type.small, { textAlign: 'center', marginTop: 4 }]}>Pauses get longer from 22:00.</Text>
+                <Text style={[type.small, { textAlign: 'center', marginTop: 4 }]}>
+                  {nightOn(now)
+                    ? `Night lock is on till ${hh(s.settings.nlTo)}: park it or close it.`
+                    : risky(now)
+                      ? `It’s your risky hour, so pauses are ${pauseSeconds(now)} seconds.`
+                      : `Pauses get longer from 22:00.${s.settings.nlOn ? ` Night lock from ${hh(s.settings.nlFrom)}.` : ''}`}
+                </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 }}>
                   <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color.mint }} />
                   <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: color.mintText }}>Shields working</Text>
@@ -161,6 +182,16 @@ export default function Today() {
             )}
           </Card>
         </Rise>
+
+        {/* Sale week */}
+        {s.settings.sale && (
+          <Rise delay={60}>
+            <View style={{ borderRadius: 22, backgroundColor: 'rgba(255,143,120,0.12)', borderWidth: 1.5, borderColor: 'rgba(255,143,120,0.32)', padding: 16 }}>
+              <Text style={[type.title, { color: '#FFE4DC' }]}>It’s Black Friday week</Text>
+              <Text style={[type.small, { color: '#FFE4DC' }]}>Waits are doubled until Monday.</Text>
+            </View>
+          </Rise>
+        )}
 
         {/* Waiting room */}
         <Rise delay={80}>
@@ -228,6 +259,16 @@ export default function Today() {
       {/* Fixed footer above the tab bar: Need to shop? */}
       {!s.pass && (
         <View style={{ position: 'absolute', left: 24, right: 24, bottom: tabSpace - 4 }}>
+          {nightOn(now) ? (
+            <Pressable
+              onPress={() => toast(`Shopping Passes sleep till ${hh(s.settings.nlTo)}. Park it till morning instead.`)}
+              accessibilityRole="button"
+              style={{ height: 56, borderRadius: 999, backgroundColor: '#1E2256', borderWidth: 1.5, borderColor: '#343A86', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            >
+              <IconMoon size={20} color={color.text2} />
+              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 17, color: color.text2 }}>Passes sleep till {hh(s.settings.nlTo)}</Text>
+            </Pressable>
+          ) : (
           <Pressable
             onPress={() => router.push({ pathname: '/pause', params: { app: 'your shop apps' } })}
             accessibilityRole="button"
@@ -247,6 +288,7 @@ export default function Today() {
               </View>
             )}
           </Pressable>
+          )}
         </View>
       )}
     </View>

@@ -27,7 +27,8 @@ import {
   waitFor,
 } from '../lib/core';
 import { bump } from '../lib/progress';
-import { getState, type ParkedWant, type PriceBand } from '../lib/store';
+import { activeChallenge, hh, nextTreat, nightOn, pauseSeconds, saleOn, shopLinkLabel } from '../lib/rules';
+import { getState, type ParkedWant, type PriceBand, setState } from '../lib/store';
 import { award, xpToast } from '../lib/xp';
 import { PauseBackground } from '../ui/backgrounds';
 import { BreathRing } from '../ui/BreathRing';
@@ -50,10 +51,27 @@ function pauseFact(app: string) {
   const waiting = s.parked.filter((w) => !w.decided);
   if (waiting.length === 1) return `**1 thing** is already parked, ready at ${hhmm(waiting[0].readyAt)}.`;
   if (waiting.length > 1) return `**${waiting.length} things** are parked, waiting their turn.`;
+  const ch = activeChallenge();
+  if (ch) return `Day **${ch.day} of ${ch.len}** of your ${ch.name.toLowerCase()}.`;
   const h = new Date(now).getHours();
   if (h >= 22 || h < 5) return `It’s **${hhmm(now)}**. A want made this late can wait till 8.`;
+  const treat = nextTreat(now);
+  if (treat && s.takeawaysChosen) return `Your next treat night is **${treat.name}**, ${treat.days} day${treat.days > 1 ? 's' : ''} away.`;
   return 'Most wants fade in a few minutes. **Watch this one.**';
 }
+
+// "What's this one about?" (REASONS / COACH in the prototype)
+const REASONS = { bored: 'Bored', badday: 'Bad day', ad: 'Saw an ad', need: 'I need it' } as const;
+type Reason = keyof typeof REASONS;
+const COACH: Record<Reason, (n: number) => string> = {
+  bored: (n) =>
+    n > 1
+      ? `That’s want number ${n} that started with boredom. Park it and see if it still matters tomorrow?`
+      : 'Boredom wants feel urgent and fade fast. Park it and see if it still matters tomorrow?',
+  badday: (n) => `Bad days have been behind ${n} of your wants. Buying usually helps for about an hour. Park it, and look again when today is over?`,
+  ad: (n) => `Ads are built for this exact minute${n > 1 ? `, and it’s the ${n}th time one started a want` : ''}. It’ll still be there in the morning.`,
+  need: () => 'If you need it, you’ll still need it at 08:00. Parking it costs you nothing.',
+};
 
 function Bold({ text, style }: { text: string; style: object }) {
   const parts = text.split('**');
@@ -80,16 +98,24 @@ export default function Pause() {
     return { app: recent?.name ?? 'your shop apps', key: recent?.key ?? null };
   }, [params.app]);
 
-  const total = useMemo(() => {
-    const base = getState().settings.pauseSeconds;
-    const h = new Date().getHours();
-    return h >= 22 ? Math.max(45, base) : base; // risky hour: at least 45 s
-  }, []);
+  const total = useMemo(() => pauseSeconds(), []);
   const lateNight = useMemo(() => {
     const h = new Date().getHours();
     return h >= 22 || h < 5;
   }, []);
+  const night = useMemo(() => nightOn(), []);
   const fact = useMemo(() => pauseFact(app), [app]);
+  const askQuestion = getState().settings.askQuestion;
+  const [answer, setAnswer] = useState<Reason | null>(null);
+  const answerReason = (r: Reason) => {
+    setState((s) => {
+      const reasons = { ...s.reasons };
+      if (answer) reasons[answer] = Math.max(0, (reasons[answer] ?? 1) - 1);
+      reasons[r] = (reasons[r] ?? 0) + 1;
+      return { reasons };
+    });
+    setAnswer(r);
+  };
 
   const startedAt = useRef(Date.now()).current;
   const [left, setLeft] = useState(total);
@@ -114,7 +140,7 @@ export default function Pause() {
   // Walking away mid-pause counts as leaving (+10 XP).
   useEffect(() => {
     const sub = AppState.addEventListener('change', (s) => {
-      if (s !== 'background' || finished.current || done) return;
+      if (s !== 'background' || finished.current || done || night) return;
       finished.current = true;
       const r = award(10, `Walked away from ${app} during the pause`, { app, gap: true });
       logPause(app, 'walked');
@@ -124,7 +150,7 @@ export default function Pause() {
       setTimeout(() => toast(xpToast(r, 'You walked away')), 600);
     });
     return () => sub.remove();
-  }, [app, key, done]);
+  }, [app, key, done, night]);
 
   // Choices unlock one after another with a bounce.
   const unlock = useRef([0, 1, 2].map(() => new Animated.Value(0))).current;
@@ -175,6 +201,39 @@ export default function Pause() {
 
   if (parked) return <ParkedScreen want={parked} />;
 
+  // Night lock: no pause and no passes, only park it, close it, or the urgent door.
+  if (night) {
+    const to = getState().settings.nlTo;
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0D0F33' }}>
+        <View style={{ flex: 1, paddingTop: insets.top + 60, paddingHorizontal: 28, alignItems: 'center' }}>
+          <View style={{ width: 110, height: 110, borderRadius: 55, backgroundColor: 'rgba(142,162,255,0.15)', alignItems: 'center', justifyContent: 'center' }}>
+            <IconMoon size={56} color="#8EA2FF" />
+          </View>
+          <Text style={[type.h1, { fontSize: 26, color: '#FFFFFF', textAlign: 'center', marginTop: 24 }]}>
+            It’s late. {app} can wait till morning.
+          </Text>
+          <Text style={{ fontFamily: font.bodySemi, fontSize: 15, color: '#9EA3D9', marginTop: 8 }}>Night lock is on until {hh(to)}</Text>
+          <View style={{ flex: 1 }} />
+          <View style={{ alignSelf: 'stretch', gap: 12, paddingBottom: insets.bottom + 20 }}>
+            <Button label="Park it till morning" icon={<IconHourglass size={18} />} onPress={() => setSheet('quick')} />
+            <Button
+              variant="secondary"
+              label={`Close ${app}`}
+              onPress={() => {
+                finished.current = true;
+                startCoolOff(app, key);
+                router.replace('/');
+              }}
+            />
+            <TextLink label="It’s urgent" style={{ color: color.text3, textDecorationLine: 'underline', fontSize: 14 }} onPress={() => router.replace({ pathname: '/urgent', params: { app } })} />
+          </View>
+        </View>
+        <ParkSheet app={app} mode={sheet} onMode={setSheet} onPark={park} />
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1 }}>
       <PauseBackground />
@@ -186,17 +245,31 @@ export default function Pause() {
           tone="glass"
           size={13}
           icon={<IconTimer size={14} />}
-          label={`${total}-second pause · ${app}${lateNight ? ' · late night' : new Date().getHours() >= 22 ? ' · risky hour' : ''}`}
+          label={`${total}-second pause · ${app}${lateNight ? ' · late night' : new Date().getHours() >= 22 ? ' · risky hour' : ''}${saleOn() ? ' · sale week' : ''}`}
         />
         <View style={{ marginTop: 16 }}>
           <BreathRing total={total} left={left} done={done} />
         </View>
 
-        <Text style={[type.h1, { color: '#FFFFFF', textAlign: 'center', marginTop: 18 }]}>
-          Take a breath. Do you still want it?
-        </Text>
+        {askQuestion ? (
+          <View style={{ alignItems: 'center', marginTop: 18, alignSelf: 'stretch' }}>
+            <Text style={[type.h1, { fontSize: 24, lineHeight: 28, color: '#FFFFFF', textAlign: 'center' }]}>What’s this one about?</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 12 }}>
+              {(Object.keys(REASONS) as Reason[]).map((r) => (
+                <Tag key={r} large onDark label={REASONS[r]} selected={answer === r} onPress={() => answerReason(r)} />
+              ))}
+            </View>
+            {answer && (
+              <Text style={[type.body, { color: color.white82, textAlign: 'center', marginTop: 12 }]}>
+                {COACH[answer](getState().reasons[answer] ?? 1)}
+              </Text>
+            )}
+          </View>
+        ) : (
+          <Text style={[type.h1, { color: '#FFFFFF', textAlign: 'center', marginTop: 18 }]}>Take a breath. Do you still want it?</Text>
+        )}
 
-        <View
+        {!answer && <View
           style={{
             marginTop: 16,
             flexDirection: 'row',
@@ -213,7 +286,7 @@ export default function Pause() {
             <IconClock size={16} color="rgba(255,255,255,0.82)" />
           </View>
           <Bold text={fact} style={{ fontFamily: font.bodySemi, fontSize: 15, lineHeight: 21, color: color.white82, flexShrink: 1 }} />
-        </View>
+        </View>}
 
         <View style={{ flex: 1, minHeight: 20 }} />
 
@@ -244,7 +317,7 @@ export default function Pause() {
                   textDecorationLine: 'underline',
                 }}
               >
-                I need it now
+                {shopLinkLabel()}
               </Text>
             </Pressable>
           </Animated.View>
