@@ -125,23 +125,69 @@ export function Button({
   );
 }
 
+/**
+ * A text button. With `underline` (or a style asking for textDecorationLine: 'underline') it draws the
+ * prototype's .link underline (P:L86): 2 px thick, 4 px under the baseline, one bar per line of text.
+ */
 export function TextLink({
   label,
   onPress,
   style,
+  underline,
+  disabled,
+  containerStyle,
+  accessibilityLabel,
 }: {
   label: string;
   onPress?: () => void;
   style?: StyleProp<TextStyle>;
+  underline?: boolean;
+  disabled?: boolean;
+  containerStyle?: StyleProp<ViewStyle>;
+  accessibilityLabel?: string;
 }) {
+  const flat: TextStyle = StyleSheet.flatten([linkText, style]) ?? linkText;
+  const bar = underline || flat.textDecorationLine === 'underline' || flat.textDecorationLine === 'underline line-through';
+  const [lines, setLines] = useState<{ x: number; y: number; width: number; height: number; ascender: number; descender: number }[]>([]);
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" hitSlop={10} style={{ alignSelf: 'center', paddingVertical: 10 }}>
-      <Text style={[{ fontFamily: font.bodyBold, fontSize: 15, color: color.blueLight, textAlign: 'center' }, style]}>
-        {label}
-      </Text>
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={disabled ? { disabled } : undefined}
+      hitSlop={10}
+      style={[{ alignSelf: 'center', paddingVertical: 10, opacity: disabled ? 0.4 : 1 }, containerStyle]}
+    >
+      <View>
+        <Text
+          onTextLayout={bar ? (e) => setLines(e.nativeEvent.lines) : undefined}
+          style={[flat, bar && { textDecorationLine: 'none' }]}
+        >
+          {label}
+        </Text>
+        {bar &&
+          lines.map((l, i) => (
+            <View
+              key={i}
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: l.x,
+                // baseline (glyphs are centred in the line box) + 4 px offset
+                top: l.y + (l.height + l.ascender - l.descender) / 2 + 4,
+                width: l.width,
+                height: 2,
+                borderRadius: 1,
+                backgroundColor: (flat.color as string) ?? color.blueLight,
+              }}
+            />
+          ))}
+      </View>
     </Pressable>
   );
 }
+const linkText: TextStyle = { fontFamily: font.bodyBold, fontSize: 15, color: color.blueLight, textAlign: 'center' };
 
 // ---- Card ----------------------------------------------------------------
 
@@ -185,7 +231,7 @@ export function Chip({ label, tone = 'paper', icon, size = 12.5 }: { label: stri
       }}
     >
       {icon}
-      <Text style={{ fontFamily: font.bodyHeavy, fontSize: size, color: look.text }}>{label}</Text>
+      <Text style={{ fontFamily: font.bodyHeavy, fontSize: size, lineHeight: size * 1.35, color: look.text }}>{label}</Text>
     </View>
   );
 }
@@ -198,6 +244,11 @@ const optSel: Record<OptTone, { sel: string; hi: string; edge: string }> = {
   violet: { sel: '#261D66', hi: '#A78BFA', edge: '#6D4FD6' },
 };
 
+/**
+ * The prototype's .opt (P:L164). `radio` places the round check: 'right' (default), 'left' (.opt.reason,
+ * budget split) or 'none' (check-in answers, "Did this pause help?"). `left` adds a leading tile.
+ * Selected = 1.5 px border + 1 px inner ring in the highlight colour, without moving the content.
+ */
 export function OptionCard({
   label,
   sub,
@@ -206,6 +257,10 @@ export function OptionCard({
   tone = 'blue',
   right,
   round = true,
+  radio = 'right',
+  left,
+  paddingVertical = 15,
+  accessibilityRole = 'radio',
 }: {
   label: string;
   sub?: string;
@@ -214,16 +269,36 @@ export function OptionCard({
   tone?: OptTone;
   right?: ReactNode;
   round?: boolean;
+  radio?: 'left' | 'right' | 'none';
+  left?: ReactNode;
+  paddingVertical?: number;
+  accessibilityRole?: 'radio' | 'button';
 }) {
   const s = optSel[tone];
+  const check = (
+    <View
+      style={{
+        width: 26,
+        height: 26,
+        borderRadius: round ? 13 : 9,
+        borderWidth: 2,
+        borderColor: selected ? s.hi : '#3A3F86',
+        backgroundColor: selected ? s.hi : color.field,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {selected && <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: color.white }} />}
+    </View>
+  );
   return (
     <Pressable
       onPress={() => {
         Haptics.selectionAsync().catch(() => {});
         onPress();
       }}
-      accessibilityRole="radio"
-      accessibilityState={{ checked: selected }}
+      accessibilityRole={accessibilityRole}
+      accessibilityState={accessibilityRole === 'radio' ? { checked: selected } : undefined}
     >
       {({ pressed }) => (
         <View
@@ -240,32 +315,27 @@ export function OptionCard({
               alignItems: 'center',
               gap: 12,
               borderRadius: radius.opt,
-              borderWidth: selected ? 2.5 : 1.5,
+              borderWidth: 1.5,
               borderColor: selected ? s.hi : color.cardEdge,
               backgroundColor: selected ? s.sel : color.card,
               paddingHorizontal: 16,
-              paddingVertical: 15,
+              paddingVertical,
             }}
           >
+            {selected && (
+              <View
+                pointerEvents="none"
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radius.opt - 1.5, borderWidth: 1, borderColor: s.hi }}
+              />
+            )}
+            {radio === 'left' && check}
+            {left}
             <View style={{ flex: 1 }}>
               <Text style={type.title}>{label}</Text>
               {sub ? <Text style={[type.small, { marginTop: 2 }]}>{sub}</Text> : null}
             </View>
             {right}
-            <View
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: round ? 13 : 9,
-                borderWidth: 2,
-                borderColor: selected ? s.hi : '#3A3F86',
-                backgroundColor: selected ? s.hi : color.field,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {selected && <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: color.white }} />}
-            </View>
+            {radio === 'right' && check}
           </View>
         </View>
       )}
@@ -275,35 +345,56 @@ export function OptionCard({
 
 // ---- Tag (choice chip) ---------------------------------------------------
 
+/**
+ * The prototype's .tag (P:L157): a pill with a 2 px bottom edge on the night (none on the pause's
+ * colour screens). `fill` makes it one equal column of a segmented row, with the label centred.
+ */
 export function Tag({
   label,
   selected,
   onPress,
   onDark,
   large,
+  fill,
+  accessibilityLabel,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
   onDark?: boolean;
   large?: boolean;
+  fill?: boolean;
+  accessibilityLabel?: string;
 }) {
   const bg = selected ? (onDark ? color.white : color.blue) : onDark ? 'rgba(255,255,255,0.1)' : '#1A1E50';
   const border = selected ? (onDark ? color.white : color.blue) : onDark ? 'rgba(255,255,255,0.36)' : '#2E3374';
   const text = selected ? (onDark ? '#2B2FB8' : color.white) : onDark ? color.white : '#E4E3FF';
+  const edge = onDark ? 'transparent' : selected ? color.blueEdge : '#2E3374';
+  const size = large ? 16 : 13.5;
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected }}>
-      <View
-        style={{
-          borderRadius: radius.pill,
-          borderWidth: 1.5,
-          borderColor: border,
-          backgroundColor: bg,
-          paddingHorizontal: large ? 18 : 12,
-          paddingVertical: large ? 9 : 5,
-        }}
-      >
-        <Text style={{ fontFamily: font.bodyBold, fontSize: large ? 16 : 13.5, color: text }}>{label}</Text>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ selected }}
+      style={fill ? { flex: 1 } : undefined}
+    >
+      <View style={{ borderRadius: radius.pill, backgroundColor: edge, paddingBottom: onDark ? 0 : 2 }}>
+        <View
+          style={{
+            borderRadius: radius.pill,
+            borderWidth: 1.5,
+            borderColor: border,
+            backgroundColor: bg,
+            paddingHorizontal: fill ? 8 : large ? 18 : 12,
+            paddingVertical: large ? 9 : 5,
+            alignItems: 'center',
+          }}
+        >
+          <Text numberOfLines={fill ? 1 : undefined} style={{ fontFamily: font.bodyBold, fontSize: size, lineHeight: size * 1.3, color: text }}>
+            {label}
+          </Text>
+        </View>
       </View>
     </Pressable>
   );
@@ -311,16 +402,19 @@ export function Tag({
 
 // ---- Back / close circle -------------------------------------------------
 
+/** The prototype's .backbtn (P:L143): 40 px (or `size`), a faint white disc that dims while pressed. */
 export function CircleButton({
   children,
   onPress,
   onDark,
   label,
+  size = 40,
 }: {
   children: ReactNode;
   onPress: () => void;
   onDark?: boolean;
   label: string;
+  size?: number;
 }) {
   return (
     <Pressable
@@ -328,14 +422,15 @@ export function CircleButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={8}
-      style={{
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+      style={({ pressed }) => ({
+        width: size,
+        height: size,
+        borderRadius: size / 2,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: onDark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.08)',
-      }}
+        opacity: pressed ? 0.7 : 1,
+      })}
     >
       {children}
     </Pressable>

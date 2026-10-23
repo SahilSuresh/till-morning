@@ -1,10 +1,14 @@
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { PauseIcon, PlayIcon } from 'phosphor-react-native';
 import { Pressable, Text, View } from 'react-native';
 
 import type { AppState } from '../lib/store';
 import { color, font } from './theme';
 
-/** "Your note from calm you": tap to hear your own voice (the pause's .wr-voice button, L1466). */
+/**
+ * "Your note from calm you": tap to hear your own voice (the pause's .wr-voice button, P:L604/1466).
+ * On the pause it sits right under the ring; `onDark={false}` is the card version used in Me.
+ */
 export function NotePlayer({ note, onDark = true }: { note: NonNullable<AppState['note']>; onDark?: boolean }) {
   const player = useAudioPlayer({ uri: note.uri });
   const status = useAudioPlayerStatus(player);
@@ -21,24 +25,28 @@ export function NotePlayer({ note, onDark = true }: { note: NonNullable<AppState
       onPress={toggle}
       accessibilityRole="button"
       accessibilityLabel={status.playing ? 'Pause your note' : 'Play your note from calm you'}
-      style={{
+      style={({ pressed }) => ({
         alignSelf: 'stretch',
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
-        backgroundColor: onDark ? 'rgba(255,255,255,0.12)' : color.card,
-        borderColor: onDark ? 'rgba(255,255,255,0.22)' : '#2E3374',
+        gap: 10,
+        backgroundColor: onDark ? 'rgba(255,255,255,0.12)' : color.field,
+        borderColor: onDark ? 'rgba(255,255,255,0.2)' : '#2E3374',
         borderWidth: 1.5,
         borderRadius: 18,
-        padding: 12,
-      }}
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        opacity: pressed ? 0.85 : 1,
+      })}
     >
-      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 15, color: color.blue }}>{status.playing ? '❚❚' : '▶'}</Text>
+      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
+        {status.playing ? <PauseIcon size={15} color="#2C24A3" weight="fill" /> : <PlayIcon size={15} color="#2C24A3" weight="fill" />}
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontFamily: font.bodyHeavy, fontSize: 12.5, color: 'rgba(255,255,255,0.75)' }}>Your note from calm you</Text>
-        <Text numberOfLines={2} style={{ fontFamily: font.bodyBold, fontSize: 15, color: '#FFFFFF' }}>
+        <Text style={{ fontFamily: font.bodyHeavy, fontSize: 11.5, lineHeight: 15, color: onDark ? 'rgba(255,255,255,0.72)' : color.text3 }}>
+          Your note from calm you
+        </Text>
+        <Text numberOfLines={3} style={{ fontFamily: font.bodySemi, fontSize: 14, lineHeight: 18.9, color: onDark ? '#FFFFFF' : color.text }}>
           {note.text ? `“${note.text}”` : `${note.secs} seconds, in your own voice`}
         </Text>
       </View>
