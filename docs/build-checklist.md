@@ -10,14 +10,14 @@ Last updated: 23 Oct 2026.
 |---|---|---|
 | ✅ | Hold-to-pause welcome (L1119) | 10 sale pills, 2.5 s ring, "Paused.", Skip |
 | ✅ | Welcome "Shop on purpose." (L1128) | |
-| ⬜ | Story "The 11 PM scroll" (L1142) | starry night screen |
+| ✅ | Story "The 11 PM scroll" (L1142) | |
 | ✅ | Screen Time ask (L1245) | real FamilyControls request |
 | ✅ | UK apps tip (L1253) | |
 | ✅ | Apple app picker (L1262) | real FamilyActivityPicker sheet |
 | ⬜ | Meals / backup dinner (L1490) | only if a takeaway app was picked — we can't see which apps were picked, so ask always or skip |
-| ⬜ | Demo pause "This is your pause" (L1351) | 5-second ring, then the three choices |
-| ⬜ | Tour slide "Park it till morning" (L1184) | |
-| ⬜ | Paywall "Your free week" (L1383) | RevenueCat products are live; timeline, plans, day-5 reminder switch |
+| ✅ | Demo pause "This is your pause" (L1351) | |
+| ✅ | Tour slide "Park it till morning" (L1184) | |
+| ✅ | Paywall "Your free week" (L1383) | live App Store prices via RevenueCat, day-5 reminder notification, restore; "Skip" only in test builds |
 | ⬜ | Post-purchase coach tour (L2252) | 4 spotlight tips |
 | ⬜ | Protection paused (plan lapsed) (L1685) | lifts every shield when the subscription ends |
 | ✅ | Notifications permission | real-app addition, needed for "Tap to start your pause" |
@@ -49,7 +49,7 @@ Last updated: 23 Oct 2026.
 | ✅ | Live pass + re-lock | Live Activity ⬜🔧 |
 | ✅ | Check-in + Did this pause help? | checkout proof screenshot + OCR ⬜🔧 |
 | ✅ | Urgent door (night lock "It's urgent") (L1477) | 60 s wait, reason, 10-minute pass, no check-in |
-| ⬜ | Rank-up celebration (L1603) | confetti, medal, "Keep going" |
+| ✅ | Rank-up celebration (L1603) | confetti, medal, XP count-up, share |
 
 ## 4. Sheets and pages
 | | Item | Notes |
@@ -90,7 +90,7 @@ Last updated: 23 Oct 2026.
 | | Item | Notes |
 |---|---|---|
 | ✅ | XP rules, 60/day cap, 5 closes/day, 30-min per-app gap, losses, rank floor | |
-| ✅ | 18 ranks | rank-up screen ⬜ |
+| ✅ | 18 ranks + rank-up screen | |
 | ✅ | Morning card / calm days / breakDay / +50 card fill | |
 | ✅ | 9 sticker goals + parcels | receipt/wallet need checkout proof; legend needs challenges |
 | ✅ | Let-go shelf | |

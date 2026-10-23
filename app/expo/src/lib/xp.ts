@@ -20,6 +20,16 @@ const METALS = [
 ] as const;
 const TIERS = ['III', 'II', 'I'] as const;
 
+export const METAL_COLORS: Record<string, [string, string]> = {
+  Bronze: ['#F2B27A', '#A85F2B'],
+  Silver: ['#EEF2F8', '#8E99B0'],
+  Gold: ['#FFE38F', '#D4911A'],
+  Platinum: ['#C4F6F2', '#3AA9A4'],
+  Diamond: ['#CFE0FF', '#4F7BEA'],
+  Legend: ['#E6D3FF', '#8248F0'],
+};
+export const METAL_NAMES = METALS.map((m) => m.metal);
+
 export const RANKS = METALS.flatMap((m) =>
   m.at.map((threshold, i) => ({ name: `${m.metal} ${TIERS[i]}`, metal: m.metal, title: m.title, threshold })),
 );

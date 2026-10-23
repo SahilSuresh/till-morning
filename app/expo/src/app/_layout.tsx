@@ -13,7 +13,8 @@ import { initCrashReporting, Sentry } from '../lib/crashes';
 import { Notifications } from '../lib/notify';
 import { checkGoals, goalToast, rollDay } from '../lib/progress';
 import { initPurchases } from '../lib/purchases';
-import { loadState, useLoaded } from '../lib/store';
+import { loadState, useAppState, useLoaded } from '../lib/store';
+import { rankFor } from '../lib/xp';
 import { toast, ToastHost } from '../ui/components';
 import { color } from '../ui/theme';
 
@@ -74,6 +75,14 @@ function RootLayout() {
     if (ready) markInteractive();
   }, [ready, markInteractive]);
 
+  // A new rank gets its celebration as soon as the XP lands.
+  const xpTotal = useAppState((s) => s.xp.total);
+  const rankSeen = useAppState((s) => s.rankSeen);
+  useEffect(() => {
+    if (!ready) return;
+    if (rankFor(xpTotal).index > rankSeen) router.push('/rankup');
+  }, [ready, xpTotal, rankSeen]);
+
   // Tapping "Tap to start your pause", "pass ended" or "is ready" opens the right screen.
   useEffect(() => {
     if (!ready || !lastResponse) return;
@@ -103,6 +112,8 @@ function RootLayout() {
         <Stack.Screen name="decide" options={{ animation: 'fade' }} />
         <Stack.Screen name="parcel" options={{ animation: 'fade' }} />
         <Stack.Screen name="urgent" options={{ animation: 'fade', gestureEnabled: false }} />
+        <Stack.Screen name="rankup" options={{ animation: 'fade' }} />
+        <Stack.Screen name="paywall" options={{ gestureEnabled: false }} />
       </Stack>
       <ToastHost />
     </View>

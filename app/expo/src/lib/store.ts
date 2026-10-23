@@ -62,6 +62,10 @@ export type AppState = {
     challengeAt: number;
     treats: number[]; // treat nights, Monday = 0
   };
+  subscribed: boolean;
+  plan: 'yearly' | 'monthly';
+  trialAt: number;
+  rankSeen: number; // index of the last rank celebrated
   offUntil: number; // "Turn off till tomorrow": shields come back at this time
   reasons: Record<string, number>; // "What's this one about?" answers
   takeawaysChosen: boolean; // a takeaway selection exists for treat nights
@@ -113,6 +117,10 @@ export const initialState: AppState = {
     challengeAt: 0,
     treats: [4],
   },
+  subscribed: false,
+  plan: 'yearly',
+  trialAt: 0,
+  rankSeen: 0,
   offUntil: 0,
   reasons: {},
   takeawaysChosen: false,
