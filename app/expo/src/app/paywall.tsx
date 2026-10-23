@@ -178,7 +178,7 @@ export default function Paywall() {
             </Pressable>
           ))}
         </View>
-        {config.appEnv !== 'production' && <TextLink label="Skip (test build only)" style={{ color: color.text3, fontSize: 13 }} onPress={done} />}
+        {config.isTestBuild && <TextLink label="Skip (test build only)" style={{ color: color.text3, fontSize: 13 }} onPress={done} />}
       </View>
     </View>
   );

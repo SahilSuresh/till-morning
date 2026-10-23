@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { DeviceActivitySelectionSheetViewPersisted } from 'react-native-device-activity';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -17,7 +17,20 @@ const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const BANDS: PriceBand[] = ['unsure', 'under20', '20to50', '50to100', 'over100'];
 
 /** planTab() from the prototype: "Your rules / Set them while you're calm." */
+const field = {
+  backgroundColor: color.field,
+  borderColor: color.fieldBorder,
+  borderWidth: 1.5,
+  borderRadius: 16,
+  paddingHorizontal: 14,
+  paddingVertical: 12,
+  fontFamily: font.bodySemi,
+  fontSize: 16,
+  color: color.text,
+};
+
 export default function Rules() {
+  const buddy = useAppState((x) => x.buddy);
   const insets = useSafeAreaInsets();
   const s = useAppState((x) => x);
   const st = s.settings;
@@ -243,6 +256,47 @@ export default function Rules() {
                     </Stepper>
                   </View>
                 </View>
+                <Divider />
+                <View style={{ paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={type.title}>Ask a friend</Text>
+                    <Text style={type.small}>Text a friend to let something over £50 skip the wait. Sends one message, from you.</Text>
+                  </View>
+                  <Switch
+                    value={buddy.on}
+                    accessibilityLabel="Ask a friend"
+                    onValueChange={(v) => {
+                      setState((x) => ({ buddy: { ...x.buddy, on: v } }));
+                      toast(v ? `${buddy.name.trim() || 'Your friend'} is your spending buddy` : 'Spending buddy off');
+                    }}
+                    trackColor={{ true: color.blue, false: '#2B2F69' }}
+                    ios_backgroundColor="#2B2F69"
+                  />
+                </View>
+                {buddy.on && (
+                  <View style={{ gap: 8, paddingBottom: 12 }}>
+                    <TextInput
+                      value={buddy.name}
+                      onChangeText={(t) => setState((x) => ({ buddy: { ...x.buddy, name: t } }))}
+                      maxLength={20}
+                      placeholder="Their first name, e.g. Sam"
+                      placeholderTextColor={color.placeholder}
+                      accessibilityLabel="Your friend's first name"
+                      style={field}
+                    />
+                    <TextInput
+                      value={buddy.phone}
+                      onChangeText={(t) => setState((x) => ({ buddy: { ...x.buddy, phone: t.replace(/[^0-9+ ]/g, '') } }))}
+                      maxLength={20}
+                      keyboardType="phone-pad"
+                      placeholder="Their number (optional)"
+                      placeholderTextColor={color.placeholder}
+                      accessibilityLabel="Your friend's phone number, optional"
+                      style={field}
+                    />
+                    <Text style={type.small}>Stays on this phone. Messages opens with the text ready; you press send.</Text>
+                  </View>
+                )}
               </>
             )}
           </Card>

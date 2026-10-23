@@ -1,10 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Modal, ScrollView, Text, View } from 'react-native';
+import { Animated, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { hasTmNative } from '../../modules/tm-native';
 import { track } from '../lib/analytics';
+import { pickScreenshot, readScreenshot } from '../lib/ocr';
 import { bump } from '../lib/progress';
 import { type CheckInAnswer, getState, setState, useAppState } from '../lib/store';
 import { award, xpToast } from '../lib/xp';
@@ -18,6 +20,8 @@ const ANSWERS: { id: CheckInAnswer; label: string }[] = [
   { id: 'bought_else', label: 'Bought something else too' },
 ];
 
+type Proof = null | 'reading' | 'fail' | { total: number; under: boolean };
+
 const REASON_LABEL = { specific: 'Something specific', browsing: 'Just browsing', unsure: 'Not sure yet' } as const;
 
 export default function CheckIn() {
@@ -25,6 +29,7 @@ export default function CheckIn() {
   const rm = useReduceMotion();
   const pass = useAppState((s) => s.pendingCheckIn);
   const [askHelp, setAskHelp] = useState(false);
+  const [proof, setProof] = useState<Proof>(null);
   const stamp = useRef(new Animated.Value(rm ? 1 : 0)).current;
 
   useEffect(() => {
@@ -38,13 +43,34 @@ export default function CheckIn() {
   if (!pass) return <View style={{ flex: 1, backgroundColor: color.night }} />;
 
   const plan = `${pass.need || REASON_LABEL[pass.reason]}${pass.limit ? `, up to £${pass.limit}` : ''}`;
+  const lim = parseFloat(pass.limit) || 0;
+
+  const addProof = async () => {
+    if (!hasTmNative) return toast('Reading screenshots needs the latest Till Morning install');
+    const uri = await pickScreenshot().catch(() => null);
+    if (!uri) return;
+    setProof('reading');
+    try {
+      const r = await readScreenshot(uri);
+      setProof(r.total ? { total: r.total, under: r.total <= lim } : 'fail');
+    } catch {
+      setProof('fail');
+    }
+  };
 
   const answer = (a: CheckInAnswer) => {
     const r = award(10, 'Checked in after a pass');
+    // Proof only: a checkout screenshot under the limit you set earns +15 and counts for the receipt stickers.
+    const proved = a === 'stuck' && proof && typeof proof === 'object' && proof.under;
+    if (proved) {
+      award(15, 'Proved you stayed under your limit');
+      const g = bump('underLimit');
+      if (g) setTimeout(() => toast(g), 5400);
+    }
     const done = getState().checkInsDone + 1;
     setState((s) => ({ pendingCheckIn: null, checkInsDone: done, checkinLog: [...s.checkinLog, { at: Date.now(), answer: a }].slice(-100) }));
     track('check_in_completed');
-    toast(xpToast(r, 'Thanks for being honest'));
+    toast(xpToast(r, proved ? 'Under your limit, with proof. Great self-control' : 'Thanks for being honest'));
     const goal = bump('checkin');
     if (goal) setTimeout(() => toast(goal), 2700);
     // "Did this pause help?" after the first pass, then every third.
@@ -126,6 +152,46 @@ export default function CheckIn() {
             ))}
           </View>
         </View>
+
+        {lim > 0 && (
+          <View style={{ alignSelf: 'stretch', marginTop: 16, backgroundColor: color.card, borderColor: '#2E3374', borderWidth: 1.5, borderRadius: 20, padding: 16 }}>
+            {proof === null ? (
+              <Pressable onPress={addProof} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Text style={{ fontSize: 26 }}>🧾</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={type.title}>
+                    Add your checkout screenshot <Text style={type.small}>(optional)</Text>
+                  </Text>
+                  <Text style={type.small}>Stayed under your £{pass.limit} limit? Prove it for +15 bonus XP and proof-only stickers.</Text>
+                </View>
+              </Pressable>
+            ) : proof === 'reading' ? (
+              <View>
+                <Text style={type.title}>Reading your screenshot…</Text>
+                <Text style={type.small}>On this phone. The picture never leaves it.</Text>
+              </View>
+            ) : proof === 'fail' ? (
+              <View>
+                <Text style={type.title}>Couldn’t find a total</Text>
+                <Text style={type.small}>Try a screenshot that shows the order total, like the last checkout page.</Text>
+                <TextLink label="Try another screenshot" onPress={() => setProof(null)} />
+              </View>
+            ) : (
+              <View>
+                <Text style={[type.title, { color: proof.under ? color.mintText : '#FFAB98' }]}>{proof.under ? '✓ Under your limit' : 'Over your limit'}</Text>
+                <Text style={type.small}>
+                  Checkout total £{proof.total.toFixed(2)} · your limit £{pass.limit}
+                </Text>
+                <Text style={[type.small, { marginTop: 4 }]}>
+                  {proof.under
+                    ? 'Pick “Bought only what I planned” for +15 bonus XP and a step to a proof-only sticker.'
+                    : 'No bonus this time. An honest answer still earns 10 XP.'}
+                </Text>
+                <TextLink label="Try another screenshot" onPress={() => setProof(null)} />
+              </View>
+            )}
+          </View>
+        )}
 
         <View style={{ alignSelf: 'stretch', gap: 10, marginTop: 20 }}>
           {ANSWERS.map((a) => (

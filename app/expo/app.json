@@ -62,7 +62,6 @@
       "typedRoutes": true
     },
     "extra": {
-      "appEnv": "development",
       "appGroup": "group.com.andrej.tillmorning",
       "router": {
         "asyncRoutes": {

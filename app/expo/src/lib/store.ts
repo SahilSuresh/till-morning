@@ -37,6 +37,7 @@ export type ParkedWant = {
   price?: number; // exact price, from a basket screenshot
   items?: number;
   buddy?: boolean; // a friend let it skip the wait
+  key?: string; // the app's token key, so a kept want unlocks just that app
   decided?: 'let_go' | 'kept';
   decidedAt?: number;
 };

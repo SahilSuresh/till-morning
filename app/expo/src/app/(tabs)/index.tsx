@@ -5,6 +5,8 @@ import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { endPass, formatReady, protectedCount, readyWants, shieldChosenApps } from '../../lib/core';
+import { hasTmNative } from '../../../modules/tm-native';
+import { type MyApp, myApps } from '../../lib/apps';
 import { lockDays, TIERS, tierFor } from '../../lib/budget';
 import { hh, nightOn, pauseSeconds, risky } from '../../lib/rules';
 import { setState, useAppState } from '../../lib/store';
@@ -17,6 +19,7 @@ import { IconCaret, IconHourglass, IconMoon, IconShield, IconTicket } from '../.
 import { useTabBarSpace } from '../../ui/layout';
 import { RankCard } from '../../ui/RankCard';
 import { Seal } from '../../ui/Seal';
+import { WhichAppSheet } from '../../ui/WhichAppSheet';
 import { color, font, gradient, type } from '../../ui/theme';
 
 const greeting = () => {
@@ -78,6 +81,7 @@ export default function Today() {
   const waiting = s.parked.filter((w) => !w.decided && w.readyAt > now);
   const unlock = nextUnlock();
   const coach = s.coachStep >= 0 && s.coachStep < COACH_TIPS.length ? COACH_TIPS[s.coachStep] : null;
+  const [whichApps, setWhichApps] = useState<MyApp[] | null>(null);
   const setup: ['/budget' | '/passintro' | '/bank', string, string, boolean][] = [
     ['/budget', 'Set a monthly budget', 'One total, split across your apps', s.budgetTotal > 0 || s.budgetSkipped],
     ['/passintro', 'Meet the Shopping Pass', 'How to shop on purpose, and your usual pass length', s.passSet],
@@ -410,7 +414,15 @@ export default function Today() {
             </Pressable>
           ) : (
           <Pressable
-            onPress={() => router.push({ pathname: '/pause', params: { app: 'your shop apps' } })}
+            onPress={() => {
+              // With app names from iOS, pick the app first; older installs pause for every app.
+              const apps = myApps().filter((a) => a.token && !s.offApps.includes(a.key));
+              if (hasTmNative && apps.length) {
+                setWhichApps(apps);
+                return;
+              }
+              router.push({ pathname: '/pause', params: { app: 'your shop apps' } });
+            }}
             accessibilityRole="button"
             accessibilityHint="You get the usual pause first"
           >
@@ -431,6 +443,8 @@ export default function Today() {
           )}
         </View>
       )}
+
+      <WhichAppSheet visible={!!whichApps} apps={whichApps ?? []} onClose={() => setWhichApps(null)} />
 
       {/* First-time coach tour, right after the paywall */}
       {coach && (

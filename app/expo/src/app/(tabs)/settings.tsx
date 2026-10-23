@@ -202,7 +202,7 @@ export default function Settings() {
           <Row
             label="Your apps"
             sub={count.apps + count.categories ? `${count.apps} app${count.apps === 1 ? '' : 's'}${count.categories ? ` and ${count.categories} categor${count.categories === 1 ? 'y' : 'ies'}` : ''} protected` : 'None chosen yet'}
-            onPress={() => router.push({ pathname: '/setup', params: { step: 'picker' } })}
+            onPress={() => router.push('/apps')}
           />
           <Divider />
           <Row label="Your rules" sub="Challenge, treat nights, when to shield" onPress={() => router.push('/rules')} />
@@ -228,6 +228,8 @@ export default function Settings() {
               <Choice title="Starts" options={[[22, '22:00'], [23, '23:00'], [0, '00:00']]} value={st.nlFrom} onPick={(v) => set({ nlFrom: v })} />
               <Divider />
               <Choice title="Ends" options={[[6, '06:00'], [7, '07:00'], [8, '08:00']]} value={st.nlTo} onPick={(v) => set({ nlTo: v })} />
+              <Divider />
+              <Row label="See how night lock looks" sub="A preview of the night-lock screen" onPress={() => router.push({ pathname: '/pause', params: { app: 'Your shop app', preview: 'night' } })} />
             </>
           )}
         </Section>
@@ -366,7 +368,7 @@ export default function Settings() {
           <Row label="Delete all data" danger onPress={askDelete} />
         </Card>
 
-        {config.appEnv !== 'production' && (
+        {config.isTestBuild && (
           <Section title={`Test tools (${config.appEnv})`}>
             <Row label="Try the pause" onPress={() => router.push({ pathname: '/pause', params: { app: 'Test app' } })} />
             <Divider />

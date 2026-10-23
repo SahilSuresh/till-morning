@@ -14,7 +14,9 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 const APP_GROUP = 'group.com.andrej.tillmorning';
 
 export default ({ config }: ConfigContext): ExpoConfig => {
-  const appEnv = process.env.APP_ENV ?? 'development';
+  // Fails safe: no APP_ENV means a store build. Local `expo start` still gets test tools via __DEV__.
+  const appEnv = process.env.APP_ENV ?? 'production';
+  const isStore = appEnv === 'production';
 
   return {
     ...config,
@@ -50,6 +52,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         },
       ],
     ],
+    // App Review (guideline 5.6): App Store builds ship without over-the-air updates, so the
+    // app people download is exactly the one Apple reviewed. Fixes ship as new reviewed builds.
+    updates: isStore ? { ...config.updates, enabled: false } : config.updates,
     extra: {
       ...config.extra,
       appEnv,

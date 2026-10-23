@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { passesToday, startPass } from '../lib/core';
 import { getState, type PassReason } from '../lib/store';
 import { Chip, CircleButton, OptionCard, toast } from '../ui/components';
-import { IconLock, IconMinus, IconPlus, IconWarn, IconX } from '../ui/icons';
+import { IconCheck, IconLock, IconMinus, IconPlus, IconWarn, IconX } from '../ui/icons';
 import { TearTicket } from '../ui/TearTicket';
 import { color, font, type } from '../ui/theme';
 
@@ -30,23 +30,25 @@ const fieldStyle = {
 
 export default function Pass() {
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ app?: string }>();
+  const params = useLocalSearchParams<{ app?: string; fromRoom?: string; need?: string; limit?: string }>();
   const app = params.app ?? 'your shop apps';
+  // Kept after the wait: on purpose, so no pause and no third-pass wait (prototype fromRoom).
+  const fromRoom = params.fromRoom === '1';
   const { passPresets, defaultPassMinutes } = getState().settings;
 
   const [reason, setReason] = useState<PassReason>('specific');
-  const [need, setNeed] = useState('');
-  const [limit, setLimit] = useState('');
+  const [need, setNeed] = useState(fromRoom ? (params.need ?? '') : '');
+  const [limit, setLimit] = useState(fromRoom ? (params.limit ?? '') : '');
   const [minutes, setMinutes] = useState(defaultPassMinutes);
   const [custom, setCustom] = useState(!passPresets.includes(defaultPassMinutes));
   // A third pass in a day isn't blocked, it just asks for 10 more seconds.
-  const [waitSeconds] = useState(passesToday() >= 2 ? 10 : 0);
+  const [waitSeconds] = useState(!fromRoom && passesToday() >= 2 ? 10 : 0);
   const passNumber = passesToday() + 1;
 
   const setCustomMinutes = (m: number) => setMinutes(Math.min(120, Math.max(1, m)));
 
   const onTear = async () => {
-    await startPass({ app, reason, need: reason === 'specific' ? need : '', limit: reason === 'specific' ? limit : '', minutes });
+    await startPass({ app, reason, need: reason === 'specific' ? need : '', limit: reason === 'specific' ? limit : '', minutes, fromRoom: fromRoom || undefined });
     router.replace('/');
     setTimeout(() => toast(`${app} unlocked for ${minutes} min`), 400);
   };
@@ -59,7 +61,7 @@ export default function Pass() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <CircleButton label="Cancel" onPress={() => router.replace('/')}>
+            <CircleButton label="Cancel" onPress={() => router.replace(fromRoom ? '/waiting' : '/')}>
               <IconX />
             </CircleButton>
             <Chip tone="sun" label="XP when you check in" />
@@ -77,6 +79,27 @@ export default function Pass() {
               </View>
             </View>
           </View>
+
+          {fromRoom && (
+            <View
+              style={{
+                marginTop: 18,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+                backgroundColor: 'rgba(94,233,181,0.12)',
+                borderColor: 'rgba(94,233,181,0.35)',
+                borderWidth: 1.5,
+                borderRadius: 16,
+                padding: 14,
+              }}
+            >
+              <IconCheck size={18} color="#6EF0BF" />
+              <Text style={{ flex: 1, fontFamily: font.bodySemi, fontSize: 15, lineHeight: 21, color: '#D6FFF0' }}>
+                You waited, so this one’s on purpose. No pause this time.
+              </Text>
+            </View>
+          )}
 
           <Text style={[type.h1, { marginTop: 24 }]}>Why are you shopping?</Text>
           <View style={{ gap: 10, marginTop: 14 }}>

@@ -436,7 +436,7 @@ export function parkWant(
   const now = Date.now();
   // A friend's yes makes it ready straight away.
   const readyAt = extra.buddy ? now : waitFor(band, now, extra.price ?? 0).readyAt;
-  const want: ParkedWant = { id: String(now), app, what: what.trim(), band, parkedAt: now, readyAt, ...extra };
+  const want: ParkedWant = { id: String(now), app, what: what.trim(), band, parkedAt: now, readyAt, ...extra, ...(key ? { key } : {}) };
   setState((s) => ({ parked: [...s.parked, want] }));
   startCoolOff(app, key);
   if (!extra.buddy) scheduleParkedReady(want).catch(() => {});

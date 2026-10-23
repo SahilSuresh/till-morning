@@ -25,7 +25,7 @@ export const WEEK1: { k: UnlockKey; day: number; kick: string; t: string; d: str
     day: 4,
     kick: 'At checkout',
     t: 'Caught at checkout',
-    d: 'Screenshot your basket and share it to Till Morning. Read on your phone, never sent anywhere.',
+    d: 'When you park a want, pick a screenshot of your basket and Till Morning reads the total. Read on your phone, never sent anywhere.',
   },
   {
     k: 'stickers',

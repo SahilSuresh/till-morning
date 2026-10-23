@@ -1,4 +1,5 @@
 import * as Haptics from 'expo-haptics';
+import * as SMS from 'expo-sms';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -15,14 +16,18 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { hasTmNative } from '../../modules/tm-native';
 import { track } from '../lib/analytics';
+import { pickScreenshot, readScreenshot } from '../lib/ocr';
 import {
   BAND_LABEL,
   formatDuration,
   formatReady,
   isTakeawayApp,
   logPause,
+  parkPrice,
   parkWant,
+  priceText,
   recentShieldedApp,
   startCoolOff,
   waitFor,
@@ -90,7 +95,9 @@ function Bold({ text, style }: { text: string; style: object }) {
 export default function Pause() {
   const insets = useSafeAreaInsets();
   const rm = useReduceMotion();
-  const params = useLocalSearchParams<{ app?: string }>();
+  const params = useLocalSearchParams<{ app?: string; preview?: string }>();
+  // "See how night lock looks" in Settings: the real screen, with nothing recorded.
+  const preview = params.preview === 'night';
 
   // Which app is this about? From Home it's passed in; from the shield, the extension recorded it.
   const { app, key } = useMemo(() => {
@@ -104,12 +111,13 @@ export default function Pause() {
     const h = new Date().getHours();
     return h >= 22 || h < 5;
   }, []);
-  const night = useMemo(() => nightOn(), []);
+  const night = useMemo(() => preview || nightOn(), [preview]);
   // Backup dinner: shown on takeaway apps when you've saved easy meals.
   const dinner = useMemo(() => {
     const meals = getState().meals;
-    return meals.length && !params.app && isTakeawayApp(true) ? meals : null;
-  }, [params.app]);
+    const takeaway = isTakeawayApp(true) || (!!key && getState().habits[key] === 'takeaways');
+    return meals.length && !params.app && takeaway ? meals : null;
+  }, [params.app, key]);
   const fact = useMemo(() => pauseFact(app), [app]);
   const askQuestion = getState().settings.askQuestion;
   const [answer, setAnswer] = useState<Reason | null>(null);
@@ -195,9 +203,10 @@ export default function Pause() {
     router.replace({ pathname: '/pass', params: { app } });
   };
 
-  const park = (what: string, band: PriceBand) => {
+  const park = (what: string, band: PriceBand, extra: ParkExtra = {}) => {
     finished.current = true;
-    const want = parkWant(app, what, band, key);
+    const name = what.trim() || (extra.price ? `${app} basket${extra.items ? `, ${extra.items} items` : ''}` : '');
+    const want = parkWant(app, name, band, key, extra);
     award(5, `Parked a want from ${app}`, { app });
     logPause(app, 'parked');
     track('pause_completed', { outcome: 'parked' });
@@ -220,8 +229,17 @@ export default function Pause() {
             It’s late. {app} can wait till morning.
           </Text>
           <Text style={{ fontFamily: font.bodySemi, fontSize: 15, color: '#9EA3D9', marginTop: 8 }}>Night lock is on until {hh(to)}</Text>
+          {preview && (
+            <View style={{ marginTop: 18 }}>
+              <Chip tone="glass" label="Preview: this is what you see during night lock" />
+            </View>
+          )}
           <View style={{ flex: 1 }} />
           <View style={{ alignSelf: 'stretch', gap: 12, paddingBottom: insets.bottom + 20 }}>
+            {preview ? (
+              <Button label="Close the preview" onPress={() => router.back()} />
+            ) : (
+              <>
             <Button label="Park it till morning" icon={<IconHourglass size={18} />} onPress={() => setSheet('quick')} />
             <Button
               variant="secondary"
@@ -233,6 +251,8 @@ export default function Pause() {
               }}
             />
             <TextLink label="It’s urgent" style={{ color: color.text3, textDecorationLine: 'underline', fontSize: 14 }} onPress={() => router.replace({ pathname: '/urgent', params: { app } })} />
+              </>
+            )}
           </View>
         </View>
         <ParkSheet app={app} mode={sheet} onMode={setSheet} onPark={park} />
@@ -352,6 +372,10 @@ export default function Pause() {
 // ---- Park it till morning: quick and expanded sheet ----------------------
 
 const BANDS: PriceBand[] = ['unsure', 'under20', '20to50', '50to100', 'over100'];
+type ParkExtra = { price?: number; items?: number; buddy?: boolean };
+
+const friendName = () => getState().buddy.name.trim() || 'Your friend';
+const hoursOfWork = (price: number, wage: number) => formatDuration((price / wage) * 3600 * 1000);
 
 function ParkSheet({
   app,
@@ -362,13 +386,56 @@ function ParkSheet({
   app: string;
   mode: null | 'quick' | 'full';
   onMode: (m: null | 'quick' | 'full') => void;
-  onPark: (what: string, band: PriceBand) => void;
+  onPark: (what: string, band: PriceBand, extra?: ParkExtra) => void;
 }) {
   const insets = useSafeAreaInsets();
   const [what, setWhat] = useState('');
   const [band, setBand] = useState<PriceBand>('unsure');
-  const { readyAt, chips } = waitFor(band);
+  const [price, setPrice] = useState(0);
+  const [items, setItems] = useState<number | undefined>();
+  const [snap, setSnap] = useState<'idle' | 'reading' | 'done' | 'fail'>('idle');
+  const [asked, setAsked] = useState(false);
+  const buddy = getState().buddy;
+  const friend = buddy.name.trim() || 'your friend';
+  const { readyAt, chips } = waitFor(band, Date.now(), price);
   const now = Date.now();
+  const wage = getState().settings.wage || 12;
+  const extra = (yes?: boolean): ParkExtra => ({ price: band === 'exact' ? price : undefined, items: band === 'exact' ? items : undefined, buddy: yes });
+
+  const snapBasket = async () => {
+    if (!hasTmNative) return toast('Reading screenshots needs the latest Till Morning install');
+    const uri = await pickScreenshot().catch(() => null);
+    if (!uri) return;
+    setSnap('reading');
+    try {
+      const r = await readScreenshot(uri);
+      if (!r.total) {
+        setSnap('fail');
+        return;
+      }
+      setPrice(Math.round(r.total * 100) / 100);
+      setItems(r.items);
+      setBand('exact');
+      setSnap('done');
+    } catch {
+      setSnap('fail');
+    }
+  };
+
+  const askFriend = async () => {
+    const hi = buddy.name.trim() ? `Hey ${buddy.name.trim()},` : 'Hey,';
+    const thing = what.trim() || 'this';
+    const cost = band === 'exact' && price ? ` for £${price}` : '';
+    const text = `${hi} I’m trying not to impulse buy. Can I get ${thing}${cost} now, or should I sleep on it?`;
+    try {
+      if (await SMS.isAvailableAsync()) {
+        await SMS.sendSMSAsync(buddy.phone.trim() ? [buddy.phone.trim()] : [], text);
+        setAsked(true);
+      } else toast('This phone can’t send texts');
+    } catch {
+      toast('Couldn’t open Messages');
+    }
+  };
 
   return (
     <Modal visible={mode !== null} transparent animationType="slide" onRequestClose={() => onMode(null)}>
@@ -444,10 +511,33 @@ function ParkSheet({
               />
               <Text style={[type.label, { marginTop: 16 }]}>Roughly how much?</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                {price > 0 && (
+                  <Tag label={`£${price}${items ? `, ${items} items` : ''}`} selected={band === 'exact'} onPress={() => setBand('exact')} />
+                )}
                 {BANDS.map((b) => (
                   <Tag key={b} label={BAND_LABEL[b]} selected={band === b} onPress={() => setBand(b)} />
                 ))}
               </View>
+              <Pressable
+                onPress={snapBasket}
+                disabled={snap === 'reading'}
+                accessibilityRole="button"
+                style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#3A3F86', borderRadius: 18, padding: 12 }}
+              >
+                <Text style={{ fontSize: 22 }}>{snap === 'done' ? '✅' : '📸'}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={type.title}>
+                    {snap === 'reading' ? 'Reading your screenshot…' : snap === 'done' ? 'Basket read from your screenshot' : snap === 'fail' ? 'Couldn’t find a total' : 'Snap your basket'}
+                  </Text>
+                  <Text style={type.small}>
+                    {snap === 'done' || snap === 'reading'
+                      ? 'Read on this phone. The picture never leaves it.'
+                      : snap === 'fail'
+                        ? 'Try a screenshot that shows the basket total.'
+                        : 'Pick a screenshot of the basket and it fills this in'}
+                  </Text>
+                </View>
+              </Pressable>
               <View style={{ marginTop: 16, backgroundColor: '#1C2057', borderRadius: 22, padding: 16 }}>
                 <Text style={type.label}>It waits</Text>
                 <Text style={{ fontFamily: font.display, fontSize: 26, color: color.blueLight }}>{formatDuration(readyAt - now)}</Text>
@@ -457,9 +547,27 @@ function ParkSheet({
                     <Chip key={c} tone="lilac" label={c} />
                   ))}
                 </View>
+                <Text style={[type.small, { marginTop: 8 }]}>
+                  {band === 'exact' && price
+                    ? `That’s about ${hoursOfWork(price, wage)} of your work.`
+                    : 'Snap your basket to see the price and the hours of work.'}
+                </Text>
               </View>
-              <View style={{ marginTop: 18, gap: 4 }}>
-                <Button label="Park it" icon={<IconHourglass size={18} />} onPress={() => onPark(what, band)} />
+              <View style={{ marginTop: 18, gap: 8 }}>
+                {asked ? (
+                  <>
+                    <Text style={[type.title, { textAlign: 'center' }]}>What did {friend} say?</Text>
+                    <Button label="They said go for it" onPress={() => onPark(what, band, extra(true))} />
+                    <Button variant="secondary" label="They said sleep on it" onPress={() => onPark(what, band, extra())} />
+                  </>
+                ) : (
+                  <>
+                    <Button label="Park it" icon={<IconHourglass size={18} />} onPress={() => onPark(what, band, extra())} />
+                    {buddy.on && parkPrice(band, price) > 50 && (
+                      <Button variant="secondary" label={`Ask ${friend} if it can skip the wait`} onPress={askFriend} />
+                    )}
+                  </>
+                )}
                 <TextLink label="Cancel" style={{ color: color.text3 }} onPress={() => onMode(null)} />
               </View>
             </>
@@ -517,7 +625,7 @@ function ParkedScreen({ want }: { want: ParkedWant }) {
             {want.what || `Something from ${want.app}`}
           </Text>
           <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: color.paperLabel, marginTop: 2 }}>
-            {want.app} · {BAND_LABEL[want.band]}
+            {want.app} · {priceText(want)}
           </Text>
           <Animated.View
             style={{
@@ -534,15 +642,17 @@ function ParkedScreen({ want }: { want: ParkedWant }) {
               paddingVertical: 4,
             }}
           >
-            <Text style={{ fontFamily: font.display, fontSize: 18, color: color.blue }}>Decide {when}</Text>
+            <Text style={{ fontFamily: font.display, fontSize: 18, color: color.blue }}>{want.buddy ? `${friendName()} said yes` : `Decide ${when}`}</Text>
           </Animated.View>
         </Animated.View>
 
         <Text style={[type.display, { color: '#FFFFFF', textAlign: 'center', marginTop: 32 }]}>
-          {morning ? 'Parked. Sleep on it.' : 'Parked. Give it time.'}
+          {want.buddy ? `${friendName()} let it through` : morning ? 'Parked. Sleep on it.' : 'Parked. Give it time.'}
         </Text>
         <Text style={[type.body, { color: color.white82, textAlign: 'center', marginTop: 10 }]}>
-          {want.app} stays shielded. Morning-you gets the final say. We’ll let you know when it’s ready.
+          {want.buddy
+            ? 'It’s ready to decide now, in your waiting room.'
+            : `${want.app} stays shielded. ${morning ? 'Morning-you' : 'Later-you'} gets the final say. We’ll let you know when it’s ready.`}
         </Text>
         <View style={{ marginTop: 14 }}>
           <Chip tone="mint" label="+5 XP" />
@@ -551,8 +661,13 @@ function ParkedScreen({ want }: { want: ParkedWant }) {
         <View style={{ alignSelf: 'stretch', paddingBottom: insets.bottom + 20 }}>
           <Button
             variant="white"
-            label="Done"
+            label={want.buddy ? 'Go to the waiting room' : 'Done'}
             onPress={() => {
+              if (want.buddy) {
+                router.replace('/waiting');
+                setTimeout(() => toast('Ready to decide in your waiting room'), 400);
+                return;
+              }
               router.replace('/');
               setTimeout(() => toast(`Parked till ${when}`), 400);
             }}

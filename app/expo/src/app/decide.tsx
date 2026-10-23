@@ -3,8 +3,9 @@ import { Image, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { decideWant, formatDuration, readyWants } from '../lib/core';
+import { chooseApp } from '../lib/apps';
 import { maybeAskReview } from '../lib/review';
-import { useAppState } from '../lib/store';
+import { getState, useAppState } from '../lib/store';
 import { award, xpToast } from '../lib/xp';
 import { PauseBackground } from '../ui/backgrounds';
 import { Button, TextLink, toast } from '../ui/components';
@@ -39,7 +40,11 @@ export default function Decide() {
       if (!goal) maybeAskReview();
     } else {
       // You waited, so this one's on purpose: straight to a pass, no pause.
-      router.replace({ pathname: '/pass', params: { app: want.app } });
+      if (want.key) chooseApp(want.key);
+      router.replace({
+        pathname: '/pass',
+        params: { app: want.app, fromRoom: '1', need: want.what, limit: want.price ? String(want.price) : '' },
+      });
     }
   };
 
@@ -53,7 +58,7 @@ export default function Decide() {
         </Text>
         <Text style={[type.display, { color: '#FFFFFF', marginTop: 6, textAlign: 'center' }]}>Still want it?</Text>
         <Text style={[type.body, { color: color.white82, marginTop: 10, textAlign: 'center' }]}>
-          You waited {formatDuration(Date.now() - want.parkedAt)}. Any honest answer earns the same 10 XP.
+          {want.buddy ? `${getState().buddy.name.trim() || 'Your friend'} let this one skip the wait.` : `You waited ${formatDuration(Date.now() - want.parkedAt)}.`} Any honest answer earns the same 10 XP.
         </Text>
         <Text style={[type.small, { color: 'rgba(255,255,255,0.7)', marginTop: 10, textAlign: 'center' }]}>
           Let it go and it goes on your shelf. Still want it and you get a Shopping Pass with no pause.
