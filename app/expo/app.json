@@ -42,7 +42,21 @@
         }
       ],
       "expo-notifications",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Till Morning records a short note from you, in your own voice, to play back in your pause. It stays on this phone."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Till Morning reads the total from a checkout or basket screenshot you choose. The picture stays on this phone.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

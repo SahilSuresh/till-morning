@@ -166,6 +166,30 @@ func tmCoolOffShieldIfNeeded(application: Application, config: [String: Any]?)
   )
 }
 
+/// Per-app shield lines the app writes for each protected app (habit line, its budget, backup dinner).
+/// tm_sub::<key> replaces the normal subtitle; tm_nightsub::<key> is added under the night-lock line.
+func tmPersonalised(_ config: [String: Any]?, application: Application) -> [String: Any]? {
+  guard let key = tmTokenKey(application.token),
+    let sub = userDefaults?.string(forKey: "tm_sub::" + key), !sub.isEmpty
+  else { return config }
+  var cfg = config ?? [:]
+  cfg["subtitle"] = sub
+  return cfg
+}
+
+func tmNightExtra(application: Application) -> String? {
+  guard let key = tmTokenKey(application.token),
+    let extra = userDefaults?.string(forKey: "tm_nightsub::" + key), !extra.isEmpty
+  else { return nil }
+  return extra
+}
+
+func tmNightSubtitle(to: Int, extra: String?) -> String {
+  let line = "Night lock is on until \(to < 10 ? "0" : "")\(to):00"
+  guard let extra = extra else { return line }
+  return line + "\n" + extra
+}
+
 /// Night lock window (default 23:00–07:00), written by the app as tm_nl_on/from/to.
 func tmNightActive(_ date: Date = Date()) -> Bool {
   guard userDefaults?.object(forKey: "tm_nl_on") as? Bool ?? true else { return false }
@@ -191,7 +215,9 @@ func tmNightOrLateShield(application: Application, config: [String: Any]?) -> Sh
       backgroundColor: tmRGB(0x0D0F33),
       icon: UIImage(systemName: "moon.zzz.fill")?.withTintColor(tmRGB(0x8EA2FF), renderingMode: .alwaysOriginal),
       title: .init(text: "It’s late. \(name) can wait till morning.", color: tmRGB(0xF3F2FF)),
-      subtitle: .init(text: "Night lock is on until \(to < 10 ? "0" : "")\(to):00", color: tmRGB(0x9EA3D9)),
+      subtitle: .init(
+        text: tmNightSubtitle(to: to, extra: tmNightExtra(application: application)),
+        color: tmRGB(0x9EA3D9)),
       primaryButtonLabel: .init(text: "Close \(name)", color: .white),
       primaryButtonBackgroundColor: tmRGB(0x4361FF),
       secondaryButtonLabel: .init(text: "Park it till morning", color: tmRGB(0xC4B5FD))
@@ -226,11 +252,12 @@ class ShieldConfigurationExtension: ShieldConfigurationDataSource {
   override func configuration(shielding application: Application) -> ShieldConfiguration {
     // Customize the shield as needed for applications.
 
-    let config = getActivitySelectionPrefixedConfigFromUserDefaults(
+    let baseConfig = getActivitySelectionPrefixedConfigFromUserDefaults(
       keyPrefix: SHIELD_CONFIGURATION_FOR_SELECTION_PREFIX,
       fallbackKey: FALLBACK_SHIELD_CONFIGURATION_KEY,
       applicationToken: application.token
     )
+    let config = tmPersonalised(baseConfig, application: application)
 
     if let coolOff = tmCoolOffShieldIfNeeded(application: application, config: config) {
       return coolOff
@@ -259,12 +286,13 @@ class ShieldConfigurationExtension: ShieldConfigurationDataSource {
 
     logger.log("shielding application category")
 
-    let config = getActivitySelectionPrefixedConfigFromUserDefaults(
+    let categoryConfig = getActivitySelectionPrefixedConfigFromUserDefaults(
       keyPrefix: SHIELD_CONFIGURATION_FOR_SELECTION_PREFIX,
       fallbackKey: FALLBACK_SHIELD_CONFIGURATION_KEY,
       applicationToken: application.token,
       categoryToken: category.token
     )
+    let config = tmPersonalised(categoryConfig, application: application)
 
     if let coolOff = tmCoolOffShieldIfNeeded(application: application, config: config) {
       return coolOff
