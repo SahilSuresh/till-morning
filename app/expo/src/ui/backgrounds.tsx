@@ -11,7 +11,7 @@ export function PauseBackground() {
       <LinearGradient colors={gradient.pause} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
       <Svg style={StyleSheet.absoluteFill} preserveAspectRatio="none" viewBox="0 0 100 100">
         <Defs>
-          <RadialGradient id="g" cx="50" cy="27" rx="65" ry="30" gradientUnits="userSpaceOnUse">
+          <RadialGradient id="g" cx="50" cy="27" rx="130" ry="60" gradientUnits="userSpaceOnUse">
             <Stop offset="0" stopColor="rgb(132,150,255)" stopOpacity={0.5} />
             <Stop offset="0.62" stopColor="rgb(132,150,255)" stopOpacity={0} />
           </RadialGradient>
@@ -28,7 +28,7 @@ export function TopGlow() {
     <View style={[StyleSheet.absoluteFill, { backgroundColor: color.night }]} pointerEvents="none">
       <Svg style={StyleSheet.absoluteFill} preserveAspectRatio="none" viewBox="0 0 100 100">
         <Defs>
-          <RadialGradient id="t" cx="50" cy="0" rx="60" ry="36" gradientUnits="userSpaceOnUse">
+          <RadialGradient id="t" cx="50" cy="0" rx="120" ry="36" gradientUnits="userSpaceOnUse">
             <Stop offset="0" stopColor="rgb(124,92,255)" stopOpacity={0.3} />
             <Stop offset="0.72" stopColor="rgb(124,92,255)" stopOpacity={0} />
           </RadialGradient>
@@ -46,7 +46,7 @@ export function VoltBackground() {
       <LinearGradient colors={gradient.volt} style={StyleSheet.absoluteFill} />
       <Svg style={StyleSheet.absoluteFill} preserveAspectRatio="none" viewBox="0 0 100 100">
         <Defs>
-          <RadialGradient id="v" cx="50" cy="0" rx="60" ry="30" gradientUnits="userSpaceOnUse">
+          <RadialGradient id="v" cx="50" cy="0" rx="120" ry="60" gradientUnits="userSpaceOnUse">
             <Stop offset="0" stopColor="#7088FF" stopOpacity={1} />
             <Stop offset="0.62" stopColor="#7088FF" stopOpacity={0} />
           </RadialGradient>

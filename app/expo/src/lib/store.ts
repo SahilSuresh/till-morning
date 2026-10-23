@@ -228,14 +228,29 @@ export function getState() {
   return state;
 }
 
+// Saving is batched: many quick changes (typing, ticks) become one write, off the tap.
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+function scheduleSave() {
+  if (saveTimer) return;
+  saveTimer = setTimeout(flushState, 400);
+}
+/** Writes the state now. Called when the app goes to the background. */
+export function flushState() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = null;
+  AsyncStorage.setItem(KEY, JSON.stringify(state)).catch(() => {});
+}
+
 export function setState(update: Partial<AppState> | ((s: AppState) => Partial<AppState>)) {
   const patch = typeof update === 'function' ? update(state) : update;
   state = { ...state, ...patch };
   listeners.forEach((l) => l());
-  AsyncStorage.setItem(KEY, JSON.stringify(state)).catch(() => {});
+  scheduleSave();
 }
 
 export function resetState() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = null;
   state = initialState;
   listeners.forEach((l) => l());
   return AsyncStorage.removeItem(KEY);

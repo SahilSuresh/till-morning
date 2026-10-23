@@ -72,17 +72,30 @@ export function Button({
   accessibilityHint?: string;
 }) {
   const look = buttonLook[variant];
+  const rm = useReduceMotion();
+  // The prototype's .tapped bump: scale .94 → 1.04 → 1 in .34 s, on the UI thread.
+  const bump = useRef(new Animated.Value(1)).current;
+  const playBump = () => {
+    if (rm) return;
+    bump.setValue(0.94);
+    Animated.sequence([
+      Animated.timing(bump, { toValue: 1.04, duration: 150, easing: easeOut, useNativeDriver: true }),
+      Animated.timing(bump, { toValue: 1, duration: 190, easing: easeOut, useNativeDriver: true }),
+    ]).start();
+  };
   return (
+    <Animated.View style={[{ alignSelf: 'stretch', transform: [{ scale: bump }] }, style]}>
     <Pressable
       onPress={() => {
         Haptics.selectionAsync().catch(() => {});
+        playBump();
         onPress?.();
       }}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       accessibilityHint={accessibilityHint}
-      style={[{ opacity: disabled ? 0.38 : 1, alignSelf: 'stretch' }, style]}
+      style={{ opacity: disabled ? 0.38 : 1, alignSelf: 'stretch' }}
     >
       {({ pressed }) => (
         <View
@@ -108,6 +121,7 @@ export function Button({
         </View>
       )}
     </Pressable>
+    </Animated.View>
   );
 }
 

@@ -13,7 +13,7 @@ import { initCrashReporting, Sentry } from '../lib/crashes';
 import { Notifications } from '../lib/notify';
 import { checkGoals, goalToast, rollDay } from '../lib/progress';
 import { initPurchases, isSubscribed, onSubscriptionChange } from '../lib/purchases';
-import { getState, loadState, setState, useAppState, useLoaded } from '../lib/store';
+import { flushState, getState, loadState, setState, useAppState, useLoaded } from '../lib/store';
 import { rankFor } from '../lib/xp';
 import { toast, ToastHost } from '../ui/components';
 import { color } from '../ui/theme';
@@ -84,7 +84,10 @@ function RootLayout() {
       checkPlan();
     });
     const sub = AppState.addEventListener('change', (s) => {
-      if (s !== 'active') return;
+      if (s !== 'active') {
+        flushState();
+        return;
+      }
       onForeground();
       checkPlan();
     });
