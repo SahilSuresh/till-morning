@@ -54,5 +54,6 @@ GoogleService-Info.plist
 *.aab
 build-*.tar.gz
 
-# Screen Time extension targets are copied in by react-native-device-activity on prebuild
-/targets
+# Screen Time extension targets live in /targets and are customised for Till Morning
+# (copyToTargetFolder is off in app.config.ts), so they ARE committed. EAS uploads only
+# what git tracks, so ignoring them would ship builds without the shield extensions.
