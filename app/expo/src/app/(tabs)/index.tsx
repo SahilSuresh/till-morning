@@ -1,473 +1,367 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { router, useIsFocused } from 'expo-router';
+import {
+  CalendarCheckIcon,
+  ClipboardTextIcon,
+  LockKeyIcon,
+  MicrophoneIcon,
+  PackageIcon,
+  PiggyBankIcon,
+  SparkleIcon,
+  TicketIcon,
+} from 'phosphor-react-native';
+import { type ComponentRef, useEffect, useRef, useState } from 'react';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { endPass, formatReady, knownApp, protectedCount, readyWants, shieldChosenApps } from '../../lib/core';
-import { AppLabel, hasTmNative } from '../../../modules/tm-native';
+import { hasTmNative } from '../../../modules/tm-native';
 import { type MyApp, myApps } from '../../lib/apps';
-import { lockDays, TIERS, tierFor } from '../../lib/budget';
+import { endPass, formatReady, shieldChosenApps } from '../../lib/core';
 import { hh, nightOn, pauseSeconds, risky } from '../../lib/rules';
-import { setState, useAppState } from '../../lib/store';
+import { getState, setState, useAppState } from '../../lib/store';
 import { COACH_TIPS, nextUnlock, recapDue } from '../../lib/week';
-import { TipSheet } from '../../ui/TipSheet';
-import { TopGlow } from '../../ui/backgrounds';
 import { xpToast } from '../../lib/xp';
-import { Button, Card, Chip, Rise, toast } from '../../ui/components';
-import { IconCaret, IconHourglass, IconMoon, IconShield, IconTicket } from '../../ui/icons';
-import { useTabBarSpace } from '../../ui/layout';
-import { RankCard } from '../../ui/RankCard';
-import { Seal } from '../../ui/Seal';
+import { TopGlow } from '../../ui/backgrounds';
+import { Button, Rise, toast } from '../../ui/components';
+import { Spotlight, type SpotRef } from '../../ui/Spotlight';
+import { useBoundaryNow } from '../../ui/tabs/clock';
+import { openRoomOn } from '../../ui/tabs/roomView';
+import { useTarget } from '../../ui/tabs/spot';
+import {
+  CheckInNudge,
+  type NextStep,
+  NextStepRow,
+  PassButton,
+  PassTicket,
+  SaleBanner,
+  ShieldChip,
+  shieldedList,
+  shieldedTitle,
+  StatusCard,
+  TryPill,
+  useShieldSummary,
+  WaitCard,
+} from '../../ui/tabs/TodayParts';
 import { WhichAppSheet } from '../../ui/WhichAppSheet';
-import { color, font, gradient, type } from '../../ui/theme';
+import { type } from '../../ui/theme';
 
-const greeting = () => {
-  const h = new Date().getHours();
-  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+const greeting = (now: number) => {
+  const h = new Date(now).getHours();
+  return h < 5 ? 'Good evening' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
 };
 
-const mmss = (ms: number) => {
-  const s = Math.max(0, Math.ceil(ms / 1000));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const hhmm = (at: number) => {
+  const d = new Date(at);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
-function useNow(ms = 250) {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), ms);
-    return () => clearInterval(t);
-  }, [ms]);
-  return now;
-}
+// COACH_TIPS (src/lib/week.ts) in order, and what each one points at (data-coach in the prototype).
+const COACH_KEYS = ['status', 'wait', 'pass', 'try'] as const;
+type CoachKey = (typeof COACH_KEYS)[number];
+const COACH_RADIUS: Record<CoachKey, number> = { status: 22, wait: 22, pass: 999, try: 999 };
 
-/** Bank limit seal on Today: tier, days and progress to the next seal. */
-function BankSealCard({ at }: { at: number }) {
-  const d = lockDays(at);
-  const ti = tierFor(d);
-  const t = TIERS[ti];
-  const nx = TIERS[ti + 1];
-  const pct = nx ? Math.round(((d - t.from) / (nx.from - t.from)) * 100) : 100;
-  return (
-    <Pressable onPress={() => router.push('/bank')} accessibilityRole="button" accessibilityLabel={`${t.name} seal, day ${d}`}>
-      <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Seal size={52} tier={ti} />
-        <View style={{ flex: 1 }}>
-          <Text style={type.title}>{t.name} seal</Text>
-          <Text style={type.small}>Bank limit, self-reported</Text>
-          <View style={{ marginTop: 6, height: 6, borderRadius: 3, backgroundColor: '#23275E', overflow: 'hidden' }}>
-            <LinearGradient colors={[t.c[1], t.c[2]]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 6, width: `${pct}%` }} />
-          </View>
-          <Text style={[type.small, { marginTop: 4 }]}>{nx ? `${nx.from - d} day${nx.from - d === 1 ? '' : 's'} to ${nx.name}` : 'Top seal reached'}</Text>
-        </View>
-        <View style={{ alignItems: 'flex-end' }}>
-          <Text style={{ fontFamily: font.display, fontSize: 26, color: t.c[1] }}>{d}</Text>
-          <Text style={{ fontFamily: font.bodyBold, fontSize: 12, color: color.text2 }}>day{d === 1 ? '' : 's'}</Text>
-        </View>
-      </Card>
-    </Pressable>
-  );
-}
-
+/**
+ * Today, the prototype's calmHome() (P:L1985–2000): "Calm Today: one card, at most one next
+ * step, then the pass button. Everything else lives in Me."
+ */
 export default function Today() {
   const insets = useSafeAreaInsets();
-  const s = useAppState((st) => st);
-  const now = useNow();
-  const tabSpace = useTabBarSpace();
+  const focused = useIsFocused();
 
-  const counts = protectedCount();
-  const shielded = counts.apps + counts.categories;
-  const ready = readyWants(now);
-  const waiting = s.parked.filter((w) => !w.decided && w.readyAt > now);
-  const unlock = nextUnlock();
-  const coach = s.coachStep >= 0 && s.coachStep < COACH_TIPS.length ? COACH_TIPS[s.coachStep] : null;
+  const pass = useAppState((s) => s.pass);
+  const checkIn = useAppState((s) => s.pendingCheckIn);
+  const shieldsOn = useAppState((s) => s.shieldsOn);
+  const offUntil = useAppState((s) => s.offUntil);
+  const lapsed = useAppState((s) => s.lapsed);
+  const subscribed = useAppState((s) => s.subscribed);
+  const parked = useAppState((s) => s.parked);
+  const settings = useAppState((s) => s.settings);
+  const coachStep = useAppState((s) => s.coachStep);
+  const parcels = useAppState((s) => s.queue.length);
+  useAppState((s) => s.unlocked.length + s.trialAt + s.recapSeenWeek); // week-one cards and the Sunday recap
+  const setupDone = useAppState(
+    (s) =>
+      `${Object.keys(s.habits).length > 0 ? 1 : 0}${s.budgetTotal > 0 || s.budgetSkipped ? 1 : 0}${s.passSet ? 1 : 0}${s.note ? 1 : 0}${s.bankLock ? 1 : 0}${s.setupHidden ? 1 : 0}`,
+  );
+  const offApps = useAppState((s) => s.offApps);
+
+  const open = parked.filter((w) => !w.decided);
+  const now = useBoundaryNow([...open.map((w) => w.readyAt), offUntil]);
+  const summary = useShieldSummary();
+  const shielded = summary.apps + summary.categories;
+
+  const offTill = shieldsOn && offUntil > now;
+  const on = subscribed && shieldsOn && !lapsed && !offTill;
+  const night = nightOn(now);
+  const showBottom = !lapsed && shielded > 0;
+
+  // "Shields on" stamps in on the first arrival after the paywall, and whenever the shields come back on.
+  const [stampChip, setStampChip] = useState(() => getState().coachStep === 0);
+  const wasOn = useRef(on);
+  useEffect(() => {
+    if (on && !wasOn.current) setStampChip(true);
+    wasOn.current = on;
+  }, [on]);
+  useEffect(() => {
+    if (!stampChip) return;
+    const t = setTimeout(() => setStampChip(false), 3200);
+    return () => clearTimeout(t);
+  }, [stampChip]);
+
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const statusRef: SpotRef = useRef(null);
+  const waitRef: SpotRef = useRef(null);
+  const passRef: SpotRef = useRef(null);
+  const tryRef: SpotRef = useRef(null);
   const [whichApps, setWhichApps] = useState<MyApp[] | null>(null);
-  type SetupItem = ['/apps' | '/budget' | '/passintro' | '/note' | '/bank', string, string, boolean];
-  const habitItem: SetupItem[] = hasTmNative
-    ? [['/apps', 'Pick a habit for each app', 'So each shield asks the right question', Object.keys(s.habits).length > 0]]
-    : [];
-  const setup: SetupItem[] = [
-    ...habitItem,
-    ['/budget', 'Set a monthly budget', 'One total, split across your apps', s.budgetTotal > 0 || s.budgetSkipped],
-    ['/passintro', 'Meet the Shopping Pass', 'How to shop on purpose, and your usual pass length', s.passSet],
-    ['/note', 'Record a note from calm you', 'It plays in your pause', !!s.note],
-    ['/bank', 'Add a bank limit (optional)', 'An extra barrier your bank enforces', !!s.bankLock],
-  ];
-  const setupLeft = s.subscribed ? setup.filter((x) => !x[3]).length : 0;
+
+  const shieldsBackOn = () => {
+    const r = shieldChosenApps();
+    toast(r ? xpToast(r, 'Shields are back on') : 'Shields are back on');
+  };
+
+  // ---- Status card ----
+  const status = (() => {
+    if (lapsed)
+      return {
+        face: 'off' as const,
+        title: 'No shields right now',
+        sub: 'Your plan has ended, so your apps open with no pause.',
+        action: <Button label="See plans" onPress={() => router.push('/paywall')} />,
+      };
+    if (offTill) {
+      const tomorrow = new Date(offUntil).toDateString() !== new Date(now).toDateString();
+      return {
+        face: 'off' as const,
+        title: 'Shields are off till tomorrow',
+        sub: `They come back on by themselves at ${hhmm(offUntil)}${tomorrow ? ' tomorrow' : ' this morning'}. Nothing else changes.`,
+        action: <Button variant="secondary" label="Turn them back on now" onPress={shieldsBackOn} />,
+      };
+    }
+    if (!shieldsOn)
+      return {
+        face: 'off' as const,
+        title: 'Shields are off',
+        sub: 'Your apps open with no pause right now.',
+        action: <Button label="Turn shields back on" onPress={shieldsBackOn} />,
+      };
+    if (shielded === 0)
+      return {
+        face: 'off' as const,
+        title: 'No apps shielded',
+        sub: 'Pick the apps that get you, and Till Morning puts a pause in front of them.',
+        action: <Button label="Choose apps" onPress={() => router.push({ pathname: '/setup', params: { step: 'picker' } })} />,
+      };
+    const timeLine = night
+      ? `Night lock is on till ${hh(settings.nlTo)}: park it or close it.`
+      : risky(now)
+        ? `It’s your risky hour, so pauses are ${pauseSeconds(now)} seconds.`
+        : settings.nlOn
+          ? `Pauses get longer from 22:00. Night lock from ${hh(settings.nlFrom)}.`
+          : 'Pauses get longer from 22:00.';
+    const title = shieldedTitle(summary);
+    return { face: 'on' as const, title, sub: `${shieldedList(summary)}. ${timeLine}`, working: true };
+  })();
+
+  // ---- Waiting room card ----
+  const readyN = open.filter((w) => w.readyAt <= now).length;
+  const waiting = open.filter((w) => w.readyAt > now).sort((a, b) => a.readyAt - b.readyAt);
+  const wait = (() => {
+    if (readyN)
+      return {
+        tone: 'ready' as const,
+        label: 'Ready now',
+        count: readyN,
+        title: `${readyN} ready to decide`,
+        sub: 'You slept on it. Now you get the final say.',
+        view: 'ready' as const,
+      };
+    if (waiting.length) {
+      const first = waiting[0].readyAt;
+      const when = formatReady(first, now); // "08:00 tomorrow"
+      const day = when.endsWith('today') ? 'later today' : when.endsWith('tomorrow') ? 'tomorrow' : `on ${when.split(' ').slice(1).join(' ')}`;
+      return {
+        tone: 'waiting' as const,
+        label: `Ready at ${hhmm(first)}`,
+        count: waiting.length,
+        title: `${waiting.length} parked want${waiting.length === 1 ? '' : 's'}`,
+        sub: `Decide with a clear head ${day}`,
+        view: 'waiting' as const,
+      };
+    }
+    return { tone: 'empty' as const, label: 'Waiting room', title: 'Nothing parked', sub: 'When a want hits, park it till morning.', view: null };
+  })();
+
+  // ---- At most one next step: week-one card, Sunday recap, a parcel, then what's left of setup ----
+  const next: NextStep | null = (() => {
+    if (lapsed) return null;
+    const unlock = nextUnlock();
+    if (unlock)
+      return {
+        key: `unlock-${unlock.k}`,
+        Icon: SparkleIcon,
+        weight: 'fill',
+        tone: 'sun',
+        isNew: true,
+        chip: `New · day ${unlock.day}`,
+        title: unlock.t,
+        sub: unlock.kick,
+        go: () => router.push({ pathname: '/unlock', params: { k: unlock.k } }),
+      };
+    if (recapDue(now))
+      return {
+        key: 'recap',
+        Icon: CalendarCheckIcon,
+        tone: 'lav',
+        title: 'Your week with Till Morning',
+        sub: 'Sunday recap: pauses, waits and passes',
+        go: () => router.push('/recap'),
+      };
+    if (parcels)
+      return {
+        key: 'parcel',
+        Icon: PackageIcon,
+        tone: 'sun',
+        title: parcels > 1 ? `${parcels} parcels to open` : 'A parcel to open',
+        sub: 'You finished a sticker goal',
+        go: () => router.push('/parcel'),
+      };
+    if (!subscribed || setupDone[5] === '1') return null;
+    const setup: (NextStep & { done: boolean })[] = [
+      ...(hasTmNative
+        ? [{ key: 'habits', Icon: ClipboardTextIcon, tone: 'hush' as const, title: 'Pick a habit for each app', sub: 'So each shield asks the right question', go: () => router.push('/apps'), done: setupDone[0] === '1' }]
+        : []),
+      { key: 'budget', Icon: PiggyBankIcon, tone: 'sun', title: 'Set a monthly budget', sub: 'One total, split across your apps', go: () => router.push('/budget'), done: setupDone[1] === '1' },
+      { key: 'passintro', Icon: TicketIcon, tone: 'lav', title: 'Meet the Shopping Pass', sub: 'How to shop on purpose, and your usual pass length', go: () => router.push('/passintro'), done: setupDone[2] === '1' },
+      { key: 'note', Icon: MicrophoneIcon, tone: 'lav', title: 'Record a note from calm you', sub: 'It plays in your pause', go: () => router.push('/note'), done: setupDone[3] === '1' },
+      { key: 'bank', Icon: LockKeyIcon, tone: 'mint', title: 'Add a bank limit (optional)', sub: 'An extra barrier your bank enforces', go: () => router.push('/bank'), done: setupDone[4] === '1' },
+    ];
+    return setup.find((x) => !x.done) ?? null;
+  })();
+
+  // ---- Bottom block actions ----
+  const getPass = () => {
+    if (night) return toast(`Shopping Passes sleep till ${hh(settings.nlTo)}. Park it till morning instead.`);
+    // With app names from iOS, pick the app first; older installs pause for every app.
+    const apps = myApps().filter((a) => a.token && !offApps.includes(a.key));
+    if (hasTmNative && apps.length) return setWhichApps(apps);
+    router.push({ pathname: '/pause', params: { app: 'your shop apps' } });
+  };
+  const tryIt = () =>
+    toast(
+      summary.names.length
+        ? `Go to your Home Screen and open ${summary.names[0]} or another shielded app.`
+        : 'Go to your Home Screen and open one of your shielded apps.',
+    );
+
+  // ---- First-time tour (P:L1840–1867, 2252–2262): starts 1.9 s after Today appears ----
+  const coachDue = coachStep >= 0 && focused && subscribed && !lapsed;
+  const [coachOn, setCoachOn] = useState(false);
+  useEffect(() => {
+    if (!coachDue) return;
+    const t = setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+      setCoachOn(true);
+    }, 1900);
+    return () => {
+      clearTimeout(t);
+      setCoachOn(false);
+    };
+  }, [coachDue]);
+  const targets: Record<CoachKey, SpotRef | null> = {
+    status: statusRef,
+    wait: waitRef,
+    pass: showBottom && !pass ? passRef : null,
+    try: showBottom ? tryRef : null,
+  };
+  const steps = COACH_KEYS.map((k, i) => ({ k, ...COACH_TIPS[i] })).filter((s) => targets[s.k]);
+  const ci = Math.max(0, Math.min(coachStep, steps.length - 1));
+  const step = coachOn && coachDue ? steps[ci] : undefined;
+  const rect = useTarget(step ? targets[step.k] : null, !!step, step ? COACH_RADIUS[step.k] : 22, 30);
+  const last = ci === steps.length - 1;
 
   return (
     <View style={{ flex: 1 }}>
       <TopGlow />
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 24, paddingBottom: tabSpace + 76, gap: 14 }}>
-        {/* Header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={type.h1}>{greeting()}</Text>
-          {s.shieldsOn ? (
-            <Chip tone="mint" label="Shields on" icon={<IconShield size={13} />} />
-          ) : (
-            <Chip tone="paper" label="Shields off" />
-          )}
-        </View>
-
-        {/* Check-in nudge */}
-        {s.pendingCheckIn && (
-          <Rise>
-            <Pressable onPress={() => router.push('/checkin')} accessibilityRole="button">
-              <View style={{ borderRadius: 22, backgroundColor: color.sunEdge, paddingBottom: 3 }}>
-                <View style={{ borderRadius: 22, backgroundColor: color.sun, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(20,22,58,0.12)', alignItems: 'center', justifyContent: 'center' }}>
-                    <IconTicket size={22} color={color.inkOnBright} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[type.title, { color: color.inkOnBright }]}>{s.pendingCheckIn.wholeSelection || !knownApp(s.pendingCheckIn.app) ? 'Your Shopping Pass ended' : `Your ${s.pendingCheckIn.app} pass ended`}</Text>
-                    <Text style={{ fontFamily: font.bodySemi, fontSize: 14, color: color.inkOnBright }}>How did it go?</Text>
-                  </View>
-                </View>
-              </View>
-            </Pressable>
-          </Rise>
-        )}
-
-        {/* Live pass */}
-        {s.pass && (
-          <Rise>
-            <View style={{ borderRadius: 22, backgroundColor: '#5427B8', paddingBottom: 3 }}>
-              <LinearGradient
-                colors={gradient.ticket}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0.6 }}
-                style={{ borderRadius: 22, paddingHorizontal: 20, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', gap: 12, overflow: 'hidden' }}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={[type.title, { color: '#FFFFFF' }]}>{s.pass.wholeSelection || !knownApp(s.pass.app) ? 'Shopping pass' : `${s.pass.app} pass`}</Text>
-                  {!s.pass.wholeSelection && !knownApp(s.pass.app) && s.pass.key ? (
-                    <AppLabel appKey={s.pass.key} mode="both" size={14} color="#FFFFFF" style={{ height: 22, marginTop: 2 }} />
-                  ) : null}
-                  <Text numberOfLines={2} style={{ fontFamily: font.bodySemi, fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>
-                    {(s.pass.need || { specific: 'Something specific', browsing: 'Just browsing', unsure: 'Not sure yet' }[s.pass.reason]) +
-                      (s.pass.limit ? `, up to £${s.pass.limit}` : '')}
-                  </Text>
-                  <Pressable onPress={() => endPass(true)} accessibilityRole="button" hitSlop={8} style={{ marginTop: 8 }}>
-                    <Text style={{ fontFamily: font.bodyBold, fontSize: 13.5, color: '#FFFFFF', textDecorationLine: 'underline' }}>End it now</Text>
-                  </Pressable>
-                </View>
-                <View style={{ width: 0, alignSelf: 'stretch', borderLeftWidth: 2, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.36)' }} />
-                <View style={{ alignItems: 'center', minWidth: 64 }}>
-                  <Text style={{ fontFamily: font.display, fontSize: 24, color: '#FFFFFF', fontVariant: ['tabular-nums'] }}>
-                    {mmss(s.pass.endsAt - now)}
-                  </Text>
-                  <Text style={{ fontFamily: font.bodyBold, fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>left</Text>
-                </View>
-                <View
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    bottom: 0,
-                    height: 5,
-                    backgroundColor: 'rgba(255,255,255,0.32)',
-                    width: `${Math.max(0, Math.min(100, ((s.pass.endsAt - now) / (s.pass.endsAt - s.pass.startedAt)) * 100))}%`,
-                  }}
-                />
-              </LinearGradient>
-            </View>
-          </Rise>
-        )}
-
-        {/* Status */}
-        <Rise delay={40}>
-          <Card style={{ alignItems: 'center', paddingVertical: 22 }}>
-            <Image source={require('../../../assets/mascots/shieldm.webp')} style={{ width: 84, height: 84 }} resizeMode="contain" />
-            {s.lapsed ? (
-              <>
-                <Text style={[type.h2, { marginTop: 10, textAlign: 'center' }]}>Protection is paused</Text>
-                <Text style={[type.small, { textAlign: 'center', marginTop: 4 }]}>Your plan has ended, so every shield is lifted.</Text>
-                <View style={{ alignSelf: 'stretch', marginTop: 14 }}>
-                  <Button label="Turn protection back on" onPress={() => router.push('/paywall')} />
-                </View>
-              </>
-            ) : s.shieldsOn && s.offUntil > now ? (
-              <>
-                <Text style={[type.h2, { marginTop: 10, textAlign: 'center' }]}>Shields are off till tomorrow</Text>
-                <Text style={[type.small, { textAlign: 'center', marginTop: 4 }]}>They come back on by themselves at 07:00 tomorrow.</Text>
-                <View style={{ alignSelf: 'stretch', marginTop: 14 }}>
-                  <Button
-                    label="Turn them back on now"
-                    onPress={() => {
-                      const r = shieldChosenApps();
-                      toast(r ? xpToast(r, 'Shields are back on') : 'Shields are back on');
-                    }}
-                  />
-                </View>
-              </>
-            ) : !s.shieldsOn ? (
-              <>
-                <Text style={[type.h2, { marginTop: 10, textAlign: 'center' }]}>Shields are off</Text>
-                <View style={{ alignSelf: 'stretch', marginTop: 14 }}>
-                  <Button
-                    label="Turn shields back on"
-                    onPress={() => {
-                      const r = shieldChosenApps();
-                      toast(r ? xpToast(r, 'Shields are back on') : 'Shields are back on');
-                    }}
-                  />
-                </View>
-              </>
-            ) : shielded === 0 ? (
-              <>
-                <Text style={[type.h2, { marginTop: 10, textAlign: 'center' }]}>No apps shielded</Text>
-                <View style={{ alignSelf: 'stretch', marginTop: 14 }}>
-                  <Button label="Choose apps" onPress={() => router.push({ pathname: '/setup', params: { step: 'picker' } })} />
-                </View>
-              </>
-            ) : (
-              <>
-                <Text style={[type.h2, { marginTop: 10, textAlign: 'center' }]}>
-                  {counts.categories > 0
-                    ? `${counts.categories === 1 ? 'A whole category' : `${counts.categories} categories`}${counts.apps ? ` and ${counts.apps} more` : ''} shielded`
-                    : counts.apps === 1
-                      ? '1 app is shielded'
-                      : `${counts.apps} apps are shielded`}
-                </Text>
-                <Text style={[type.small, { textAlign: 'center', marginTop: 4 }]}>
-                  {nightOn(now)
-                    ? `Night lock is on till ${hh(s.settings.nlTo)}: park it or close it.`
-                    : risky(now)
-                      ? `It’s your risky hour, so pauses are ${pauseSeconds(now)} seconds.`
-                      : `Pauses get longer from 22:00.${s.settings.nlOn ? ` Night lock from ${hh(s.settings.nlFrom)}.` : ''}`}
-                </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 }}>
-                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color.mint }} />
-                  <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: color.mintText }}>Shields working</Text>
-                </View>
-              </>
-            )}
-          </Card>
+      <ScrollView ref={scrollRef} contentContainerStyle={{ paddingTop: insets.top + 10, paddingHorizontal: 24, paddingBottom: 16 }}>
+        <Rise style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <Text accessibilityRole="header" style={type.h1}>
+            {greeting(now)}
+          </Text>
+          <ShieldChip on={on} play={stampChip} />
         </Rise>
 
-        {/* Sale week */}
-        {s.settings.sale && (
-          <Rise delay={60}>
-            <View style={{ borderRadius: 22, backgroundColor: 'rgba(255,143,120,0.12)', borderWidth: 1.5, borderColor: 'rgba(255,143,120,0.32)', padding: 16 }}>
-              <Text style={[type.title, { color: '#FFE4DC' }]}>It’s Black Friday week</Text>
-              <Text style={[type.small, { color: '#FFE4DC' }]}>Waits are doubled until Monday.</Text>
-            </View>
+        {checkIn && (
+          <Rise style={{ marginTop: 20 }}>
+            <CheckInNudge pass={checkIn} />
           </Rise>
         )}
 
-        {/* Waiting room */}
-        <Rise delay={80}>
-          <Pressable onPress={() => router.push('/waiting')} accessibilityRole="button">
-            <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <View
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 14,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: ready.length ? 'rgba(94,233,181,0.14)' : 'rgba(167,139,250,0.19)',
-                }}
-              >
-                {ready.length ? <IconHourglass size={22} color="#6EF0BF" /> : <IconMoon size={22} color="#CBBBFF" />}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[type.label, { color: ready.length ? color.mintText : color.text3 }]}>
-                  {ready.length ? 'Ready now' : waiting.length ? `Ready ${formatReady(Math.min(...waiting.map((w) => w.readyAt)), now)}` : 'Waiting room'}
-                </Text>
-                <Text style={type.title}>
-                  {ready.length
-                    ? `${ready.length} ready to decide`
-                    : waiting.length
-                      ? `${waiting.length} parked ${waiting.length === 1 ? 'want' : 'wants'}`
-                      : 'Nothing parked'}
-                </Text>
-                <Text style={type.small}>
-                  {ready.length
-                    ? 'You slept on it. Now you get the final say.'
-                    : waiting.length
-                      ? 'Decide with a clear head.'
-                      : 'When a want hits, park it till morning.'}
-                </Text>
-              </View>
-            </Card>
-          </Pressable>
+        {pass && (
+          <Rise delay={30} style={{ marginTop: 20 }}>
+            <PassTicket pass={pass} onEnd={() => endPass(true)} />
+          </Rise>
+        )}
+
+        <Rise delay={30} style={{ marginTop: 20 }}>
+          <StatusCard targetRef={statusRef} face={status.face} title={status.title} sub={status.sub} action={status.action} working={status.working} />
         </Rise>
 
-        {/* Next steps: week-one feature card, Sunday recap */}
-        {unlock && (
-          <Rise delay={90}>
-            <Pressable onPress={() => router.push({ pathname: '/unlock', params: { k: unlock.k } })} accessibilityRole="button">
-              <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14, borderColor: 'rgba(255,201,77,0.45)' }}>
-                <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(255,201,77,0.15)', alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 22 }}>✨</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Chip tone="sun" size={11} label={`New · day ${unlock.day}`} />
-                  <Text style={[type.title, { marginTop: 4 }]}>{unlock.t}</Text>
-                  <Text style={type.small}>{unlock.kick}</Text>
-                </View>
-                <IconCaret />
-              </Card>
-            </Pressable>
-          </Rise>
-        )}
-        {recapDue(now) && (
-          <Rise delay={95}>
-            <Pressable onPress={() => router.push('/recap')} accessibilityRole="button">
-              <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(167,139,250,0.19)', alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 22 }}>📅</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={type.title}>Your week with Till Morning</Text>
-                  <Text style={type.small}>Sunday recap: pauses, waits and passes</Text>
-                </View>
-                <IconCaret />
-              </Card>
-            </Pressable>
+        {!lapsed && (
+          <Rise delay={60} style={{ marginTop: 12 }}>
+            <WaitCard
+              targetRef={waitRef}
+              tone={wait.tone}
+              label={wait.label}
+              count={wait.count}
+              title={wait.title}
+              sub={wait.sub}
+              onPress={() => {
+                if (wait.view) openRoomOn(wait.view);
+                router.navigate('/waiting');
+              }}
+            />
           </Rise>
         )}
 
-        {/* Next step: a parcel to open */}
-        {s.queue.length > 0 && (
-          <Rise delay={100}>
-            <Pressable onPress={() => router.push('/parcel')} accessibilityRole="button">
-              <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(255,201,77,0.15)', alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 24 }}>🎁</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={type.title}>{s.queue.length > 1 ? `${s.queue.length} parcels to open` : 'A parcel to open'}</Text>
-                  <Text style={type.small}>You finished a sticker goal</Text>
-                </View>
-                <IconCaret />
-              </Card>
-            </Pressable>
+        {!lapsed && settings.sale && (
+          <Rise delay={40} style={{ marginTop: 12 }}>
+            <SaleBanner />
           </Rise>
         )}
 
-        {/* Rank */}
-        <Rise delay={120}>
-          <RankCard />
-        </Rise>
-
-        {/* Bank limit seal, or the offer to add one once setup is done */}
-        {s.bankLock ? (
-          <Rise delay={140}>
-            <BankSealCard at={s.bankLock.at} />
-          </Rise>
-        ) : s.subscribed && (setupLeft === 0 || s.setupHidden) ? (
-          <Rise delay={140}>
-            <Pressable onPress={() => router.push('/bank')} accessibilityRole="button">
-              <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <Seal size={48} tier={-1} />
-                <View style={{ flex: 1 }}>
-                  <Text style={type.title}>Add a bank limit</Text>
-                  <Text style={type.small}>An optional extra barrier your bank enforces</Text>
-                </View>
-                <IconCaret />
-              </Card>
-            </Pressable>
-          </Rise>
-        ) : null}
-
-        {/* Things moved out of setup, discovered here one at a time */}
-        {!s.setupHidden && setupLeft > 0 && (
-          <Rise delay={150}>
-            <Card style={{ paddingVertical: 4 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 12, paddingBottom: 8 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={type.h2}>Finish setting up</Text>
-                  <Text style={type.small}>
-                    {setup.length - setupLeft} of {setup.length} done, at your own pace
-                  </Text>
-                </View>
-                <Pressable onPress={() => setState({ setupHidden: true })} accessibilityRole="button" hitSlop={8}>
-                  <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: color.text3, textDecorationLine: 'underline' }}>Hide</Text>
-                </Pressable>
-              </View>
-              {setup.map(([path, t, d, ok], i) => (
-                <Pressable
-                  key={path}
-                  onPress={() => router.push(path)}
-                  accessibilityRole="button"
-                  accessibilityState={{ checked: ok }}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: 1.5, borderColor: color.divider }}
-                >
-                  <View style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: ok ? color.mint : '#23275E' }}>
-                    {ok ? <Text style={{ fontFamily: font.display, color: color.inkOnBright }}>✓</Text> : <Text style={{ fontFamily: font.display, fontSize: 15, color: color.text2 }}>{i + 1}</Text>}
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[type.title, ok && { color: color.text2, textDecorationLine: 'line-through' }]}>{t}</Text>
-                    <Text style={type.small}>{d}</Text>
-                  </View>
-                  <IconCaret />
-                </Pressable>
-              ))}
-            </Card>
+        {next && (
+          <Rise key={next.key} delay={60} style={{ marginTop: 16 }}>
+            <NextStepRow step={next} />
           </Rise>
         )}
       </ScrollView>
 
-      {/* Fixed footer above the tab bar: Need to shop? */}
-      {!s.pass && (
-        <View style={{ position: 'absolute', left: 24, right: 24, bottom: tabSpace - 4 }}>
-          {nightOn(now) ? (
-            <Pressable
-              onPress={() => toast(`Shopping Passes sleep till ${hh(s.settings.nlTo)}. Park it till morning instead.`)}
-              accessibilityRole="button"
-              style={{ height: 56, borderRadius: 999, backgroundColor: '#1E2256', borderWidth: 1.5, borderColor: '#343A86', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-            >
-              <IconMoon size={20} color={color.text2} />
-              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 17, color: color.text2 }}>Passes sleep till {hh(s.settings.nlTo)}</Text>
-            </Pressable>
-          ) : (
-          <Pressable
-            onPress={() => {
-              // With app names from iOS, pick the app first; older installs pause for every app.
-              const apps = myApps().filter((a) => a.token && !s.offApps.includes(a.key));
-              if (hasTmNative && apps.length) {
-                setWhichApps(apps);
-                return;
-              }
-              router.push({ pathname: '/pause', params: { app: 'your shop apps' } });
-            }}
-            accessibilityRole="button"
-            accessibilityHint="You get the usual pause first"
-          >
-            {({ pressed }) => (
-              <View style={{ borderRadius: 999, backgroundColor: '#4B2BB0', paddingBottom: pressed ? 1 : 4, marginTop: pressed ? 3 : 0 }}>
-                <LinearGradient
-                  colors={gradient.passPill}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={{ height: 56, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-                >
-                  <IconTicket size={20} />
-                  <Text style={{ fontFamily: font.bodyHeavy, fontSize: 17, color: '#FFFFFF' }}>Need to shop? Get a pass</Text>
-                </LinearGradient>
-              </View>
-            )}
-          </Pressable>
-          )}
+      {/* Between the content and the tab bar, not over the content */}
+      {showBottom && (
+        <View style={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 12, gap: 12, alignItems: 'center' }}>
+          <TryPill targetRef={tryRef} onPress={tryIt} />
+          {!pass && <PassButton targetRef={passRef} night={night} nightTo={hh(settings.nlTo)} onPress={getPass} />}
         </View>
       )}
 
       <WhichAppSheet visible={!!whichApps} apps={whichApps ?? []} onClose={() => setWhichApps(null)} />
 
-      {/* First-time coach tour, right after the paywall */}
-      {coach && (
-        <TipSheet
-          visible
-          title={coach.t}
-          body={coach.d}
-          step={s.coachStep}
-          steps={COACH_TIPS.length}
-          next={s.coachStep === COACH_TIPS.length - 1 ? 'Got it' : 'Next'}
-          onNext={() => setState({ coachStep: s.coachStep + 1 >= COACH_TIPS.length ? -1 : s.coachStep + 1 })}
-          onSkip={() => setState({ coachStep: -1 })}
-        />
-      )}
+      <Spotlight
+        visible={!!step && !!rect}
+        target={rect}
+        title={step?.t ?? ''}
+        body={step?.d ?? ''}
+        step={ci}
+        steps={steps.length}
+        next={last ? 'Open an app' : 'Next'}
+        onNext={() => {
+          if (!last) return setState({ coachStep: ci + 1 });
+          setState({ coachStep: -1 });
+          tryIt();
+        }}
+        onSkip={() => setState({ coachStep: -1 })}
+        skipLabel={last ? 'Later' : 'Skip'}
+      />
     </View>
   );
 }

@@ -1,73 +1,75 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { CameraIcon } from 'phosphor-react-native';
+import { useCallback, useRef, useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
-
-import { BAND_LABEL, formatDuration, formatReady } from '../../lib/core';
-import { type ParkedWant, setState, useAppState } from '../../lib/store';
-import { TAB_TIPS } from '../../lib/week';
-import { TipSheet } from '../../ui/TipSheet';
-import { Card, Rise } from '../../ui/components';
-import { IconMoon } from '../../ui/icons';
+import { useAppState } from '../../lib/store';
+import { TopGlow } from '../../ui/backgrounds';
+import { Rise } from '../../ui/components';
 import { useTabBarSpace } from '../../ui/layout';
+import { Mascot } from '../../ui/Mascot';
+import type { SpotRef } from '../../ui/Spotlight';
+import { useBoundaryNow, useTickWhileFocused } from '../../ui/tabs/clock';
+import { type RoomView, takeRoomView } from '../../ui/tabs/roomView';
+import { type ScrollRef, TabTip } from '../../ui/tabs/TabTip';
+import { LetGoShelf, RoomEmpty, WantTag } from '../../ui/tabs/WaitingParts';
 import { color, font, type } from '../../ui/theme';
 
-type View_ = 'waiting' | 'ready' | 'letgo';
-
-// Gradients for the let-go shelf, so each thing gets its own colour.
-const SHELF = [
-  ['#7E3FF2', '#B455F0'],
-  ['#3F5BFF', '#5B76FF'],
-  ['#1FA67A', '#5EE9B5'],
-  ['#E0663F', '#FF8F78'],
-  ['#C98A12', '#FFC94D'],
-] as const;
-
-function useMinuteClock() {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 30000);
-    return () => clearInterval(t);
-  }, []);
-  return now;
-}
-
+/** roomTab() from the prototype (P:L2117–2129; CSS P:L551–573). */
 export default function Waiting() {
   const insets = useSafeAreaInsets();
   const tabSpace = useTabBarSpace();
   const parked = useAppState((s) => s.parked);
-  const now = useMinuteClock();
+  const sale = useAppState((s) => s.settings.sale);
+  // Moves wants to Ready the moment their wait ends; the "left" pills refresh twice a minute.
+  const edge = useBoundaryNow(parked.filter((w) => !w.decided).map((w) => w.readyAt));
+  const tick = useTickWhileFocused(30000);
+  const now = Math.max(edge, tick);
+
   const ready = parked.filter((w) => !w.decided && w.readyAt <= now);
   const waiting = parked.filter((w) => !w.decided && w.readyAt > now).sort((a, b) => a.readyAt - b.readyAt);
   const letGo = parked.filter((w) => w.decided === 'let_go').reverse();
-  const [view, setView] = useState<View_>(ready.length ? 'ready' : 'waiting');
-  const tipDue = useAppState((s) => s.subscribed && !s.tabTips.waiting && s.coachStep < 0);
+  const [view, setView] = useState<RoomView>(() => takeRoomView() ?? (ready.length ? 'ready' : 'waiting'));
+  const scrollRef: ScrollRef = useRef(null);
+  const segRef: SpotRef = useRef(null);
 
-  const segments: [View_, string, number][] = [
+  // Today's wait card picks the segment.
+  useFocusEffect(
+    useCallback(() => {
+      const v = takeRoomView();
+      if (v) setView(v);
+    }, []),
+  );
+
+  const segments: [RoomView, string, number][] = [
     ['waiting', 'Waiting', waiting.length],
     ['ready', 'Ready', ready.length],
     ['letgo', 'Let go', letGo.length],
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: color.night }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 24, paddingBottom: tabSpace }}>
+    <View style={{ flex: 1 }}>
+      <TopGlow />
+      <ScrollView ref={scrollRef} contentContainerStyle={{ paddingTop: insets.top + 10, paddingHorizontal: 24, paddingBottom: tabSpace }}>
         <Rise style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={type.small}>Every want waits its turn</Text>
-            <Text style={type.h1}>Waiting room</Text>
+            <Text accessibilityRole="header" style={type.h1}>
+              Waiting room
+            </Text>
           </View>
-          <Image source={require('../../../assets/mascots/shieldm.webp')} style={{ width: 56, height: 56 }} resizeMode="contain" />
+          <Mascot source={require('../../../assets/mascots/shieldm.webp')} size={56} halo={false} float={false} pop={false} />
         </Rise>
 
-        {/* Segmented control */}
+        {/* .wr-seg */}
         <Rise delay={60} style={{ marginTop: 16 }}>
           <View
+            ref={segRef}
+            collapsable={false}
             accessibilityRole="tablist"
-            style={{ flexDirection: 'row', backgroundColor: '#12153A', borderRadius: 999, padding: 4, borderWidth: 1.5, borderColor: '#2E3374' }}
+            accessibilityLabel="Waiting room"
+            style={{ flexDirection: 'row', gap: 4, backgroundColor: '#12153A', borderRadius: 99, padding: 4, borderWidth: 1.5, borderColor: '#282C68' }}
           >
             {segments.map(([k, label, n]) => {
               const on = view === k;
@@ -77,11 +79,15 @@ export default function Waiting() {
                   onPress={() => setView(k)}
                   accessibilityRole="tab"
                   accessibilityState={{ selected: on }}
-                  style={{ flex: 1, borderRadius: 999, paddingVertical: 9, alignItems: 'center', backgroundColor: on ? color.blue : 'transparent' }}
+                  style={{ flex: 1 }}
                 >
-                  <Text style={{ fontFamily: font.bodyHeavy, fontSize: 14, color: on ? '#FFFFFF' : color.text2 }}>
-                    {label} {n}
-                  </Text>
+                  {/* box-shadow: 0 3px 0 #2A3BC0 */}
+                  {on && <View style={{ position: 'absolute', left: 0, right: 0, top: 3, bottom: -3, borderRadius: 99, backgroundColor: '#2A3BC0' }} />}
+                  <View style={{ borderRadius: 99, paddingVertical: 8, paddingHorizontal: 4, alignItems: 'center', backgroundColor: on ? color.blue : 'transparent' }}>
+                    <Text style={{ fontFamily: font.bodyHeavy, fontSize: 13.5, color: on ? '#FFFFFF' : color.text2 }}>
+                      {label} {n}
+                    </Text>
+                  </View>
                 </Pressable>
               );
             })}
@@ -91,130 +97,59 @@ export default function Waiting() {
         <Rise delay={100} style={{ marginTop: 16, gap: 12 }}>
           {view === 'waiting' &&
             (waiting.length ? (
-              waiting.map((w) => <WantTag key={w.id} want={w} now={now} />)
+              waiting.map((w, i) => <WantTag key={w.id} want={w} now={now} ready={false} index={i} />)
             ) : (
-              <Empty text="Nothing is waiting. Next time you want something, choose “Park it till morning” in the pause." />
+              <RoomEmpty text="Nothing is waiting. Next time you want something, choose “Park it till morning” in the pause, or park it from a screenshot." />
             ))}
           {view === 'ready' &&
             (ready.length ? (
-              ready.map((w) => <WantTag key={w.id} want={w} now={now} ready />)
+              ready.map((w, i) => <WantTag key={w.id} want={w} now={now} ready index={i} />)
             ) : (
-              <Empty text="Nothing is ready yet. Wants come back here when their wait is over, often at 08:00." />
+              <RoomEmpty text="Nothing is ready yet. Wants come back here when their wait is over, often at 08:00." />
             ))}
           {view === 'letgo' &&
             (letGo.length ? (
-              <>
+              <View>
                 <Text style={type.small}>Things you wanted, waited for and let go. Just the things, no money totals.</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                  {letGo.map((w, i) => (
-                    <LinearGradient
-                      key={w.id}
-                      colors={SHELF[i % SHELF.length]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={{ borderRadius: 16, paddingHorizontal: 14, paddingVertical: 12, maxWidth: '100%' }}
-                    >
-                      <Text style={{ fontFamily: font.bodyHeavy, fontSize: 14.5, color: '#FFFFFF' }}>{w.what || `Something from ${w.app}`}</Text>
-                    </LinearGradient>
-                  ))}
-                </View>
-              </>
+                <LetGoShelf wants={letGo} />
+              </View>
             ) : (
-              <Empty text="Your let-go shelf is empty. When you let something go, it lands here." />
+              <RoomEmpty text="Your let-go shelf is empty. When you let something go, it lands here and counts toward a sticker." />
             ))}
         </Rise>
 
-        <Text style={[type.small, { textAlign: 'center', marginTop: 18 }]}>
-          The rule: the more it costs, the longer it waits, and it’s never ready at night.
-        </Text>
-      </ScrollView>
-      <TipSheet
-        visible={tipDue}
-        title={TAB_TIPS.waiting.t}
-        body={TAB_TIPS.waiting.d}
-        next="Got it"
-        onNext={() => setState((s) => ({ tabTips: { ...s.tabTips, waiting: true } }))}
-      />
-    </View>
-  );
-}
+        {view !== 'letgo' && (
+          <Rise delay={140} style={{ marginTop: 16 }}>
+            <Pressable
+              onPress={() => router.push('/snap')}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                paddingVertical: 16,
+                borderRadius: 20,
+                borderWidth: 2,
+                borderStyle: 'dashed',
+                borderColor: '#343A80',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <CameraIcon size={20} weight="bold" color={color.text2} />
+              <Text style={{ fontFamily: font.bodyBold, fontSize: 16, color: color.text2 }}>Park something from a screenshot</Text>
+            </Pressable>
+          </Rise>
+        )}
 
-const RING_C = 2 * Math.PI * 33;
-
-/** The countdown ring around a tag's icon (prototype ringSVG()). */
-function TagRing({ frac, ready }: { frac: number; ready: boolean }) {
-  return (
-    <Svg width={56} height={56} viewBox="0 0 74 74" style={{ position: 'absolute' }}>
-      <Defs>
-        <SvgGradient id="wrg" x1="0" y1="0" x2="1" y2="0">
-          <Stop offset="0" stopColor="#4361FF" />
-          <Stop offset="1" stopColor="#8B5CF6" />
-        </SvgGradient>
-      </Defs>
-      <Circle cx="37" cy="37" r="33" fill="none" stroke="#DCD8F7" strokeWidth="6" />
-      <Circle
-        cx="37"
-        cy="37"
-        r="33"
-        fill="none"
-        stroke={ready ? '#1FBF86' : 'url(#wrg)'}
-        strokeWidth="6"
-        strokeLinecap="round"
-        strokeDasharray={RING_C}
-        strokeDashoffset={RING_C * (1 - frac)}
-        transform="rotate(-90 37 37)"
-      />
-    </Svg>
-  );
-}
-
-/** A parked want as a paper tag: countdown ring, name, app and price band, time left or "Decide". */
-function WantTag({ want, now, ready }: { want: ParkedWant; now: number; ready?: boolean }) {
-  const total = want.readyAt - want.parkedAt;
-  const frac = ready || total <= 0 ? 1 : Math.min(1, Math.max(0, (now - want.parkedAt) / total));
-  const name = want.what || `Something from ${want.app}`;
-  return (
-    <Pressable
-      onPress={() => ready && router.push({ pathname: '/decide', params: { id: want.id } })}
-      disabled={!ready}
-      accessibilityRole={ready ? 'button' : undefined}
-      accessibilityLabel={ready ? `${name}. Ready. Decide now` : `${name}. ${formatDuration(want.readyAt - now)} left, ready ${formatReady(want.readyAt, now)}`}
-    >
-      <View style={{ backgroundColor: color.paper, borderRadius: 18, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <View style={{ width: 56, height: 56, alignItems: 'center', justifyContent: 'center' }}>
-          <TagRing frac={frac} ready={!!ready} />
-          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: '#2C24A3', alignItems: 'center', justifyContent: 'center' }}>
-            <IconMoon size={19} color="#C4B5FD" />
-          </View>
-        </View>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontFamily: font.display, fontSize: 18, color: color.inkOnBright }}>{name}</Text>
-          <Text style={{ fontFamily: font.bodyBold, fontSize: 13.5, color: color.paperLabel }}>
-            {want.app} · {BAND_LABEL[want.band]}
+        <Rise delay={160} style={{ marginTop: 16 }}>
+          <Text style={[type.small, { textAlign: 'center' }]}>
+            The rule: 1 hour for every £10, never ready at night{sale ? ', doubled in sale week' : ''}. Change it in Settings.
           </Text>
-          {ready ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 13.5, color: '#1FA67A' }}>Ready. Still want it?</Text>
-              <View style={{ backgroundColor: color.blue, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 }}>
-                <Text style={{ fontFamily: font.display, fontSize: 14, color: '#FFFFFF' }}>Decide</Text>
-              </View>
-            </View>
-          ) : (
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 13.5, color: color.blue, fontVariant: ['tabular-nums'] }}>{formatDuration(want.readyAt - now)} left</Text>
-              <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: color.paperLabel }}>{formatReady(want.readyAt, now)}</Text>
-            </View>
-          )}
-        </View>
-      </View>
-    </Pressable>
-  );
-}
+        </Rise>
+      </ScrollView>
 
-function Empty({ text }: { text: string }) {
-  return (
-    <Card>
-      <Text style={[type.body, { color: color.text2 }]}>{text}</Text>
-    </Card>
+      <TabTip k="waiting" targetRef={segRef} scrollRef={scrollRef} radius={99} />
+    </View>
   );
 }
