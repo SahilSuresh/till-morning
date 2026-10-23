@@ -1,28 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
-import {
-  ArrowCounterClockwiseIcon,
-  BugIcon,
-  CalendarCheckIcon,
-  CreditCardIcon,
-  CrownSimpleIcon,
-  EyeIcon,
-  FileTextIcon,
-  HeartIcon,
-  type Icon,
-  InfoIcon,
-  LifebuoyIcon,
-  LockIcon,
-  LockKeyIcon,
-  MoonStarsIcon,
-  PiggyBankIcon,
-  PlayIcon,
-  ScrollIcon,
-  ShieldCheckIcon,
-  SquaresFourIcon,
-  StarIcon,
-  ToggleRightIcon,
-} from 'phosphor-react-native';
+import { ArrowCounterClockwiseIcon, BugIcon, CalendarCheckIcon, CreditCardIcon, CrownSimpleIcon, EyeIcon, FileTextIcon, HeartIcon, type Icon, InfoIcon, LifebuoyIcon, LockIcon, LockKeyIcon, MoonStarsIcon, PiggyBankIcon, PlayIcon, ScrollIcon, ShieldCheckIcon, SquaresFourIcon, StarIcon, ToggleRightIcon } from '../../ui/ph';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, Switch, Text, TextInput, type TextInputProps, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

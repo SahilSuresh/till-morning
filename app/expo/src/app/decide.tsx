@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeftIcon } from 'phosphor-react-native';
+import { ArrowLeftIcon } from '../ui/ph';
 import { ScrollView, Text, useWindowDimensions, View } from 'react-native';
 
 import { decideWant, formatDuration, knownApp, priceText, readyWants } from '../lib/core';

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { BellRinging } from 'phosphor-react-native';
+import { BellRinging } from '../ui/ph';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import Svg, { Line } from 'react-native-svg';

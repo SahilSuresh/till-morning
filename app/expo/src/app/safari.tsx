@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Compass, Hourglass, ShareNetwork, ShieldCheck } from 'phosphor-react-native';
+import { Compass, Hourglass, ShareNetwork, ShieldCheck } from '../ui/ph';
 import { Linking, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

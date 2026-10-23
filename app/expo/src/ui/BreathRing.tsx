@@ -1,4 +1,4 @@
-import { Check } from 'phosphor-react-native';
+import { Check } from './ph';
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {

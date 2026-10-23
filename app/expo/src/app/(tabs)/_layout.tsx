@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
 import { TabList, TabSlot, Tabs, TabTrigger, type TabsDescriptor, type TabsSlotRenderOptions } from 'expo-router/ui';
-import { GearSixIcon, HourglassMediumIcon, HouseIcon, UserIcon } from 'phosphor-react-native';
+import { GearSixIcon, HourglassMediumIcon, HouseIcon, UserIcon } from '../../ui/ph';
 import { StyleSheet } from 'react-native';
 import { Screen } from 'react-native-screens';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

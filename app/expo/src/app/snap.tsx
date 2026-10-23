@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Camera, CheckCircle, Hourglass, ShoppingBag } from 'phosphor-react-native';
+import { Camera, CheckCircle, Hourglass, ShoppingBag } from '../ui/ph';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Image, KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

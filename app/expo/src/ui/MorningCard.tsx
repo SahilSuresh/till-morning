@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
-import { CheckIcon, XIcon } from 'phosphor-react-native';
+import { CheckIcon, XIcon } from './ph';
 import { useCallback, useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import R from 'react-native-reanimated';

@@ -1,14 +1,5 @@
 import { router, useIsFocused } from 'expo-router';
-import {
-  CalendarCheckIcon,
-  ClipboardTextIcon,
-  LockKeyIcon,
-  MicrophoneIcon,
-  PackageIcon,
-  PiggyBankIcon,
-  SparkleIcon,
-  TicketIcon,
-} from 'phosphor-react-native';
+import { CalendarCheckIcon, ClipboardTextIcon, LockKeyIcon, MicrophoneIcon, PackageIcon, PiggyBankIcon, SparkleIcon, TicketIcon } from '../../ui/ph';
 import { type ComponentRef, useEffect, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

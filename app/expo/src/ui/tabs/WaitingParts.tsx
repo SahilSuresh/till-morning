@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { ShoppingBagIcon } from 'phosphor-react-native';
+import { ShoppingBagIcon } from '../ph';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';

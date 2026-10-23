@@ -1,4 +1,4 @@
-import { ArrowUp, Check, LockKey } from 'phosphor-react-native';
+import { ArrowUp, Check, LockKey } from '../ph';
 import { useEffect } from 'react';
 import { Text, View } from 'react-native';
 import Animated, { cancelAnimation, Easing, FadeIn, useAnimatedStyle, useSharedValue, withRepeat, withTiming, ZoomIn } from 'react-native-reanimated';

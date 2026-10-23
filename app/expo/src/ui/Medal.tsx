@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { CrownIcon, DiamondIcon, type Icon, LockKeyIcon, MedalIcon, ShieldIcon, ShieldStarIcon, TrophyIcon } from 'phosphor-react-native';
+import { CrownIcon, DiamondIcon, type Icon, LockKeyIcon, MedalIcon, ShieldIcon, ShieldStarIcon, TrophyIcon } from './ph';
 import { useId } from 'react';
 import { Text, View } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';

@@ -1,14 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, useIsFocused } from 'expo-router';
-import {
-  CaretRightIcon,
-  HandPointingIcon,
-  type Icon,
-  type IconWeight,
-  MoonStarsIcon,
-  ShieldCheckIcon,
-  TicketIcon,
-} from 'phosphor-react-native';
+import { CaretRightIcon, HandPointingIcon, type Icon, type IconWeight, MoonStarsIcon, ShieldCheckIcon, TicketIcon } from '../ph';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { AppState, Platform, Pressable, Text, View } from 'react-native';
 import R from 'react-native-reanimated';

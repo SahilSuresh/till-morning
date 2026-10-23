@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { ShoppingBagIcon } from 'phosphor-react-native';
+import { ShoppingBagIcon } from '../ph';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, Mask, RadialGradient, Rect, Stop } from 'react-native-svg';

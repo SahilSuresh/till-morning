@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { DeviceMobile, EyeSlash, Heart, type Icon, LockKey, MoonStars, Timer, ToggleRight } from 'phosphor-react-native';
+import { DeviceMobile, EyeSlash, Heart, type Icon, LockKey, MoonStars, Timer, ToggleRight } from '../ui/ph';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 import { DeviceActivitySelectionSheetViewPersisted } from 'react-native-device-activity';

@@ -134,6 +134,8 @@ export async function syncShields() {
   DA.resetBlocks();
   DA.clearWhitelist();
   if (!s.shieldsOn || !s.onboarded || s.lapsed) return;
+  // "Shields working · checked just now" on Today.
+  setState({ lastCheckAt: now });
 
   if (s.offUntil > now) {
     // Back on by itself at 07:00, even if Till Morning stays closed.

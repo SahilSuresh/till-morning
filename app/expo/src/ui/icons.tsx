@@ -1,23 +1,4 @@
-import {
-  CaretDoubleRightIcon,
-  CaretRightIcon,
-  CheckIcon,
-  ClockIcon,
-  GearSixIcon,
-  HourglassMediumIcon,
-  LockKeyIcon,
-  MinusIcon,
-  MoonStarsIcon,
-  PlusIcon,
-  ReceiptIcon,
-  ShieldCheckIcon,
-  SunIcon,
-  TicketIcon,
-  TimerIcon,
-  UserIcon,
-  WarningCircleIcon,
-  XIcon,
-} from 'phosphor-react-native';
+import { CaretDoubleRightIcon, CaretRightIcon, CheckIcon, ClockIcon, GearSixIcon, HourglassMediumIcon, LockKeyIcon, MinusIcon, MoonStarsIcon, PlusIcon, ReceiptIcon, ShieldCheckIcon, SunIcon, TicketIcon, TimerIcon, UserIcon, WarningCircleIcon, XIcon } from './ph';
 
 // The app's named icons, drawn with Phosphor's bold glyphs (the prototype's ic() set, P:L754).
 // Names, sizes and default colours are unchanged, so every screen keeps working.

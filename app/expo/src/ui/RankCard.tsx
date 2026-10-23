@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
-import { CaretRightIcon } from 'phosphor-react-native';
+import { CaretRightIcon } from './ph';
 import { useCallback, useEffect, useState } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 

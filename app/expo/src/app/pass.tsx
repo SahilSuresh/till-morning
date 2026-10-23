@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { CheckCircleIcon, LightningIcon, ShoppingBagIcon, WarningCircleIcon } from 'phosphor-react-native';
+import { CheckCircleIcon, LightningIcon, ShoppingBagIcon, WarningCircleIcon } from '../ui/ph';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 

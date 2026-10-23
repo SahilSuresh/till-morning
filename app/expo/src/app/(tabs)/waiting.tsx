@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { CameraIcon } from 'phosphor-react-native';
+import { CameraIcon } from '../../ui/ph';
 import { useCallback, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -144,7 +144,7 @@ export default function Waiting() {
 
         <Rise delay={160} style={{ marginTop: 16 }}>
           <Text style={[type.small, { textAlign: 'center' }]}>
-            The rule: 1 hour for every £10, never ready at night{sale ? ', doubled in sale week' : ''}. Change it in Settings.
+            The rule: 1 hour for every £10, never ready at night{sale ? ', doubled in sale week' : ''}.
           </Text>
         </Rise>
       </ScrollView>

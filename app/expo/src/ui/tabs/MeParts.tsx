@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useIsFocused } from 'expo-router';
-import { CaretRightIcon, CheckCircleIcon, MicrophoneIcon, PackageIcon } from 'phosphor-react-native';
+import { CaretRightIcon, CheckCircleIcon, MicrophoneIcon, PackageIcon } from '../ph';
 import { useMemo } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import R, { css } from 'react-native-reanimated';

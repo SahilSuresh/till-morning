@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { ArrowLeftIcon, CheckCircleIcon } from 'phosphor-react-native';
+import { ArrowLeftIcon, CheckCircleIcon } from '../ui/ph';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

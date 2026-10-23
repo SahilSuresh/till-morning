@@ -1,4 +1,4 @@
-import { CaretRightIcon, CheckIcon } from 'phosphor-react-native';
+import { CaretRightIcon, CheckIcon } from '../../ui/ph';
 import { useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

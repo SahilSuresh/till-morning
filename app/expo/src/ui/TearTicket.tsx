@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { CaretRightIcon } from 'phosphor-react-native';
+import { CaretRightIcon } from './ph';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, PanResponder, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Line, LinearGradient, Path, Stop } from 'react-native-svg';

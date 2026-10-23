@@ -1,5 +1,5 @@
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { PauseIcon, PlayIcon } from 'phosphor-react-native';
+import { PauseIcon, PlayIcon } from './ph';
 import { Pressable, Text, View } from 'react-native';
 
 import type { AppState } from '../lib/store';

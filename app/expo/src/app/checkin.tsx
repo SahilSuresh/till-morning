@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { CameraIcon, CheckCircleIcon, CheckIcon, ReceiptIcon, WalletIcon, WarningCircleIcon } from 'phosphor-react-native';
+import { CameraIcon, CheckCircleIcon, CheckIcon, ReceiptIcon, WalletIcon, WarningCircleIcon } from '../ui/ph';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';

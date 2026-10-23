@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as SMS from 'expo-sms';
 import { router, useLocalSearchParams } from 'expo-router';
-import { CameraIcon, ChatCircleIcon, CheckCircleIcon, MoonStarsIcon, SparkleIcon, WarningCircleIcon } from 'phosphor-react-native';
+import { CameraIcon, ChatCircleIcon, CheckCircleIcon, MoonStarsIcon, SparkleIcon, WarningCircleIcon } from '../ui/ph';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, AppState, Easing, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
