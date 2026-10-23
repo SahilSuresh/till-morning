@@ -238,12 +238,17 @@ func tmHandleShieldTap(
   }
 
   // "I still want to shop": the shield can't open the app on most iOS versions,
-  // so a notification takes them straight into the pause.
+  // so a notification takes them straight into the pause (or, at night, to park it).
   tmAppendShieldLog(action: "want", name: name)
+  let nlOn = userDefaults?.object(forKey: "tm_nl_on") as? Bool ?? true
+  let nlFrom = userDefaults?.object(forKey: "tm_nl_from") as? Int ?? 23
+  let nlTo = userDefaults?.object(forKey: "tm_nl_to") as? Int ?? 7
+  let hour = Calendar.current.component(.hour, from: Date())
+  let night = nlOn && (nlFrom > nlTo ? (hour >= nlFrom || hour < nlTo) : (hour >= nlFrom && hour < nlTo))
   sendNotification(
     contents: [
-      "title": "Tap to start your pause",
-      "body": "Take a breath before \(name).",
+      "title": night ? "Park it till morning" : "Tap to start your pause",
+      "body": night ? "Tap to park it, or say why it’s urgent." : "Take a breath before \(name).",
       "sound": "default",
       "interruptionLevel": "timeSensitive",
       "identifier": "tm_pause_request",

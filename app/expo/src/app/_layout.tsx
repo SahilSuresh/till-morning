@@ -8,7 +8,7 @@ import { useEffect } from 'react';
 import { AppState, View } from 'react-native';
 
 import { initAnalytics } from '../lib/analytics';
-import { processShieldLog, tick } from '../lib/core';
+import { processShieldLog, syncShields, tick } from '../lib/core';
 import { initCrashReporting, Sentry } from '../lib/crashes';
 import { Notifications } from '../lib/notify';
 import { checkGoals, goalToast, rollDay } from '../lib/progress';
@@ -23,7 +23,9 @@ initPurchases();
 
 function onForeground() {
   rollDay();
-  tick();
+  syncShields();
+  const ended = tick();
+  if (ended) toast(ended);
   const toasts = processShieldLog();
   const goal = goalToast(checkGoals());
   if (toasts.length) toast(toasts[toasts.length - 1]);
@@ -57,7 +59,10 @@ function RootLayout() {
   useEffect(() => {
     loadState().then(onForeground);
     const sub = AppState.addEventListener('change', (s) => s === 'active' && onForeground());
-    const timer = setInterval(tick, 1000);
+    const timer = setInterval(() => {
+      const ended = tick();
+      if (ended) toast(ended);
+    }, 1000);
     return () => {
       sub.remove();
       clearInterval(timer);

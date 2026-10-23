@@ -4,7 +4,8 @@ import { useSyncExternalStore } from 'react';
 // Everything Till Morning knows lives on the phone, in one small JSON document.
 // No account, no server: see the privacy promise in the brief.
 
-export type Habit = 'takeaways' | 'shopping' | 'fashion' | 'social' | 'other';
+export type ChallengeKey = 'none' | 'nobuy' | 'lowbuy' | 'takeaway';
+export type Habit ='takeaways' | 'shopping' | 'fashion' | 'social' | 'other';
 export type PassReason = 'specific' | 'browsing' | 'unsure';
 export type CheckInAnswer = 'stuck' | 'bought_else' | 'didnt_buy' | 'over';
 
@@ -12,6 +13,7 @@ export type ShoppingPass = {
   id: string;
   app: string; // display name, or 'your shop apps' when started from Home
   wholeSelection: boolean; // true when the pass opened every protected app
+  urgent?: boolean; // night lock's urgent door: 10 minutes, no check-in
   reason: PassReason;
   need: string;
   limit: string;
@@ -49,7 +51,20 @@ export type AppState = {
     coolOffMinutes: number; // 0 = off
     passPresets: [number, number, number];
     defaultPassMinutes: number;
+    shieldMsg: string; // shown first on every shield (60 chars)
+    nlOn: boolean; // night lock
+    nlFrom: number; // 22 | 23 | 0
+    nlTo: number; // 6 | 7 | 8
+    schedule: 'all' | 'evenings' | 'weekends';
+    sale: boolean; // sale week: waits ×2, pause +15 s
+    wage: number; // £ per hour, for "about X of your work"
+    challenge: ChallengeKey;
+    challengeAt: number;
+    treats: number[]; // treat nights, Monday = 0
   };
+  offUntil: number; // "Turn off till tomorrow": shields come back at this time
+  reasons: Record<string, number>; // "What's this one about?" answers
+  takeawaysChosen: boolean; // a takeaway selection exists for treat nights
   pass: ShoppingPass | null;
   pendingCheckIn: ShoppingPass | null;
   passesByDay: Record<string, number>;
@@ -87,7 +102,20 @@ export const initialState: AppState = {
     coolOffMinutes: 10,
     passPresets: [5, 10, 15],
     defaultPassMinutes: 10,
+    shieldMsg: '',
+    nlOn: true,
+    nlFrom: 23,
+    nlTo: 7,
+    schedule: 'all',
+    sale: false,
+    wage: 12,
+    challenge: 'none',
+    challengeAt: 0,
+    treats: [4],
   },
+  offUntil: 0,
+  reasons: {},
+  takeawaysChosen: false,
   pass: null,
   pendingCheckIn: null,
   passesByDay: {},

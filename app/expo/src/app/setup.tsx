@@ -28,8 +28,8 @@ export default function Setup() {
   const idx = ORDER.indexOf(step);
 
   const finish = () => {
+    setState({ onboarded: true, appsChosen: true, day: '' });
     shieldChosenApps();
-    setState({ onboarded: true, appsChosen: true });
     track('onboarding_completed');
     router.replace('/');
   };

@@ -166,6 +166,59 @@ func tmCoolOffShieldIfNeeded(application: Application, config: [String: Any]?)
   )
 }
 
+/// Night lock window (default 23:00–07:00), written by the app as tm_nl_on/from/to.
+func tmNightActive(_ date: Date = Date()) -> Bool {
+  guard userDefaults?.object(forKey: "tm_nl_on") as? Bool ?? true else { return false }
+  let from = userDefaults?.object(forKey: "tm_nl_from") as? Int ?? 23
+  let to = userDefaults?.object(forKey: "tm_nl_to") as? Int ?? 7
+  let h = Calendar.current.component(.hour, from: date)
+  return from > to ? (h >= from || h < to) : (h >= from && h < to)
+}
+
+/// The night-lock shield ("It's late. … can wait till morning.") and the late shield
+/// (22:00–05:00 when night lock isn't on: "It's 23:10. … will still be there at 8.").
+func tmNightOrLateShield(application: Application, config: [String: Any]?) -> ShieldConfiguration? {
+  let name = application.localizedDisplayName ?? "this app"
+  let now = Date()
+  let formatter = DateFormatter()
+  formatter.locale = Locale(identifier: "en_GB")
+  formatter.dateFormat = "HH:mm"
+
+  if tmNightActive(now) {
+    let to = userDefaults?.object(forKey: "tm_nl_to") as? Int ?? 7
+    return ShieldConfiguration(
+      backgroundBlurStyle: nil,
+      backgroundColor: tmRGB(0x0D0F33),
+      icon: UIImage(systemName: "moon.zzz.fill")?.withTintColor(tmRGB(0x8EA2FF), renderingMode: .alwaysOriginal),
+      title: .init(text: "It’s late. \(name) can wait till morning.", color: tmRGB(0xF3F2FF)),
+      subtitle: .init(text: "Night lock is on until \(to < 10 ? "0" : "")\(to):00", color: tmRGB(0x9EA3D9)),
+      primaryButtonLabel: .init(text: "Close \(name)", color: .white),
+      primaryButtonBackgroundColor: tmRGB(0x4361FF),
+      secondaryButtonLabel: .init(text: "Park it till morning", color: tmRGB(0xC4B5FD))
+    )
+  }
+
+  let h = Calendar.current.component(.hour, from: now)
+  guard h >= 22 || h < 5 else { return nil }
+  var subtitle = (config?["subtitle"] as? String) ?? "Is this a planned purchase?"
+  if let stats = userDefaults?.string(forKey: "tm_leftstats::\(name)") {
+    let parts = stats.split(separator: "|").compactMap { Int($0) }
+    if parts.count == 2, parts[1] >= 2, parts[0] >= 1 {
+      subtitle = "You left it \(parts[0]) of the last \(parts[1]) times."
+    }
+  }
+  return ShieldConfiguration(
+    backgroundBlurStyle: nil,
+    backgroundColor: tmRGB(0x101236),
+    icon: resolveIcon(dict: config ?? [:]),
+    title: .init(text: "It’s \(formatter.string(from: now)). \(name) will still be there at 8.", color: tmRGB(0xF3F2FF)),
+    subtitle: .init(text: subtitle, color: tmRGB(0xB4B6E4)),
+    primaryButtonLabel: .init(text: "Close \(name)", color: .white),
+    primaryButtonBackgroundColor: tmRGB(0x4361FF),
+    secondaryButtonLabel: .init(text: "I still want it", color: tmRGB(0x93A5FF))
+  )
+}
+
 // Override the functions below to customize the shields used in various situations.
 // The system provides a default appearance for any methods that your subclass doesn't override.
 // Make sure that your class name matches the NSExtensionPrincipalClass in your Info.plist.
@@ -181,6 +234,9 @@ class ShieldConfigurationExtension: ShieldConfigurationDataSource {
 
     if let coolOff = tmCoolOffShieldIfNeeded(application: application, config: config) {
       return coolOff
+    }
+    if let night = tmNightOrLateShield(application: application, config: config) {
+      return night
     }
 
     let placeholders: [String: String?] = [
@@ -212,6 +268,9 @@ class ShieldConfigurationExtension: ShieldConfigurationDataSource {
 
     if let coolOff = tmCoolOffShieldIfNeeded(application: application, config: config) {
       return coolOff
+    }
+    if let night = tmNightOrLateShield(application: application, config: config) {
+      return night
     }
 
     let placeholders = [

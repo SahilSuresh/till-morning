@@ -28,9 +28,13 @@ export async function schedulePassEnd(p: ShoppingPass) {
     identifier: passId(p),
     content: {
       title: 'Till Morning',
-      body: p.wholeSelection ? 'Your Shopping Pass ended. Tap to check in.' : `Your ${p.app} pass ended. Tap to check in.`,
+      body: p.urgent
+        ? `${p.app} is locked again. Sleep well.`
+        : p.wholeSelection
+          ? 'Your Shopping Pass ended. Tap to check in.'
+          : `Your ${p.app} pass ended. Tap to check in.`,
       sound: 'default',
-      data: { url: 'tillmorning://checkin' },
+      data: { url: p.urgent ? 'tillmorning://' : 'tillmorning://checkin' },
       interruptionLevel: 'timeSensitive',
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(p.endsAt) },
