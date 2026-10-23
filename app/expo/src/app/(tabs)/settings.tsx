@@ -1,7 +1,30 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
-import { type ReactNode, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import {
+  ArrowCounterClockwiseIcon,
+  BugIcon,
+  CalendarCheckIcon,
+  CreditCardIcon,
+  CrownSimpleIcon,
+  EyeIcon,
+  FileTextIcon,
+  HeartIcon,
+  type Icon,
+  InfoIcon,
+  LifebuoyIcon,
+  LockIcon,
+  LockKeyIcon,
+  MoonStarsIcon,
+  PiggyBankIcon,
+  PlayIcon,
+  ScrollIcon,
+  ShieldCheckIcon,
+  SquaresFourIcon,
+  StarIcon,
+  ToggleRightIcon,
+} from 'phosphor-react-native';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Linking, Pressable, ScrollView, Switch, Text, TextInput, type TextInputProps, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { budgetSummary, lockDays } from '../../lib/budget';
@@ -14,77 +37,184 @@ import { getScreenTimeStatus } from '../../lib/screenTime';
 import { type AppState, resetState, setState, useAppState } from '../../lib/store';
 import { lose, xpToast } from '../../lib/xp';
 import { Card, Tag, toast } from '../../ui/components';
+import { Enter, Tile, type TileTone } from '../../ui/flow/kit';
 import { IconCaret } from '../../ui/icons';
 import { useTabBarSpace } from '../../ui/layout';
 import { color, font, type } from '../../ui/theme';
 
-function Row({ label, sub, onPress, right, danger }: { label: string; sub?: string; onPress?: () => void; right?: ReactNode; danger?: boolean }) {
+// settingsTab() in the prototype (P:L2155): cards of rows, each with a tinted icon tile.
+
+const rowLine = { borderTopWidth: 1.5, borderTopColor: color.divider } as const;
+
+/** A plain row (`row()` in the prototype): px-4 py-3.5 with a full-width line above it. */
+function Cell({ children, first }: { children: ReactNode; first?: boolean }) {
+  return <View style={[{ paddingHorizontal: 16, paddingVertical: 14 }, !first && rowLine]}>{children}</View>;
+}
+
+/** A row with an icon tile (`link()` in the prototype). Shows a caret, a link word, or a switch on the right. */
+function Row({
+  Icon: I,
+  tone,
+  label,
+  sub,
+  onPress,
+  right,
+  link,
+  first,
+  danger,
+}: {
+  Icon: Icon;
+  tone: TileTone;
+  label: string;
+  sub?: string;
+  onPress?: () => void;
+  right?: ReactNode;
+  link?: string;
+  first?: boolean;
+  danger?: boolean;
+}) {
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
-      style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}
+      style={({ pressed }) => [
+        { paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? 'rgba(255,255,255,0.04)' : 'transparent' },
+        !first && rowLine,
+      ]}
     >
+      <Tile tone={tone} Icon={I} weight={I === StarIcon ? 'fill' : 'bold'} />
       <View style={{ flex: 1 }}>
         <Text style={[type.title, danger && { color: '#FF9F94' }]}>{label}</Text>
-        {sub ? <Text style={[type.small, { marginTop: 2 }]}>{sub}</Text> : null}
+        {sub ? <Text style={type.small}>{sub}</Text> : null}
       </View>
-      {right ?? (onPress ? <IconCaret /> : null)}
+      {right ??
+        (link ? (
+          <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: color.blueLight, textDecorationLine: 'underline' }}>{link}</Text>
+        ) : onPress ? (
+          <IconCaret size={20} />
+        ) : null)}
     </Pressable>
   );
 }
 
-const Divider = () => <View style={{ height: 1.5, backgroundColor: color.divider }} />;
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Head({ title, d }: { title: string; d: number }) {
   return (
-    <View style={{ gap: 8 }}>
-      <Text style={type.label}>{title}</Text>
-      <Card style={{ paddingVertical: 4 }}>{children}</Card>
-    </View>
+    <Enter d={d}>
+      <Text accessibilityRole="header" style={[type.h2, { marginTop: 24, marginBottom: 8 }]}>
+        {title}
+      </Text>
+    </Enter>
   );
 }
 
-function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
-  return <Switch value={value} onValueChange={onChange} trackColor={{ true: color.blue, false: '#2B2F69' }} ios_backgroundColor="#2B2F69" />;
+/** A card whose rows run edge to edge, with lines between them. */
+function Group({ children, d, style }: { children: ReactNode; d: number; style?: object }) {
+  return (
+    <Enter d={d} style={style}>
+      <Card style={{ padding: 0, overflow: 'hidden' }}>{children}</Card>
+    </Enter>
+  );
 }
 
-function Choice<T extends string | number>({ title, sub, options, value, onPick }: { title: string; sub?: string; options: [T, string][]; value: T; onPick: (v: T) => void }) {
+function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
-    <View style={{ paddingVertical: 12, gap: 8 }}>
-      <Text style={type.title}>{title}</Text>
-      {sub ? <Text style={type.small}>{sub}</Text> : null}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {options.map(([v, label]) => (
-          <Tag key={String(v)} label={label} selected={value === v} onPress={() => onPick(v)} />
-        ))}
-      </View>
+    <Switch
+      value={value}
+      onValueChange={onChange}
+      accessibilityLabel={label}
+      trackColor={{ true: color.blue, false: '#2B2F69' }}
+      ios_backgroundColor="#2B2F69"
+    />
+  );
+}
+
+/** Equal-width choices, one column per option (`seg()` in the prototype). */
+function Seg<T extends string | number>({ options, value, onPick, label }: { options: [T, string][]; value: T; onPick: (v: T) => void; label: string }) {
+  return (
+    <View accessibilityLabel={label} style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+      {options.map(([v, l]) => (
+        <Tag key={String(v)} fill label={l} selected={value === v} onPress={() => onPick(v)} />
+      ))}
     </View>
   );
 }
 
 const fieldStyle = {
-  marginTop: 8,
+  marginTop: 12,
   backgroundColor: color.field,
   borderColor: color.fieldBorder,
   borderWidth: 1.5,
   borderRadius: 16,
-  paddingHorizontal: 14,
+  paddingHorizontal: 16,
   paddingVertical: 12,
   fontFamily: font.bodySemi,
   fontSize: 16,
   color: color.text,
 };
 
+/**
+ * A text field that keeps what you type to itself and saves once, when you finish
+ * (Done, leaving the field, or leaving the screen), so typing never touches the shield.
+ */
+function CommitInput({ value, onCommit, ...props }: { value: string; onCommit: (v: string) => void } & Omit<TextInputProps, 'value' | 'onChangeText'>) {
+  const [text, setText] = useState(value);
+  const editing = useRef(false);
+  const latest = useRef(value);
+  const saved = useRef(value);
+  useEffect(() => {
+    if (editing.current) return;
+    setText(value);
+    latest.current = value;
+    saved.current = value;
+  }, [value]);
+  const commit = useRef(() => {
+    editing.current = false;
+    if (latest.current === saved.current) return;
+    saved.current = latest.current;
+    onCommitRef.current(latest.current);
+  }).current;
+  const onCommitRef = useRef(onCommit);
+  onCommitRef.current = onCommit;
+  useEffect(() => commit, [commit]);
+  return (
+    <TextInput
+      {...props}
+      value={text}
+      onChangeText={(t) => {
+        editing.current = true;
+        latest.current = t;
+        setText(t);
+      }}
+      onEndEditing={commit}
+      onSubmitEditing={commit}
+      returnKeyType="done"
+    />
+  );
+}
+
 export default function Settings() {
   const insets = useSafeAreaInsets();
   const tabSpace = useTabBarSpace();
-  const s = useAppState((st) => st);
-  const st = s.settings;
+  // Only what this screen shows, so unrelated changes (XP, the pause log…) don't re-render it.
+  const shieldsOn = useAppState((s) => s.shieldsOn);
+  const offUntil = useAppState((s) => s.offUntil);
+  const st = useAppState((s) => s.settings);
+  const meals = useAppState((s) => s.meals);
+  const goal = useAppState((s) => s.goal);
+  const bankLock = useAppState((s) => s.bankLock);
+  const budgetTotal = useAppState((s) => s.budgetTotal);
+  const split = useAppState((s) => s.split);
+  const lapsed = useAppState((s) => s.lapsed);
+  const plan = useAppState((s) => s.plan);
+  const trialAt = useAppState((s) => s.trialAt);
   const [more, setMore] = useState(false);
-  const offTill = s.offUntil > Date.now();
-  const count = protectedCount();
+  const offTill = offUntil > Date.now();
+
+  // The protected-app count comes from Screen Time: read it when Settings comes into view, not on every render.
+  const [count, setCount] = useState(protectedCount);
+  useFocusEffect(useCallback(() => setCount(protectedCount()), []));
+  const budget = useMemo(() => budgetSummary(), [budgetTotal, split]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (patch: Partial<AppState['settings']>, resync = false) => {
     setState((x) => ({ settings: { ...x.settings, ...patch } }));
@@ -170,50 +300,66 @@ export default function Settings() {
     }
   };
 
+  const days = bankLock ? lockDays() : 0;
+
   return (
     <View style={{ flex: 1, backgroundColor: color.night }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 24, paddingBottom: tabSpace, gap: 20 }} keyboardShouldPersistTaps="handled">
-        <Text style={type.h1}>Settings</Text>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 6, paddingHorizontal: 24, paddingBottom: tabSpace }} keyboardShouldPersistTaps="handled">
+        <Enter>
+          <Text accessibilityRole="header" style={type.h1}>
+            Settings
+          </Text>
+        </Enter>
 
-        <Card style={{ paddingVertical: 4 }}>
+        <Group d={40} style={{ marginTop: 20 }}>
           <Row
+            first
+            Icon={ShieldCheckIcon}
+            tone="mint"
             label="Shield my apps"
-            sub={s.shieldsOn ? 'On. Your apps open with a pause.' : 'Off. Your apps open straight away.'}
-            right={<Toggle value={s.shieldsOn} onChange={toggleShields} />}
+            sub={shieldsOn ? 'On. Your apps open with a pause.' : 'Off. Your apps open straight away.'}
+            right={<Toggle label="Shield my apps" value={shieldsOn} onChange={toggleShields} />}
           />
-          {s.shieldsOn && (
-            <>
-              <Divider />
-              {offTill ? (
-                <Row
-                  label="Off till tomorrow"
-                  sub="Back on by itself at 07:00"
-                  onPress={() => {
-                    const r = shieldChosenApps();
-                    toast(r ? xpToast(r, 'Shields are back on') : 'Shields are back on');
-                  }}
-                />
-              ) : (
-                <Row label="Turn off till tomorrow" sub="Every shield comes back on at 07:00" onPress={askOffTill} />
-              )}
-            </>
-          )}
-          <Divider />
+          {shieldsOn &&
+            (offTill ? (
+              <Row
+                Icon={MoonStarsIcon}
+                tone="hush"
+                label="Off till tomorrow"
+                sub="Back on by itself at 07:00"
+                onPress={() => {
+                  const r = shieldChosenApps();
+                  toast(r ? xpToast(r, 'Shields are back on') : 'Shields are back on');
+                }}
+              />
+            ) : (
+              <Row Icon={MoonStarsIcon} tone="hush" label="Turn off till tomorrow" sub="Every shield comes back on at 07:00" onPress={askOffTill} />
+            ))}
           <Row
+            Icon={SquaresFourIcon}
+            tone="lav"
             label="Your apps"
-            sub={count.apps + count.categories ? `${count.apps} app${count.apps === 1 ? '' : 's'}${count.categories ? ` and ${count.categories} categor${count.categories === 1 ? 'y' : 'ies'}` : ''} protected` : 'None chosen yet'}
+            sub={
+              count.apps + count.categories
+                ? `${count.apps} app${count.apps === 1 ? '' : 's'}${count.categories ? ` and ${count.categories} categor${count.categories === 1 ? 'y' : 'ies'}` : ''} protected`
+                : 'None chosen yet'
+            }
             onPress={() => router.push('/apps')}
           />
-          <Divider />
-          <Row label="Your rules" sub="Challenge, treat nights, when to shield" onPress={() => router.push('/rules')} />
-        </Card>
+          <Row Icon={CalendarCheckIcon} tone="sun" label="Your rules" sub="Challenge, treat nights, when to shield" onPress={() => router.push('/rules')} />
+        </Group>
 
-        <Section title="Night lock">
+        <Head title="Night lock" d={50} />
+        <Group d={55}>
           <Row
+            first
+            Icon={MoonStarsIcon}
+            tone="hush"
             label="Night lock"
             sub={st.nlOn ? `${hh(st.nlFrom)} to ${hh(st.nlTo)}: only Park it or Close. Passes sleep.` : 'Off. Nights get the longer pause instead.'}
             right={
               <Toggle
+                label="Night lock"
                 value={st.nlOn}
                 onChange={(v) => {
                   set({ nlOn: v });
@@ -224,167 +370,219 @@ export default function Settings() {
           />
           {st.nlOn && (
             <>
-              <Divider />
-              <Choice title="Starts" options={[[22, '22:00'], [23, '23:00'], [0, '00:00']]} value={st.nlFrom} onPick={(v) => set({ nlFrom: v })} />
-              <Divider />
-              <Choice title="Ends" options={[[6, '06:00'], [7, '07:00'], [8, '08:00']]} value={st.nlTo} onPick={(v) => set({ nlTo: v })} />
-              <Divider />
-              <Row label="See how night lock looks" sub="A preview of the night-lock screen" onPress={() => router.push({ pathname: '/pause', params: { app: 'Your shop app', preview: 'night' } })} />
+              <Cell>
+                <Text style={type.title}>Starts</Text>
+                <Seg label="Night lock starts" options={[[22, '22:00'], [23, '23:00'], [0, '00:00']]} value={st.nlFrom} onPick={(v) => set({ nlFrom: v })} />
+                <Text style={[type.title, { marginTop: 16 }]}>Ends</Text>
+                <Seg label="Night lock ends" options={[[6, '06:00'], [7, '07:00'], [8, '08:00']]} value={st.nlTo} onPick={(v) => set({ nlTo: v })} />
+              </Cell>
+              <Row
+                Icon={EyeIcon}
+                tone="hush"
+                label="See how night lock looks"
+                sub="A preview of the night-lock screen"
+                onPress={() => router.push({ pathname: '/pause', params: { app: 'Your shop app', preview: 'night' } })}
+              />
             </>
           )}
-        </Section>
+        </Group>
 
-        <Section title="Pause">
+        <Head title="Pause" d={60} />
+        <Group d={80}>
           <Row
+            first
+            Icon={HeartIcon}
+            tone="sun"
             label="Backup dinner"
-            sub={s.meals.length ? s.meals.map((m) => m.n).join(', ') : 'Easy meals to show on takeaway pauses'}
+            sub={meals.length ? meals.map((m) => m.n).join(', ') : 'Easy meals to show on takeaway pauses'}
             onPress={() => router.push('/meals')}
           />
-          <Divider />
-          <Choice
-            title="How long the pause lasts"
-            options={[[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min']]}
-            value={st.pauseSeconds}
-            onPick={(v) => set({ pauseSeconds: v })}
-          />
-        </Section>
+          <Cell>
+            <Text style={type.title}>How long the pause lasts</Text>
+            <Seg
+              label="Pause length"
+              options={[[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min']]}
+              value={st.pauseSeconds}
+              onPick={(v) => set({ pauseSeconds: v })}
+            />
+          </Cell>
+        </Group>
 
-        <Card style={{ paddingVertical: 4 }}>
-          <Pressable onPress={() => setMore((v) => !v)} accessibilityRole="button" accessibilityState={{ expanded: more }} style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center' }}>
+        <Group d={100} style={{ marginTop: 24 }}>
+          <Pressable
+            onPress={() => setMore((v) => !v)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: more }}
+            style={({ pressed }) => ({
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              backgroundColor: pressed ? 'rgba(255,255,255,0.04)' : 'transparent',
+            })}
+          >
+            <Tile tone="hush" Icon={ToggleRightIcon} />
             <View style={{ flex: 1 }}>
               <Text style={type.title}>More options</Text>
               <Text style={type.small}>Budget, shield message, cool-off and more</Text>
             </View>
-            <View style={{ transform: [{ rotate: more ? '90deg' : '0deg' }] }}>
-              <IconCaret />
+            <View style={{ transform: [{ rotate: more ? '-90deg' : '90deg' }] }}>
+              <IconCaret size={20} />
             </View>
           </Pressable>
           {more && (
             <>
-              <Divider />
-              <Row label="Monthly budget" sub={budgetSummary()} onPress={() => router.push('/budget')} />
-              <Divider />
-              <Row
-                label="Bank limit"
-                sub={s.bankLock ? `Set ${lockDays()} day${lockDays() === 1 ? '' : 's'} ago, self-reported` : 'Optional: a card limit your bank enforces'}
-                onPress={() => router.push('/bank')}
-              />
-              <Divider />
-              <View style={{ paddingVertical: 12 }}>
+              <Row Icon={PiggyBankIcon} tone="sun" label="Monthly budget" sub={budget} link="Edit" onPress={() => router.push('/budget')} />
+              <Cell>
                 <Text style={type.title}>Your shield message</Text>
                 <Text style={type.small}>Shown first on every shield, in your own words.</Text>
-                <TextInput
+                <CommitInput
                   value={st.shieldMsg}
-                  onChangeText={(t) => set({ shieldMsg: t })}
+                  onCommit={(t) => set({ shieldMsg: t })}
                   maxLength={60}
+                  accessibilityLabel="Your shield message"
                   placeholder="e.g. Is this worth an hour of work?"
                   placeholderTextColor={color.placeholder}
                   style={fieldStyle}
                 />
-              </View>
-              <Divider />
-              <View style={{ paddingVertical: 12 }}>
+              </Cell>
+              <Cell>
                 <Text style={type.title}>What you’re saving for</Text>
-                <TextInput
-                  value={s.goal}
-                  onChangeText={(t) => {
+                <CommitInput
+                  value={goal}
+                  onCommit={(t) => {
                     setState({ goal: t });
                     applyShieldLook();
                   }}
                   maxLength={40}
+                  accessibilityLabel="What you’re saving for"
                   placeholder="e.g. a Japan trip"
                   placeholderTextColor={color.placeholder}
                   style={fieldStyle}
                 />
-              </View>
-              <Divider />
-              <Choice
-                title="Cool-off after you leave"
-                sub="The app stays locked this long after you walk away."
-                options={[[0, 'Off'], [5, '5 min'], [10, '10 min'], [30, '30 min']]}
-                value={st.coolOffMinutes}
-                onPick={(v) => set({ coolOffMinutes: v })}
-              />
-              <Divider />
-              <Row
-                label="Ask “What’s this one about?”"
-                sub="A question in the pause, with a short coach reply"
-                right={<Toggle value={st.askQuestion} onChange={(v) => set({ askQuestion: v })} />}
-              />
-              <Divider />
-              <View style={{ paddingVertical: 12 }}>
+              </Cell>
+              <Cell>
+                <Text style={type.title}>Cool-off after you leave</Text>
+                <Text style={type.small}>The app stays locked this long after you walk away.</Text>
+                <Seg
+                  label="Cool-off length"
+                  options={[[0, 'Off'], [5, '5 min'], [10, '10 min'], [30, '30 min']]}
+                  value={st.coolOffMinutes}
+                  onPick={(v) => set({ coolOffMinutes: v })}
+                />
+              </Cell>
+              <Cell>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={type.title}>Ask “What’s this one about?”</Text>
+                    <Text style={type.small}>A question in the pause, with a short coach reply</Text>
+                  </View>
+                  <Toggle label="Ask a question during the pause" value={st.askQuestion} onChange={(v) => set({ askQuestion: v })} />
+                </View>
+              </Cell>
+              <Cell>
                 <Text style={type.title}>Shopping Pass lengths</Text>
-                <Text style={type.small}>Minutes, from 1 to 120</Text>
-                <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Text style={type.small}>In minutes</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
                   {st.passPresets.map((m, i) => (
-                    <TextInput
-                      key={i}
-                      defaultValue={String(m)}
-                      keyboardType="number-pad"
-                      maxLength={3}
-                      accessibilityLabel={`Pass length ${i + 1}`}
-                      onEndEditing={(e) => {
-                        const v = Math.min(120, Math.max(1, parseInt(e.nativeEvent.text || '0', 10) || m));
-                        const next = [...st.passPresets] as [number, number, number];
-                        next[i] = v;
-                        set({ passPresets: next, defaultPassMinutes: next[1] });
-                      }}
-                      style={[fieldStyle, { flex: 1, textAlign: 'center', fontFamily: font.display, fontSize: 20 }]}
-                    />
+                    <View key={`${i}-${m}`} style={{ flex: 1, justifyContent: 'center' }}>
+                      <TextInput
+                        defaultValue={String(m)}
+                        keyboardType="number-pad"
+                        maxLength={3}
+                        returnKeyType="done"
+                        accessibilityLabel={`Pass length ${i + 1} in minutes`}
+                        onEndEditing={(e) => {
+                          const v = Math.min(120, Math.max(1, parseInt(e.nativeEvent.text || '0', 10) || m));
+                          const next = [...st.passPresets] as [number, number, number];
+                          next[i] = v;
+                          set({ passPresets: next, defaultPassMinutes: next[1] });
+                        }}
+                        style={[fieldStyle, { marginTop: 0, paddingLeft: 16, paddingRight: 48, fontSize: 17 }]}
+                      />
+                      <Text pointerEvents="none" style={[type.small, { position: 'absolute', right: 14 }]}>
+                        min
+                      </Text>
+                    </View>
                   ))}
                 </View>
-              </View>
+              </Cell>
+              <Row
+                Icon={LockKeyIcon}
+                tone="lav"
+                label="Bank limit"
+                sub={bankLock ? `Set ${days} day${days === 1 ? '' : 's'} ago, self-reported` : 'Optional: a card limit your bank enforces'}
+                link={bankLock ? 'Steps' : 'Set up'}
+                onPress={() => router.push('/bank')}
+              />
             </>
           )}
-        </Card>
+        </Group>
 
-        <Section title="Subscription and privacy">
+        <Head title="Subscription and privacy" d={120} />
+        <Group d={140}>
           <Row
-            label={s.lapsed ? 'Protection is paused' : `Till Morning ${s.plan === 'yearly' ? 'yearly' : 'monthly'}`}
+            first
+            Icon={CrownSimpleIcon}
+            tone="lav"
+            label={lapsed ? 'Protection is paused' : `Till Morning ${plan === 'yearly' ? 'yearly' : 'monthly'}`}
             sub={
-              s.lapsed
+              lapsed
                 ? 'Your plan has ended. Tap to turn protection back on.'
-                : s.trialAt && Date.now() - s.trialAt < 7 * 86400000
-                  ? `Free week, day ${Math.floor((Date.now() - s.trialAt) / 86400000) + 1} of 7. Cancel any time in your Apple account.`
+                : trialAt && Date.now() - trialAt < 7 * 86400000
+                  ? `Free week, day ${Math.floor((Date.now() - trialAt) / 86400000) + 1} of 7. Cancel any time in your Apple account.`
                   : 'Manage or cancel in your Apple account'
             }
-            onPress={() => (s.lapsed ? router.push('/paywall') : Linking.openURL('https://apps.apple.com/account/subscriptions'))}
+            onPress={() => (lapsed ? router.push('/paywall') : Linking.openURL('https://apps.apple.com/account/subscriptions'))}
           />
-          <Divider />
-          <Row label="Restore purchases" onPress={onRestore} />
-          <Divider />
-          <Row label="Privacy policy" onPress={() => Linking.openURL(links.privacy)} />
-          <Divider />
-          <Row label="Terms of use" onPress={() => Linking.openURL(links.terms)} />
-          <Divider />
-          <Row label="Support" onPress={() => Linking.openURL(links.support)} />
-          <Divider />
-          <Text style={[type.small, { paddingVertical: 12 }]}>Everything stays on this phone. No bank links, no account.</Text>
-        </Section>
+          <Row Icon={ArrowCounterClockwiseIcon} tone="hush" label="Restore purchases" onPress={onRestore} />
+          <Row Icon={FileTextIcon} tone="hush" label="Privacy policy" onPress={() => Linking.openURL(links.privacy)} />
+          <Row Icon={ScrollIcon} tone="hush" label="Terms of use" onPress={() => Linking.openURL(links.terms)} />
+          <Row Icon={LifebuoyIcon} tone="hush" label="Support" onPress={() => Linking.openURL(links.support)} />
+          <Cell>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Tile tone="mint" Icon={LockIcon} />
+              <Text style={{ flex: 1, fontFamily: font.bodySemi, fontSize: 14.5, lineHeight: 20, color: color.text }}>
+                Everything stays on this phone. No bank links, no account.
+              </Text>
+            </View>
+          </Cell>
+        </Group>
 
-        <Card style={{ paddingVertical: 4 }}>
-          <Row label="Rate Till Morning" sub="Write a review on the App Store" onPress={rate} />
-          <Divider />
-          <Row label="Delete all data" danger onPress={askDelete} />
-        </Card>
+        <Group d={150} style={{ marginTop: 16 }}>
+          <Row first Icon={StarIcon} tone="sun" label="Rate Till Morning" sub="Write a review on the App Store" onPress={rate} />
+        </Group>
+
+        <Enter d={160} style={{ marginTop: 24 }}>
+          <Pressable onPress={askDelete} accessibilityRole="button" style={({ pressed }) => ({ paddingVertical: 8, opacity: pressed ? 0.6 : 1 })}>
+            <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: '#FF9F8A', textAlign: 'center' }}>Delete all data</Text>
+          </Pressable>
+        </Enter>
 
         {config.isTestBuild && (
-          <Section title={`Test tools (${config.appEnv})`}>
-            <Row label="Try the pause" onPress={() => router.push({ pathname: '/pause', params: { app: 'Test app' } })} />
-            <Divider />
-            <Row label="Try the urgent door" onPress={() => router.push({ pathname: '/urgent', params: { app: 'Test app' } })} />
-            <Divider />
-            <Row label="Pass re-lock check" sub="When the last pass re-lock ran" onPress={() => Alert.alert('Pass re-lock', passRelockReport())} />
-            <Divider />
-            <Row label="Send test crash report" onPress={() => { sendTestEvent(); Alert.alert('Sent to Sentry'); }} />
-            <Divider />
-            <Row label="Check RevenueCat offerings" onPress={onCheckOfferings} />
-            <Divider />
-            <Row label={`Screen Time status: ${String(getScreenTimeStatus())}`} />
-          </Section>
+          <>
+            <Head title={`Test tools (${config.appEnv})`} d={170} />
+            <Group d={180}>
+              <Row first Icon={PlayIcon} tone="hush" label="Try the pause" onPress={() => router.push({ pathname: '/pause', params: { app: 'Test app' } })} />
+              <Row Icon={MoonStarsIcon} tone="hush" label="Try the urgent door" onPress={() => router.push({ pathname: '/urgent', params: { app: 'Test app' } })} />
+              <Row Icon={LockKeyIcon} tone="hush" label="Pass re-lock check" sub="When the last pass re-lock ran" onPress={() => Alert.alert('Pass re-lock', passRelockReport())} />
+              <Row
+                Icon={BugIcon}
+                tone="hush"
+                label="Send test crash report"
+                onPress={() => {
+                  sendTestEvent();
+                  Alert.alert('Sent to Sentry');
+                }}
+              />
+              <Row Icon={CreditCardIcon} tone="hush" label="Check RevenueCat offerings" onPress={onCheckOfferings} />
+              <Row Icon={InfoIcon} tone="hush" label={`Screen Time status: ${String(getScreenTimeStatus())}`} />
+            </Group>
+          </>
         )}
 
-        <Text style={{ fontFamily: font.bodySemi, fontSize: 13, color: color.text3, textAlign: 'center' }}>
+        <Text style={{ marginTop: 24, fontFamily: font.bodySemi, fontSize: 13, color: color.text3, textAlign: 'center' }}>
           Version {config.version} ({config.build})
         </Text>
       </ScrollView>

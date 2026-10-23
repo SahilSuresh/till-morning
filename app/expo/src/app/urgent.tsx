@@ -1,45 +1,39 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { KeyboardAvoidingView, ScrollView, Text, TextInput, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCallback, useMemo, useState } from 'react';
+import { KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
-import { parkWant, recentShieldedApp, startPass } from '../lib/core';
-import { BreathRing } from '../ui/BreathRing';
-import { PauseBackground } from '../ui/backgrounds';
-import { Button, Chip, TextLink, toast } from '../ui/components';
-import { IconMoon } from '../ui/icons';
+import { knownApp, parkWant, recentShieldedApp, startPass } from '../lib/core';
+import { Button, Chip, CircleButton, toast } from '../ui/components';
+import { CountRing } from '../ui/flow/CountRing';
+import { Enter, NlSky, useFootPad, useHeadPad } from '../ui/flow/kit';
+import { IconMoon, IconX } from '../ui/icons';
 import { color, font, type } from '../ui/theme';
 
 const WAIT = 60;
 
-/** Night lock's "It's urgent" door (V.urgent, L1477): a minute's wait and a reason, then 10 minutes. */
+/** Night lock's "It's urgent" door (V.urgent, P:L1477): a minute's wait and a reason, then 10 minutes. */
 export default function Urgent() {
-  const insets = useSafeAreaInsets();
+  const headPad = useHeadPad();
+  const footPad = useFootPad();
   const params = useLocalSearchParams<{ app?: string }>();
   const { app, key } = useMemo(() => {
     if (params.app) return { app: params.app, key: null as string | null };
     const recent = recentShieldedApp();
     return { app: recent?.name ?? 'your shop apps', key: recent?.key ?? null };
   }, [params.app]);
+  const named = knownApp(app);
 
-  const startedAt = useRef(Date.now()).current;
-  const [left, setLeft] = useState(WAIT);
+  const [startedAt] = useState(Date.now);
+  // Only the ring counts down; the screen re-renders when the minute is up and as you type.
+  const [done, setDone] = useState(false);
+  const onDone = useCallback(() => setDone(true), []);
   const [why, setWhy] = useState('');
-  const done = left <= 0;
-
-  useEffect(() => {
-    const t = setInterval(() => {
-      const l = Math.max(0, WAIT - (Date.now() - startedAt) / 1000);
-      setLeft(l);
-      if (l <= 0) clearInterval(t);
-    }, 250);
-    return () => clearInterval(t);
-  }, [startedAt]);
+  const ok = done && why.trim().length > 1;
 
   const open = async () => {
     await startPass({ app, reason: 'specific', need: why.trim(), limit: '', minutes: 10, urgent: true });
     router.replace('/');
-    setTimeout(() => toast(`${app} is open for 10 minutes`), 400);
+    setTimeout(() => toast(named ? `${app} is open for 10 minutes` : 'Open for 10 minutes'), 400);
   };
 
   const park = () => {
@@ -50,48 +44,64 @@ export default function Urgent() {
 
   return (
     <View style={{ flex: 1 }}>
-      <PauseBackground />
+      <NlSky />
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 12, paddingHorizontal: 28, alignItems: 'center', paddingBottom: insets.bottom + 20 }} keyboardShouldPersistTaps="handled">
-          <Chip tone="glass" size={13} icon={<IconMoon size={14} color="#FFFFFF" />} label={`Night lock · ${app}`} />
-          <View style={{ marginTop: 16 }}>
-            <BreathRing total={WAIT} left={left} done={done} size={200} />
-          </View>
-          <Text style={[type.h1, { color: '#FFFFFF', textAlign: 'center', marginTop: 16 }]}>Is it really urgent?</Text>
-          <Text style={[type.body, { color: color.white82, textAlign: 'center', marginTop: 6 }]}>
-            Wait one minute. If it still is, say why and {app} opens for 10 minutes.
-          </Text>
+        <View style={{ paddingTop: headPad, paddingHorizontal: 24, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <CircleButton onDark label="Close and park it till morning" onPress={park}>
+            <IconX color="#FFFFFF" />
+          </CircleButton>
+          <Chip tone="glass" size={13} icon={<IconMoon size={15} color="#FFFFFF" />} label={named ? `Night lock · ${app}` : 'Night lock'} />
+        </View>
 
-          <View style={{ alignSelf: 'stretch', marginTop: 18 }}>
-            <Text style={{ fontFamily: font.bodyHeavy, fontSize: 13.5, color: 'rgba(255,255,255,0.82)' }}>What’s it for?</Text>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingBottom: 12, alignItems: 'center' }} keyboardShouldPersistTaps="handled">
+          <View style={{ marginTop: 16 }}>
+            <CountRing total={WAIT} startedAt={startedAt} onDone={onDone} />
+          </View>
+          <Enter d={60}>
+            <Text accessibilityRole="header" style={[type.h1, { textAlign: 'center', marginTop: 20 }]}>
+              Is it really urgent?
+            </Text>
+          </Enter>
+          <Enter d={120}>
+            <Text style={[type.body, { color: color.white82, textAlign: 'center', marginTop: 8 }]}>
+              Wait one minute. If it still is, say why and {named ? app : 'the app'} opens for 10 minutes.
+            </Text>
+          </Enter>
+          <Enter d={180} style={{ alignSelf: 'stretch', marginTop: 20 }}>
+            <Text style={[type.label, { marginBottom: 6 }]}>What’s it for?</Text>
             <TextInput
               value={why}
               onChangeText={setWhy}
               maxLength={60}
-              placeholder="e.g. medicine for the baby"
-              placeholderTextColor="rgba(255,255,255,0.5)"
+              autoComplete="off"
+              accessibilityLabel="What’s it for?"
+              placeholder="e.g. dinner for the kids"
+              placeholderTextColor={color.placeholder}
               style={{
-                marginTop: 6,
-                backgroundColor: 'rgba(13,15,46,0.35)',
-                borderColor: 'rgba(255,255,255,0.3)',
+                backgroundColor: color.field,
+                borderColor: color.fieldBorder,
                 borderWidth: 1.5,
                 borderRadius: 16,
-                paddingHorizontal: 14,
-                paddingVertical: 13,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
                 fontFamily: font.bodySemi,
-                fontSize: 16.5,
-                color: '#FFFFFF',
+                fontSize: 17,
+                color: color.text,
               }}
             />
-          </View>
-
-          <View style={{ flex: 1, minHeight: 20 }} />
-          <View style={{ alignSelf: 'stretch', gap: 10 }}>
-            <Button variant="white" label={done ? `Open ${app}` : `Wait ${Math.ceil(left)}s`} disabled={!done || why.trim().length < 2} onPress={open} />
-            <TextLink label="Never mind, park it till morning" style={{ color: '#FFFFFF' }} onPress={park} />
-            <Text style={[type.small, { color: 'rgba(255,255,255,0.7)', textAlign: 'center' }]}>No XP either way, and no judgement.</Text>
-          </View>
+          </Enter>
         </ScrollView>
+
+        <View style={{ paddingHorizontal: 28, paddingTop: 12, paddingBottom: footPad, gap: 8 }}>
+          <Text accessibilityLiveRegion="polite" style={{ fontFamily: font.bodySemi, fontSize: 14, color: 'rgba(243,242,255,0.75)', textAlign: 'center' }}>
+            {!done ? 'Take the minute. Then say why.' : ok ? 'Fine. It opens for 10 minutes, then locks again.' : 'Now say why, in a few words.'}
+          </Text>
+          <Button variant="white" label={named ? `Open ${app}` : 'Open the app'} disabled={!ok} onPress={open} />
+          <Pressable onPress={park} accessibilityRole="button" style={({ pressed }) => ({ paddingVertical: 8, opacity: pressed ? 0.7 : 1 })}>
+            <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: 'rgba(243,242,255,0.8)', textAlign: 'center' }}>Never mind, park it till morning</Text>
+          </Pressable>
+          <Text style={[type.small, { color: color.white82, textAlign: 'center' }]}>No XP either way, and no judgement.</Text>
+        </View>
       </KeyboardAvoidingView>
     </View>
   );
