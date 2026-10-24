@@ -20,10 +20,7 @@
         "usesNonExemptEncryption": false
       },
       "infoPlist": {
-        "NSSupportsLiveActivities": true,
-        "UIBackgroundModes": [
-          "audio"
-        ]
+        "NSSupportsLiveActivities": true
       }
     },
     "platforms": [

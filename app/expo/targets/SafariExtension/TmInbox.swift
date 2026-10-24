@@ -179,11 +179,21 @@ enum TmOCR {
     func matches(_ re: NSRegularExpression?, _ s: String) -> Bool {
       re?.firstMatch(in: s, range: NSRange(location: 0, length: (s as NSString).length)) != nil
     }
+    // Discounts show a struck-through old price, then the price you pay: take the last one.
+    func priceOnly(_ s: String) -> Bool {
+      let letters = s.unicodeScalars.filter { CharacterSet.letters.contains($0) }.count
+      return !amounts(s).isEmpty && letters <= 2
+    }
     for i in stride(from: lines.count - 1, through: 0, by: -1) {
       let l = lines[i]
       guard matches(isTotal, l), !matches(notTotal, l) else { continue }
-      if let last = amounts(l).last { return last }
-      if i + 1 < lines.count, let next = amounts(lines[i + 1]).first { return next }
+      var found = amounts(l)
+      var j = i + 1
+      while j < min(lines.count, i + 4), priceOnly(lines[j]) {
+        found.append(contentsOf: amounts(lines[j]))
+        j += 1
+      }
+      if let last = found.last { return last }
     }
     let skip = try? NSRegularExpression(pattern: #"subtotal|saving|was|rrp|save"#, options: .caseInsensitive)
     let best = lines.filter { !matches(skip, $0) }.flatMap { amounts($0) }.max()

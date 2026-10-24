@@ -22,13 +22,14 @@
   const findTotal = (lines) => {
     const isTotal = /\btotal\b|amount to pay|you pay|to pay/i;
     const notTotal = /sub-?total|items total|saving|discount|delivery|postage|shipping|vat|tax|before/i;
+    const priceOnly = (l) => amounts(l).length > 0 && l.replace(AMOUNT, '').replace(/[^a-z]/gi, '').length <= 2;
     for (let i = lines.length - 1; i >= 0; i--) {
       const l = lines[i];
       if (!isTotal.test(l) || notTotal.test(l)) continue;
-      const here = amounts(l);
-      if (here.length) return here[here.length - 1];
-      const next = amounts(lines[i + 1] || '');
-      if (next.length) return next[0];
+      // Struck-through old price first, then the price you pay: take the last.
+      const found = [...amounts(l)];
+      for (let j = i + 1; j < Math.min(lines.length, i + 4) && priceOnly(lines[j]); j++) found.push(...amounts(lines[j]));
+      if (found.length) return found[found.length - 1];
     }
     return null; // no fallback on web pages: product grids have too many prices
   };

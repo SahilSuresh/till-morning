@@ -6,7 +6,7 @@ import { cancelPassEnd, scheduleParkedReady, schedulePassEnd } from './notify';
 import { breakDay, bump, FREE_PASSES } from './progress';
 import { activeChallenge, inSchedule, isTreatNight, saleOn } from './rules';
 import { dayKey, getState, type ParkedWant, type PriceBand, setState, type ShoppingPass } from './store';
-import { endPassActivities, reloadWidgets, startPassActivity, startPassPip, stopPassPip } from '../../modules/tm-native';
+import { endPassActivities, reloadWidgets, startPassActivity, stopPassPip } from '../../modules/tm-native';
 import { shieldLine1, shieldLine2, writeAppLines } from './apps';
 import { award } from './xp';
 
@@ -384,8 +384,6 @@ export async function startPass(draft: Omit<ShoppingPass, 'id' | 'startedAt' | '
     pass.startedAt,
     pass.endsAt,
   );
-  // And a floating countdown over the shop itself (iPhones without a Dynamic Island).
-  startPassPip(pass.urgent ? 'Urgent pass' : knownApp(pass.app) ? `${pass.app} pass` : 'Shopping pass', pass.startedAt, pass.endsAt);
   return pass;
 }
 

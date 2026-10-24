@@ -30,7 +30,7 @@ Till Morning helps people stop impulse buying. They choose their shopping and ta
 | Rating prompt | Apple's own `SKStoreReviewController`, after a calm win on day 4+ | System controlled |
 
 **Shopping Pass countdown outside the app**
-- While a Shopping Pass runs, the countdown shows as a Live Activity (Lock Screen and Dynamic Island) and as a small floating Picture-in-Picture window, so people can see the time left while they shop in another app. The PiP window is a rendered countdown (no audio, no video content from the network); this is why the app declares the "Audio, AirPlay, and Picture in Picture" background mode. It closes itself a few seconds after the pass ends.
+- While a Shopping Pass runs, the countdown shows as a Live Activity (Lock Screen and Dynamic Island), plus notifications at 2 minutes and 30 seconds left.
 
 **Share and Safari**
 - Share extension: in any app, Share → Till Morning parks a screenshot (the total is read on the phone with Vision) or a link.

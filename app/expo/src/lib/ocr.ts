@@ -25,13 +25,15 @@ function amounts(line: string): number[] {
 export function findTotal(lines: string[]): number | null {
   const isTotal = /\btotal\b|amount to pay|you pay|to pay/i;
   const notTotal = /sub-?total|items total|saving|discount|delivery|postage|shipping|vat|tax|before/i;
+  // A line that is only prices (e.g. a crossed-out "£32.51" then the real "£18.12").
+  const priceOnly = (l: string) => amounts(l).length > 0 && l.replace(AMOUNT, '').replace(/[^a-z]/gi, '').length <= 2;
   for (let i = lines.length - 1; i >= 0; i--) {
     const l = lines[i];
     if (!isTotal.test(l) || notTotal.test(l)) continue;
-    const here = amounts(l);
-    if (here.length) return here[here.length - 1];
-    const next = amounts(lines[i + 1] ?? '');
-    if (next.length) return next[0];
+    // Shops show discounts as an old price struck through, then the price you pay: take the last.
+    const found = [...amounts(l)];
+    for (let j = i + 1; j < Math.min(lines.length, i + 4) && priceOnly(lines[j]); j++) found.push(...amounts(lines[j]));
+    if (found.length) return found[found.length - 1];
   }
   // Fallback: the largest amount on the page, ignoring savings and old prices.
   let best = 0;
