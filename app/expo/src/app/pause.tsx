@@ -33,6 +33,7 @@ import { Button, Chip, easeOut, Tag, TextLink, toast, useReduceMotion } from '..
 import { BottomSheet, Enter, NlSky, useFootPad, useHeadPad, WrFull } from '../ui/flow/kit';
 import { IconClock, IconHourglass, IconTimer } from '../ui/icons';
 import { MOON, ShelfTag, TagTitle } from '../ui/ShelfTag';
+import { SkyCorner } from '../ui/SkyCorner';
 import { StFace } from '../ui/StFace';
 import { TrolleyIcon } from '../ui/tabs/TrolleyRoute';
 import { color, font, type } from '../ui/theme';
@@ -603,50 +604,6 @@ function PriceTag({ label, selected, onPress, index }: { label: string; selected
   );
 }
 
-/** A rocking crescent moon and twinkling stars in the sheet's top corner. */
-function SheetSky() {
-  const rm = useReduceMotion();
-  const tw = useAnimatedValue(0);
-  useEffect(() => {
-    if (rm) return;
-    const loop = Animated.loop(Animated.timing(tw, { toValue: 1, duration: 3600, easing: Easing.linear, useNativeDriver: true }));
-    loop.start();
-    return () => loop.stop();
-  }, [rm, tw]);
-  const twinkle = (a: number, b: number, c: number) =>
-    rm
-      ? { opacity: 0.7 }
-      : {
-          opacity: tw.interpolate({ inputRange: [0, a, b, c, 1], outputRange: [0.2, 0.2, 1, 0.2, 0.2] }),
-          transform: [{ scale: tw.interpolate({ inputRange: [0, a, b, c, 1], outputRange: [0.6, 0.6, 1.4, 0.6, 0.6] }) }],
-        };
-  const dot = (right: number, top: number, size: number, fill: string) => ({ position: 'absolute' as const, right, top, width: size, height: size, borderRadius: size / 2, backgroundColor: fill });
-  return (
-    <View pointerEvents="none" style={{ position: 'absolute', right: 0, top: 0, width: 90, height: 46 }}>
-      <Animated.View
-        style={{
-          position: 'absolute',
-          right: 2,
-          top: 2,
-          width: 24,
-          height: 24,
-          shadowColor: MOON,
-          shadowOpacity: 0.55,
-          shadowRadius: 8,
-          transform: rm ? [] : [{ rotate: tw.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: ['-7deg', '0deg', '7deg', '0deg', '-7deg'] }) }],
-        }}
-      >
-        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: MOON, overflow: 'hidden' }}>
-          <View style={{ position: 'absolute', left: 8, top: -5, width: 24, height: 24, borderRadius: 12, backgroundColor: SHEET_BG }} />
-        </View>
-      </Animated.View>
-      <Animated.View style={[dot(40, 6, 4, MOON), twinkle(0.05, 0.18, 0.32)]} />
-      <Animated.View style={[dot(62, 22, 3, '#FFFFFF'), twinkle(0.38, 0.5, 0.62)]} />
-      <Animated.View style={[dot(30, 34, 3, '#FFFFFF'), twinkle(0.68, 0.8, 0.92)]} />
-    </View>
-  );
-}
-
 /** Rises in when it mounts; give it a new key to replay (e.g. when the wait changes). */
 function PopIn({ children }: { children: ReactNode }) {
   const rm = useReduceMotion();
@@ -807,7 +764,7 @@ function ParkSheet({
   return (
     <BottomSheet visible={mode !== null} onClose={() => onMode(null)} label="Park it till morning">
       <View>
-        <SheetSky />
+        <SkyCorner bg={SHEET_BG} />
         <Text accessibilityRole="header" style={[type.h2, { fontSize: 24, lineHeight: 28.8, paddingRight: 60 }]}>
           Write the shelf tag
         </Text>
