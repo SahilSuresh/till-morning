@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Text, useAnimatedValue, View } from 'react-native';
 import Svg, { Circle, Defs, Line, LinearGradient as SvgGradient, Path, Rect, Stop } from 'react-native-svg';
 
@@ -53,6 +53,9 @@ export function ShelfTag({
   stubValue,
   hang = 'star',
   motion = 'none',
+  dropDelay = 120,
+  poke,
+  popKey,
   children,
 }: {
   label: string;
@@ -62,6 +65,12 @@ export function ShelfTag({
   hang?: 'star' | 'trolley';
   /** nudge: a small swing every few seconds. drop: falls in and swings to rest. */
   motion?: 'none' | 'nudge' | 'drop';
+  /** How long to wait before dropping in (so it lands as a sheet finishes rising). */
+  dropDelay?: number;
+  /** Each change gives the tag a tiny sway (e.g. one per letter typed). */
+  poke?: number;
+  /** Each change slaps the price on: the stub pops and the tag swings. */
+  popKey?: string | number;
   children: ReactNode;
 }) {
   const rm = useReduceMotion();
@@ -71,21 +80,61 @@ export function ShelfTag({
 
   const swing = useAnimatedValue(0);
   const drop = useAnimatedValue(motion === 'drop' && !rm ? 0 : 1);
+  const pop = useAnimatedValue(1);
+  const glint = useAnimatedValue(0);
+  const t = (toValue: number, duration: number) => Animated.timing(swing, { toValue, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true });
   useEffect(() => {
     if (rm || motion === 'none') return;
-    const t = (toValue: number, duration: number) => Animated.timing(swing, { toValue, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true });
+    const sw = (toValue: number, duration: number) => Animated.timing(swing, { toValue, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true });
     if (motion === 'drop') {
       swing.setValue(4);
       Animated.parallel([
-        Animated.timing(drop, { toValue: 1, duration: 420, delay: 120, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }),
-        Animated.sequence([Animated.delay(320), t(-2.6, 380), t(1.6, 360), t(-0.8, 320), t(0.3, 280), t(0, 240)]),
+        Animated.timing(drop, { toValue: 1, duration: 420, delay: dropDelay, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }),
+        Animated.sequence([Animated.delay(dropDelay + 200), sw(-2.6, 380), sw(1.6, 360), sw(-0.8, 320), sw(0.3, 280), sw(0, 240)]),
       ]).start();
       return;
     }
-    const loop = Animated.loop(Animated.sequence([Animated.delay(4200), t(1, 260), t(-0.7, 380), t(0.4, 340), t(-0.18, 300), t(0, 260)]));
+    const loop = Animated.loop(Animated.sequence([Animated.delay(4200), sw(1, 260), sw(-0.7, 380), sw(0.4, 340), sw(-0.18, 300), sw(0, 260)]));
     loop.start();
     return () => loop.stop();
-  }, [rm, motion, swing, drop]);
+  }, [rm, motion, swing, drop, dropDelay]);
+
+  // The star it hangs from glints now and then.
+  useEffect(() => {
+    if (rm || motion === 'none' || hang !== 'star') return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.delay(1600),
+        Animated.timing(glint, { toValue: 1, duration: 420, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(glint, { toValue: 0, duration: 700, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [rm, motion, hang, glint]);
+
+  // A letter typed: a tiny sway.
+  const pokeSeen = useRef(poke);
+  useEffect(() => {
+    if (pokeSeen.current === poke) return;
+    pokeSeen.current = poke;
+    if (rm) return;
+    Animated.sequence([t(0.7, 110), t(-0.45, 150), t(0.2, 130), t(0, 130)]).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [poke, rm]);
+
+  // A price picked: the stub pops in like a sticker and the tag swings.
+  const popSeen = useRef(popKey);
+  useEffect(() => {
+    if (popSeen.current === popKey) return;
+    popSeen.current = popKey;
+    if (rm) return;
+    pop.setValue(0);
+    Animated.spring(pop, { toValue: 1, friction: 4.5, tension: 140, useNativeDriver: true }).start();
+    Animated.sequence([t(1.8, 140), t(-1.2, 220), t(0.6, 200), t(-0.25, 180), t(0, 160)]).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [popKey, rm, pop]);
+
   const rotate = swing.interpolate({ inputRange: [-1, 1], outputRange: ['-1.3deg', '1.3deg'] });
 
   const { w, h } = size;
@@ -140,6 +189,22 @@ export function ShelfTag({
             {hang === 'star' && <Path d={star(HOLE_X, 5, 5)} fill={MOON} />}
           </Svg>
         )}
+        {hang === 'star' && motion !== 'none' && (
+          <Animated.View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: HOLE_X - 10,
+              top: -5,
+              width: 20,
+              height: 20,
+              borderRadius: 10,
+              backgroundColor: MOON,
+              opacity: glint.interpolate({ inputRange: [0, 1], outputRange: [0, 0.4] }),
+              transform: [{ scale: glint.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1.3] }) }],
+            }}
+          />
+        )}
         <View
           onLayout={(e) => {
             const { width, height } = e.nativeEvent.layout;
@@ -155,9 +220,23 @@ export function ShelfTag({
           </View>
           <View style={{ width: STUB, alignItems: 'center', paddingHorizontal: 4 }}>
             <Text style={{ fontFamily: font.bodyHeavy, fontSize: 9.5, letterSpacing: 1.1, textTransform: 'uppercase', color: '#E3D9FF' }}>{stubLabel}</Text>
-            <Text style={{ fontFamily: font.display, fontSize: 19, lineHeight: 23, color: MOON }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            <Animated.Text
+              style={{
+                fontFamily: font.display,
+                fontSize: 19,
+                lineHeight: 23,
+                color: MOON,
+                transform: [
+                  { scale: pop.interpolate({ inputRange: [0, 1], outputRange: [1.6, 1] }) },
+                  { rotate: pop.interpolate({ inputRange: [0, 1], outputRange: ['-10deg', '0deg'] }) },
+                ],
+              }}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
               {stubValue}
-            </Text>
+            </Animated.Text>
           </View>
         </View>
       </Animated.View>

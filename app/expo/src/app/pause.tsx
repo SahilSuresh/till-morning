@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as SMS from 'expo-sms';
 import { router, useLocalSearchParams } from 'expo-router';
 import { CameraIcon, ChatCircleIcon, CheckCircleIcon, SparkleIcon, WarningCircleIcon } from '../ui/ph';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, AppState, Easing, Pressable, ScrollView, Text, TextInput, useAnimatedValue, View } from 'react-native';
 
 import { hasTmNative } from '../../modules/tm-native';
@@ -552,46 +552,118 @@ const hoursOfWork = (price: number, wage: number) => formatDuration((price / wag
 const money = (n: number) => `£${Number.isInteger(n) ? n : n.toFixed(2)}`;
 const SHEET_BG = '#14173F';
 
-/** A price choice drawn as a mini shelf tag: an eyelet on the left, purple once picked. */
-function PriceTag({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+/** A price choice drawn as a mini shelf tag: an eyelet on the left, purple once picked. They hop in one by one and bounce when picked. */
+function PriceTag({ label, selected, onPress, index }: { label: string; selected: boolean; onPress: () => void; index: number }) {
+  const rm = useReduceMotion();
+  const enter = useAnimatedValue(rm ? 1 : 0);
+  const bounce = useAnimatedValue(1);
+  useEffect(() => {
+    if (rm) return;
+    Animated.timing(enter, { toValue: 1, duration: 380, delay: 560 + index * 60, easing: Easing.out(Easing.back(1.8)), useNativeDriver: true }).start();
+  }, [rm, enter, index]);
+  const seen = useRef(selected);
+  useEffect(() => {
+    if (seen.current === selected) return;
+    seen.current = selected;
+    if (rm || !selected) return;
+    bounce.setValue(0.8);
+    Animated.spring(bounce, { toValue: 1, friction: 3.4, tension: 190, useNativeDriver: true }).start();
+  }, [selected, rm, bounce]);
   return (
-    <Pressable onPress={onPress} accessibilityRole="radio" accessibilityState={{ selected }} accessibilityLabel={label} hitSlop={4}>
-      {({ pressed }) => (
-        <View style={{ borderRadius: 11, backgroundColor: selected ? '#4524A8' : '#121540', paddingBottom: pressed ? 0 : 2, marginTop: pressed ? 2 : 0 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 7,
-              borderRadius: 11,
-              borderWidth: 1.5,
-              borderColor: selected ? '#9B5CF6' : '#3A3F86',
-              backgroundColor: selected ? '#6A3DE8' : '#1E2256',
-              paddingLeft: 9,
-              paddingRight: 12,
-              paddingVertical: 6,
-            }}
-          >
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: SHEET_BG, borderWidth: 1.5, borderColor: selected ? MOON : 'rgba(196,181,253,0.7)' }} />
-            <Text style={{ fontFamily: font.bodyHeavy, fontSize: 13.5, color: selected ? '#FFFFFF' : '#C4B5FD' }}>{label}</Text>
+    <Animated.View
+      style={{
+        opacity: enter.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' }),
+        transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }, { scale: bounce }],
+      }}
+    >
+      <Pressable onPress={onPress} accessibilityRole="radio" accessibilityState={{ selected }} accessibilityLabel={label} hitSlop={4}>
+        {({ pressed }) => (
+          <View style={{ borderRadius: 11, backgroundColor: selected ? '#4524A8' : '#121540', paddingBottom: pressed ? 0 : 2, marginTop: pressed ? 2 : 0 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 7,
+                borderRadius: 11,
+                borderWidth: 1.5,
+                borderColor: selected ? '#9B5CF6' : '#3A3F86',
+                backgroundColor: selected ? '#6A3DE8' : '#1E2256',
+                paddingLeft: 9,
+                paddingRight: 12,
+                paddingVertical: 6,
+              }}
+            >
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: SHEET_BG, borderWidth: 1.5, borderColor: selected ? MOON : 'rgba(196,181,253,0.7)' }} />
+              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 13.5, color: selected ? '#FFFFFF' : '#C4B5FD' }}>{label}</Text>
+            </View>
           </View>
-        </View>
-      )}
-    </Pressable>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }
 
-/** A crescent moon and a few stars in the sheet's top corner. */
+/** A rocking crescent moon and twinkling stars in the sheet's top corner. */
 function SheetSky() {
+  const rm = useReduceMotion();
+  const tw = useAnimatedValue(0);
+  useEffect(() => {
+    if (rm) return;
+    const loop = Animated.loop(Animated.timing(tw, { toValue: 1, duration: 3600, easing: Easing.linear, useNativeDriver: true }));
+    loop.start();
+    return () => loop.stop();
+  }, [rm, tw]);
+  const twinkle = (a: number, b: number, c: number) =>
+    rm
+      ? { opacity: 0.7 }
+      : {
+          opacity: tw.interpolate({ inputRange: [0, a, b, c, 1], outputRange: [0.2, 0.2, 1, 0.2, 0.2] }),
+          transform: [{ scale: tw.interpolate({ inputRange: [0, a, b, c, 1], outputRange: [0.6, 0.6, 1.4, 0.6, 0.6] }) }],
+        };
+  const dot = (right: number, top: number, size: number, fill: string) => ({ position: 'absolute' as const, right, top, width: size, height: size, borderRadius: size / 2, backgroundColor: fill });
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', right: 0, top: 0, width: 84, height: 44 }}>
-      <View style={{ position: 'absolute', right: 2, top: 2, width: 24, height: 24, borderRadius: 12, backgroundColor: MOON, overflow: 'hidden' }}>
-        <View style={{ position: 'absolute', left: 8, top: -5, width: 24, height: 24, borderRadius: 12, backgroundColor: SHEET_BG }} />
-      </View>
-      <View style={{ position: 'absolute', right: 40, top: 6, width: 3, height: 3, borderRadius: 2, backgroundColor: MOON, opacity: 0.7 }} />
-      <View style={{ position: 'absolute', right: 60, top: 22, width: 2, height: 2, borderRadius: 1, backgroundColor: '#FFFFFF', opacity: 0.5 }} />
-      <View style={{ position: 'absolute', right: 30, top: 34, width: 2, height: 2, borderRadius: 1, backgroundColor: '#FFFFFF', opacity: 0.4 }} />
+    <View pointerEvents="none" style={{ position: 'absolute', right: 0, top: 0, width: 90, height: 46 }}>
+      <Animated.View
+        style={{
+          position: 'absolute',
+          right: 2,
+          top: 2,
+          width: 24,
+          height: 24,
+          shadowColor: MOON,
+          shadowOpacity: 0.55,
+          shadowRadius: 8,
+          transform: rm ? [] : [{ rotate: tw.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: ['-7deg', '0deg', '7deg', '0deg', '-7deg'] }) }],
+        }}
+      >
+        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: MOON, overflow: 'hidden' }}>
+          <View style={{ position: 'absolute', left: 8, top: -5, width: 24, height: 24, borderRadius: 12, backgroundColor: SHEET_BG }} />
+        </View>
+      </Animated.View>
+      <Animated.View style={[dot(40, 6, 4, MOON), twinkle(0.05, 0.18, 0.32)]} />
+      <Animated.View style={[dot(62, 22, 3, '#FFFFFF'), twinkle(0.38, 0.5, 0.62)]} />
+      <Animated.View style={[dot(30, 34, 3, '#FFFFFF'), twinkle(0.68, 0.8, 0.92)]} />
     </View>
+  );
+}
+
+/** Rises in when it mounts; give it a new key to replay (e.g. when the wait changes). */
+function PopIn({ children }: { children: ReactNode }) {
+  const rm = useReduceMotion();
+  const v = useAnimatedValue(rm ? 1 : 0);
+  useEffect(() => {
+    if (rm) return;
+    Animated.spring(v, { toValue: 1, friction: 6, tension: 130, useNativeDriver: true }).start();
+  }, [rm, v]);
+  return (
+    <Animated.View
+      style={{
+        opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' }),
+        transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
+      }}
+    >
+      {children}
+    </Animated.View>
   );
 }
 
@@ -614,7 +686,13 @@ function ParkSheet({
   const [snap, setSnap] = useState<'idle' | 'reading' | 'done' | 'fail'>('idle');
   const [asked, setAsked] = useState(false);
   const [clipping, setClipping] = useState(false);
+  const [caught, setCaught] = useState(false);
+  const [counting, setCounting] = useState<number | null>(null);
+  const [fall, setFall] = useState(320);
   const clip = useAnimatedValue(0);
+  const catchV = useAnimatedValue(0);
+  const roll = useAnimatedValue(0);
+  const pos = useRef({ tagY: 0, tagH: 0, btnY: 0 });
   const buddy = getState().buddy;
   const friend = buddy.name.trim() || 'your friend';
   const named = knownApp(app);
@@ -623,15 +701,56 @@ function ParkSheet({
   const { readyAt, chips } = waitFor(band, now, price);
   const wage = getState().settings.wage || 12;
   const extra = (yes?: boolean): ParkExtra => ({ price: band === 'exact' ? price : undefined, items: band === 'exact' ? items : undefined, buddy: yes });
-  const stubValue = band === 'exact' && price ? money(price) : STUB_PRICE[band];
+  const stubValue = counting !== null ? `£${counting}` : band === 'exact' && price ? money(price) : STUB_PRICE[band];
+  const waits = formatDuration(readyAt - now);
 
-  /** "Clip it on": the tag swings down off the sheet into your trolley, then it's parked. */
+  // The trolley in the button rolls a little every few seconds, asking to be filled.
+  useEffect(() => {
+    if (rm) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.delay(2800),
+        Animated.timing(roll, { toValue: 1, duration: 260, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(roll, { toValue: -0.5, duration: 240, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(roll, { toValue: 0, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [rm, roll]);
+
+  /**
+   * "Clip it on": the tag lifts, then swings down the sheet into the trolley on the button, which
+   * bounces as it catches it ("In your trolley!"); then it's parked.
+   */
   const clipOn = (yes?: boolean) => {
     if (clipping) return;
     const go = () => onPark(what, band, extra(yes));
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     if (rm) return go();
+    const p = pos.current;
+    setFall(p.btnY ? Math.max(120, p.btnY + 24 - (p.tagY + p.tagH / 2)) : 320);
     setClipping(true);
-    Animated.timing(clip, { toValue: 1, duration: 360, easing: Easing.in(Easing.back(1.3)), useNativeDriver: true }).start(() => go());
+    Animated.sequence([
+      Animated.timing(clip, { toValue: 0.25, duration: 170, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(clip, { toValue: 1, duration: 440, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+    ]).start(() => {
+      setCaught(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      Animated.spring(catchV, { toValue: 1, friction: 3.2, tension: 150, useNativeDriver: true }).start();
+      setTimeout(go, 460);
+    });
+  };
+
+  /** After a screenshot is read, the price on the stub counts up to the total. */
+  const countUp = (total: number) => {
+    const start = Date.now();
+    const step = () => {
+      const k = Math.min(1, (Date.now() - start) / 750);
+      setCounting(k < 1 ? Math.round(total * (1 - Math.pow(1 - k, 3))) : null);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   };
 
   const snapBasket = async () => {
@@ -645,10 +764,12 @@ function ParkSheet({
         setSnap('fail');
         return;
       }
-      setPrice(Math.round(r.total * 100) / 100);
+      const total = Math.round(r.total * 100) / 100;
+      setPrice(total);
       setItems(r.items);
       setBand('exact');
       setSnap('done');
+      if (!rm) countUp(total);
     } catch {
       setSnap('fail');
     }
@@ -669,6 +790,20 @@ function ParkSheet({
     }
   };
 
+  const trolley = (
+    <Animated.View
+      style={{
+        transform: [
+          { translateX: roll.interpolate({ inputRange: [-1, 1], outputRange: [-4, 4] }) },
+          { scale: catchV.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.55, 1], extrapolate: 'clamp' }) },
+          { rotate: catchV.interpolate({ inputRange: [0, 0.3, 0.65, 1], outputRange: ['0deg', '-16deg', '9deg', '0deg'], extrapolate: 'clamp' }) },
+        ],
+      }}
+    >
+      <TrolleyIcon size={24} colour="#FFFFFF" />
+    </Animated.View>
+  );
+
   return (
     <BottomSheet visible={mode !== null} onClose={() => onMode(null)} label="Park it till morning">
       <View>
@@ -679,19 +814,33 @@ function ParkSheet({
         <Text style={[type.small, { marginTop: 4, paddingRight: 40 }]}>Name and price are optional. {App} stays shielded while it waits.</Text>
       </View>
 
-      {/* The tag itself is the form: type on it, and the stub shows the price */}
+      {/* The tag itself is the form: it drops in on its string, sways as you type, and the price pops onto its stub */}
       <Animated.View
+        onLayout={(e) => {
+          pos.current.tagY = e.nativeEvent.layout.y;
+          pos.current.tagH = e.nativeEvent.layout.height;
+        }}
         style={{
           marginTop: 14,
-          opacity: clip.interpolate({ inputRange: [0, 0.75, 1], outputRange: [1, 1, 0] }),
+          zIndex: 10,
+          opacity: clip.interpolate({ inputRange: [0, 0.85, 1], outputRange: [1, 1, 0] }),
           transform: [
-            { translateY: clip.interpolate({ inputRange: [0, 1], outputRange: [0, 80] }) },
-            { rotate: clip.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '9deg'] }) },
-            { scale: clip.interpolate({ inputRange: [0, 1], outputRange: [1, 0.82] }) },
+            { translateY: clip.interpolate({ inputRange: [0, 0.25, 1], outputRange: [0, -12, fall] }) },
+            { translateX: clip.interpolate({ inputRange: [0, 0.25, 1], outputRange: [0, 0, -36] }) },
+            { rotate: clip.interpolate({ inputRange: [0, 0.25, 1], outputRange: ['0deg', '-5deg', '16deg'] }) },
+            { scale: clip.interpolate({ inputRange: [0, 0.25, 1], outputRange: [1, 1.03, 0.26] }) },
           ],
         }}
       >
-        <ShelfTag label={named ? `From ${app}` : 'Park it till morning'} stubLabel="Price" stubValue={stubValue}>
+        <ShelfTag
+          label={named ? `From ${app}` : 'Park it till morning'}
+          stubLabel="Price"
+          stubValue={stubValue}
+          motion="drop"
+          dropDelay={380}
+          poke={what.length}
+          popKey={`${band}:${band === 'exact' ? price : ''}`}
+        >
           <TextInput
             value={what}
             onChangeText={setWhat}
@@ -718,9 +867,11 @@ function ParkSheet({
 
       <Text style={[type.label, { marginTop: 18, marginBottom: 8 }]}>Roughly how much?</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }} accessibilityRole="radiogroup" accessibilityLabel="Roughly how much?">
-        {price > 0 && <PriceTag label={`${money(price)}${items ? `, ${items} items` : ''}`} selected={band === 'exact'} onPress={() => setBand('exact')} />}
-        {BANDS.map((b) => (
-          <PriceTag key={b} label={BAND_SHORT[b]} selected={band === b} onPress={() => setBand(b)} />
+        {price > 0 && (
+          <PriceTag index={0} label={`${money(price)}${items ? `, ${items} items` : ''}`} selected={band === 'exact'} onPress={() => setBand('exact')} />
+        )}
+        {BANDS.map((b, i) => (
+          <PriceTag key={b} index={i + 1} label={BAND_SHORT[b]} selected={band === b} onPress={() => setBand(b)} />
         ))}
       </View>
 
@@ -763,11 +914,13 @@ function ParkSheet({
         </View>
       </Pressable>
 
-      {/* How long it waits and why */}
+      {/* How long it waits and why: the number rises in again whenever it changes */}
       <View style={{ marginTop: 12, backgroundColor: '#1E2256', borderColor: '#3A3F86', borderWidth: 1.5, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 11 }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
           <Text style={type.small}>It waits</Text>
-          <Text style={[type.num, { fontSize: 22, lineHeight: 27, color: MOON }]}>{formatDuration(readyAt - now)}</Text>
+          <PopIn key={waits}>
+            <Text style={[type.num, { fontSize: 22, lineHeight: 27, color: MOON }]}>{waits}</Text>
+          </PopIn>
         </View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
           {chips.map((c) => (
@@ -777,7 +930,12 @@ function ParkSheet({
         {band === 'exact' && price ? <Text style={[type.small, { marginTop: 6 }]}>That’s about {hoursOfWork(price, wage)} of your work.</Text> : null}
       </View>
 
-      <View style={{ marginTop: 18, gap: 8 }}>
+      <View
+        onLayout={(e) => {
+          pos.current.btnY = e.nativeEvent.layout.y;
+        }}
+        style={{ marginTop: 18, gap: 8 }}
+      >
         {asked ? (
           <>
             <Text style={[type.title, { textAlign: 'center' }]}>What did {friend} say?</Text>
@@ -786,7 +944,13 @@ function ParkSheet({
           </>
         ) : (
           <>
-            <Button variant="night" label="Clip it on" icon={<TrolleyIcon size={24} colour="#FFFFFF" />} onPress={() => clipOn()} accessibilityHint="Parks it in your trolley till it’s ready" />
+            <Button
+              variant="night"
+              label={caught ? 'In your trolley!' : 'Clip it on'}
+              icon={trolley}
+              onPress={() => clipOn()}
+              accessibilityHint="Parks it in your trolley till it’s ready"
+            />
             {buddy.on && parkPrice(band, price) > 50 && (
               <Button
                 variant="secondary"
