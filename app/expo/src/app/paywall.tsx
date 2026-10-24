@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
 import { BellRinging } from '../ui/ph';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Switch, Text, View } from 'react-native';
-import Svg, { Line } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
+import { type ReactNode, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Animated, Easing, Linking, Pressable, ScrollView, Switch, Text, useAnimatedValue, View } from 'react-native';
+import Svg, { Circle, ClipPath, Defs, G } from 'react-native-svg';
 
 import { config, links } from '../lib/config';
 import { protectedCount, shieldChosenApps } from '../lib/core';
@@ -10,7 +11,7 @@ import { Notifications } from '../lib/notify';
 import { buy, getPlans, type Plans, restorePurchases } from '../lib/purchases';
 import { getState, setState, useAppState } from '../lib/store';
 import { TopGlow } from '../ui/backgrounds';
-import { Button, Rise, TextLink, toast } from '../ui/components';
+import { Button, Rise, TextLink, toast, useReduceMotion } from '../ui/components';
 import { useObSpace } from '../ui/onboarding/space';
 import { color, font, type } from '../ui/theme';
 
@@ -19,8 +20,11 @@ const dt = (days: number) => new Date(Date.now() + days * 86400000).toLocaleDate
 // The prices set in App Store Connect, shown only until the App Store's own strings arrive.
 const FALLBACK = { yearly: '£29.99', monthly: '£4.99', perMonth: `£${(29.99 / 12).toFixed(2)}` };
 
-const INK = '#14163A';
-const SUB = '#4A4E7A'; // .pw-sub / .pw-due
+/** "Wednesday" for n days from now; "WED" when short. */
+const weekday = (n: number, short = false) => {
+  const w = new Date(Date.now() + n * 86400000).toLocaleDateString('en-GB', { weekday: short ? 'short' : 'long' });
+  return short ? w.toUpperCase() : w;
+};
 
 /** What "Today" shields: apps and whole categories are counted apart (a category isn't one app). */
 function shieldsLine(apps: number, categories: number) {
@@ -32,7 +36,10 @@ function shieldsLine(apps: number, categories: number) {
   return 'Shields go up on your apps';
 }
 
-/** "Your free week" (V.paywall, P:L1383; CSS P:L1780–1792). The billed price stays the biggest number (Apple's rule). */
+/**
+ * "Your free week" as "7 nights free" (Night Trolley, option C): seven moons growing to full, the terms in one
+ * card, the plans as purple shelf tags. The billed price stays the biggest number (Apple's rule).
+ */
 export default function Paywall() {
   const sp = useObSpace();
   const plan = useAppState((s) => s.plan);
@@ -112,113 +119,64 @@ export default function Paywall() {
     }
   };
 
-  // .pw-step: dot, bold title, grey line
-  const step = (dot: string, title: string, sub: string) => (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 11 }}>
-      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: dot, marginTop: 5 }} />
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontFamily: font.bodyHeavy, fontSize: 15.5, lineHeight: 20, color: INK }}>{title}</Text>
-        <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, lineHeight: 18, color: SUB }}>{sub}</Text>
-      </View>
-    </View>
-  );
-
-  // .pw-plan + .pw-radio
-  const planRow = (id: 'yearly' | 'monthly', name: string, amount: string) => {
-    const on = plan === id;
-    return (
-      <Pressable
-        onPress={() => setState({ plan: id })}
-        accessibilityRole="radio"
-        accessibilityState={{ checked: on }}
-        accessibilityLabel={`${name}, ${amount}`}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
-          borderRadius: 16,
-          borderWidth: 1.5,
-          borderColor: on ? '#93A5FF' : '#2E3374',
-          backgroundColor: on ? '#1C2160' : color.card,
-          paddingHorizontal: 16,
-          paddingVertical: 15,
-        }}
-      >
-        <View
-          style={{
-            width: 20,
-            height: 20,
-            borderRadius: 10,
-            borderWidth: 2,
-            borderColor: on ? '#93A5FF' : '#5A5F9E',
-            backgroundColor: on ? '#1C2160' : 'transparent',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {on && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#93A5FF' }} />}
-        </View>
-        <Text style={{ flex: 1, fontFamily: font.bodyBold, fontSize: 16, lineHeight: 24, color: color.text }}>{name}</Text>
-        <Text style={{ fontFamily: font.bodyHeavy, fontSize: 16, lineHeight: 24, color: color.text, fontVariant: ['tabular-nums'] }}>{amount}</Text>
-      </Pressable>
-    );
-  };
-
   return (
     <View style={{ flex: 1 }}>
       <TopGlow />
       <ScrollView contentContainerStyle={{ paddingTop: sp.top(56), paddingHorizontal: 24, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
         <Rise delay={40}>
-          <Text style={[type.h1, { textAlign: 'center' }]}>Your free week</Text>
+          <Text accessibilityRole="header" accessibilityLabel="Your free week: 7 nights free" style={[type.h1, { textAlign: 'center' }]}>
+            7 nights free
+          </Text>
         </Rise>
-        <Rise delay={100} style={{ marginTop: 20 }}>
-          <View accessibilityLabel="Your free week" style={{ backgroundColor: '#F4F3FF', borderRadius: 22, paddingTop: 18, paddingHorizontal: 18, paddingBottom: 14 }}>
-            <View style={{ gap: 14 }}>
-              {step('#4361FF', 'Today', shieldsLine(count.apps, count.categories))}
-              {step('#8B5CF6', `Day 5 · ${dt(5)}`, remind ? 'We remind you the plan starts soon' : 'No reminder. You turned it off below.')}
-              {step(INK, `Day 7 · ${dt(7)}`, `${price} starts. Cancel any time before.`)}
+
+        {/* Seven moons, one per night, growing to full on the night the plan starts */}
+        <View style={{ marginTop: 22 }}>
+          <SevenMoons remind={remind} />
+        </View>
+
+        {/* The terms in one place: due today, the reminder, when the plan starts */}
+        <Rise delay={520} style={{ marginTop: 18 }}>
+          <View style={{ borderRadius: 18, backgroundColor: '#1E2256', borderWidth: 1, borderColor: '#3A3F86', padding: 14, gap: 4 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 15.5, color: color.mintText }}>Due today</Text>
+              <Text style={{ fontFamily: font.display, fontSize: 18, color: color.mintText }}>£0.00</Text>
             </View>
-            {/* .pw-rule: dashed, drawn as a line (one-sided dashed borders render solid on iOS) */}
-            <Svg height={1.5} width="100%" style={{ marginTop: 16, marginBottom: 10 }}>
-              <Line x1="0" y1="0.75" x2="100%" y2="0.75" stroke="#C9C8E6" strokeWidth={1.5} strokeDasharray="4 3" />
-            </Svg>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 19, lineHeight: 26, color: INK }}>Total</Text>
-              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 19, lineHeight: 26, color: INK }}>{price}</Text>
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-              <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, lineHeight: 19, color: SUB }}>Due today</Text>
-              <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, lineHeight: 19, color: SUB }}>£0.00</Text>
-            </View>
+            <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, lineHeight: 19, color: color.text2 }}>
+              Tonight: {shieldsLine(count.apps, count.categories).charAt(0).toLowerCase() + shieldsLine(count.apps, count.categories).slice(1)}.{' '}
+              {remind ? `We remind you on ${weekday(5)}. ` : 'No reminder, you turned it off below. '}
+              <Text style={{ fontFamily: font.bodyHeavy, color: color.text }}>{price}</Text> starts {weekday(7)} ({dt(7)}). Cancel any time before.
+            </Text>
           </View>
         </Rise>
-        <Rise delay={160} style={{ marginTop: 16 }}>
+
+        <Rise delay={600} style={{ marginTop: 14 }}>
           <View accessibilityRole="radiogroup" accessibilityLabel="Choose a plan" style={{ gap: 10 }}>
-            {planRow('yearly', `Yearly · ${perMonth} a month`, yearlyPrice)}
-            {planRow('monthly', 'Monthly', monthlyPrice)}
+            <PlanTag on={yearly} name="Yearly" sub={`${perMonth} a month`} amount={yearlyPrice} onPress={() => setState({ plan: 'yearly' })} />
+            <PlanTag on={!yearly} name="Monthly" sub="Pay as you go" amount={monthlyPrice} onPress={() => setState({ plan: 'monthly' })} />
           </View>
         </Rise>
-        <Rise delay={200} style={{ marginTop: 10 }}>
+
+        <Rise delay={660} style={{ marginTop: 10 }}>
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               gap: 12,
               borderRadius: 16,
-              borderWidth: 1.5,
-              borderColor: '#2E3374',
-              backgroundColor: color.card,
+              borderWidth: 1,
+              borderColor: '#3A3F86',
+              backgroundColor: '#1E2256',
               paddingHorizontal: 16,
-              paddingVertical: 15,
+              paddingVertical: 13,
             }}
           >
-            <BellRinging size={20} weight="bold" color={color.sun} />
+            <BellRinging size={20} weight="bold" color={MOON} />
             <Text style={{ flex: 1, fontFamily: font.bodyBold, fontSize: 16, lineHeight: 24, color: color.text }}>Remind me on day 5</Text>
             <Switch
               value={remind}
               onValueChange={setRemind}
               accessibilityLabel="Remind me on day 5"
-              trackColor={{ true: color.blue, false: '#2B2F69' }}
+              trackColor={{ true: '#7C4DFF', false: '#2B2F69' }}
               ios_backgroundColor="#2B2F69"
             />
           </View>
@@ -227,7 +185,13 @@ export default function Paywall() {
 
       <View style={{ paddingHorizontal: 28, paddingTop: 12, paddingBottom: sp.bottom(40), alignItems: 'center', gap: 8 }}>
         {/* Never greyed out while the plans load: tapping fetches them if they aren't in yet. */}
-        <Button label="Start my free week" onPress={start} icon={busy ? <ActivityIndicator color="#FFFFFF" /> : undefined} accessibilityHint={busy ? 'Opening the App Store' : undefined} />
+        <Button
+          variant="night"
+          label="Start my free week"
+          onPress={start}
+          icon={busy ? <ActivityIndicator color="#FFFFFF" /> : undefined}
+          accessibilityHint={busy ? 'Opening the App Store' : undefined}
+        />
         <Text style={{ fontFamily: font.bodySemi, fontSize: 12.5, lineHeight: 17, color: color.text2, textAlign: 'center' }}>
           No payment today. Cancel anytime in Settings at least 24 hours before your trial ends.
         </Text>
@@ -245,5 +209,124 @@ export default function Paywall() {
         {config.isTestBuild && <TextLink label="Skip (test build only)" style={{ color: color.text3, fontSize: 13 }} onPress={done} />}
       </View>
     </View>
+  );
+}
+
+const MOON = '#FFE7A3';
+const DAWN = '#FFB59A';
+
+/** One night's moon: a thin crescent on night 1, full on night 7 (the shadow slides off as `lit` grows). */
+function NightMoon({ lit, size = 30, id }: { lit: number; size?: number; id: string }) {
+  const r = size / 2;
+  return (
+    <Svg width={size} height={size}>
+      <Defs>
+        <ClipPath id={id}>
+          <Circle cx={r} cy={r} r={r - 1} />
+        </ClipPath>
+      </Defs>
+      <Circle cx={r} cy={r} r={r - 1} fill={MOON} />
+      {lit < 1 && (
+        <G clipPath={`url(#${id})`}>
+          <Circle cx={r + size * 0.18 + size * 0.95 * lit} cy={r - size * 0.08} r={r - 1} fill="#1E2058" />
+        </G>
+      )}
+    </Svg>
+  );
+}
+
+/** "7 nights free": the next seven nights as moons that pop in one by one; a bell on night 5, a dawn ring on night 7. */
+function SevenMoons({ remind }: { remind: boolean }) {
+  const rm = useReduceMotion();
+  const days = Array.from({ length: 7 }, (_, i) => weekday(i + 1, true));
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }} accessible accessibilityLabel={`Seven free nights. ${remind ? 'A reminder on night 5. ' : ''}Your plan starts after night 7.`}>
+      {days.map((d, i) => (
+        <MoonPop key={i} delay={rm ? 0 : 120 + i * 70}>
+          <View style={{ alignItems: 'center', gap: 5 }}>
+            <View style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}>
+              {i === 6 && <View style={{ position: 'absolute', width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: DAWN }} />}
+              <NightMoon lit={(i + 1) / 7} id={`night${i}`} />
+              {i === 4 && remind && (
+                <View style={{ position: 'absolute', top: -8, right: -6, width: 18, height: 18, borderRadius: 9, backgroundColor: '#7C4DFF', alignItems: 'center', justifyContent: 'center' }}>
+                  <BellRinging size={11} weight="fill" color="#FFFFFF" />
+                </View>
+              )}
+            </View>
+            <Text style={{ fontFamily: font.bodyHeavy, fontSize: 10.5, letterSpacing: 0.5, color: i === 6 ? DAWN : i === 4 && remind ? '#C4B5FD' : color.text3 }}>{d}</Text>
+          </View>
+        </MoonPop>
+      ))}
+    </View>
+  );
+}
+
+function MoonPop({ delay, children }: { delay: number; children: ReactNode }) {
+  const rm = useReduceMotion();
+  const v = useAnimatedValue(rm ? 1 : 0);
+  useEffect(() => {
+    if (rm) return;
+    const a = Animated.timing(v, { toValue: 1, duration: 380, delay, easing: Easing.out(Easing.back(2)), useNativeDriver: true });
+    a.start();
+    return () => a.stop();
+  }, [rm, v, delay]);
+  return (
+    <Animated.View
+      style={{
+        opacity: v.interpolate({ inputRange: [0, 0.3], outputRange: [0, 1], extrapolate: 'clamp' }),
+        transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) }, { translateY: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
+      }}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
+/** A plan as a purple shelf tag: name on the left, the billed price (the biggest number) on the stub. */
+function PlanTag({ on, name, sub, amount, onPress }: { on: boolean; name: string; sub: string; amount: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`${name}, ${amount}. ${sub}`}>
+      {({ pressed }) => (
+        <View
+          style={{
+            borderTopRightRadius: 16,
+            borderBottomRightRadius: 16,
+            borderTopLeftRadius: 6,
+            borderBottomLeftRadius: 6,
+            backgroundColor: on ? '#4524A8' : '#14173F',
+            paddingBottom: pressed ? 1 : 3,
+            marginTop: pressed ? 2 : 0,
+          }}
+        >
+          <LinearGradient
+            colors={on ? ['#6A3DE8', '#9B5CF6'] : ['#1E2256', '#1E2256']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              minHeight: 62,
+              borderTopRightRadius: 16,
+              borderBottomRightRadius: 16,
+              borderTopLeftRadius: 6,
+              borderBottomLeftRadius: 6,
+              borderWidth: on ? 0 : 1.5,
+              borderColor: '#3A3F86',
+            }}
+          >
+            {/* the eyelet, filled when picked */}
+            <View style={{ marginLeft: 14, width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: on ? MOON : '#8A8EC6', alignItems: 'center', justifyContent: 'center' }}>
+              {on && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: MOON }} />}
+            </View>
+            <View style={{ flex: 1, paddingHorizontal: 12, paddingVertical: 10 }}>
+              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 16, color: '#FFFFFF' }}>{name}</Text>
+              <Text style={{ fontFamily: font.bodySemi, fontSize: 12.5, color: on ? '#E3D9FF' : color.text3 }}>{sub}</Text>
+            </View>
+            <View style={{ alignSelf: 'stretch', width: 1.5, marginVertical: 10, borderLeftWidth: 1.5, borderStyle: 'dashed', borderColor: on ? 'rgba(255,255,255,0.45)' : '#3A3F86' }} />
+            <Text style={{ width: 92, textAlign: 'center', fontFamily: font.display, fontSize: 21, color: on ? MOON : '#FFFFFF', fontVariant: ['tabular-nums'] }}>{amount}</Text>
+          </LinearGradient>
+        </View>
+      )}
+    </Pressable>
   );
 }
