@@ -1,9 +1,11 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   cancelAnimation,
   Easing,
+  interpolate,
   ReduceMotion,
   type SharedValue,
   useAnimatedProps,
@@ -12,15 +14,16 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Circle, Rect } from 'react-native-svg';
+import Svg, { Circle, ClipPath, Defs, G } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { useReduceMotion } from '../components';
 import { color, font, type } from '../theme';
 import { StepBody, useStepAnims } from './StepMotion';
 
-// The first screen (P:L1119–1126, logic P:L2773–2803): sale noise jiggling around one pause button.
-// Holding it for 2.5 s fills the ring, slows the noise and fades it out; letting go early resets.
+// The first screen (P:L1119–1126, logic P:L2773–2803): sale noise jiggling around one button, a crescent
+// moon (Night Trolley). Holding it for 2.5 s fills the ring and the moon grows full while the noise slows and
+// fades; then it goes BOOM: a flash, a shockwave and rays, and the moon turns into the sun. Letting go early resets.
 
 const HOLD_MS = 2500;
 const RING_C = 326.7; // 2π × 52, in the button's 120-unit drawing
@@ -40,6 +43,21 @@ const PILLS: [string, string, number, number][] = [
 const darkText = (bg: string) => bg === '#FFC94D' || bg === '#5EE9B5';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const MOON = '#FFE7A3';
+const RAYS = Array.from({ length: 12 }, (_, i) => i * 30);
+
+/** One sunbeam shooting out from the middle when the moon becomes the sun. */
+function Ray({ angle, boom }: { angle: number; boom: SharedValue<number> }) {
+  const style = useAnimatedStyle(() => ({
+    opacity: interpolate(boom.value, [0, 0.12, 0.7, 1], [0, 1, 0.9, 0.55]),
+    transform: [
+      { rotate: `${angle}deg` },
+      { translateY: interpolate(boom.value, [0, 0.4, 1], [-40, -104, -96]) },
+      { scaleY: interpolate(boom.value, [0, 0.35, 1], [0.2, 1.4, 1]) },
+    ],
+  }));
+  return <Animated.View style={[{ position: 'absolute', width: 7, height: 34, marginLeft: -3.5, marginTop: -17, left: '50%', top: '50%', borderRadius: 4, backgroundColor: '#FFD3A8' }, style]} />;
+}
 
 /**
  * One pill. `clock` counts half-swings of the .jig keyframes (.5 s each at rest, `alternate`);
@@ -86,6 +104,7 @@ export function WelcomeHold({ onHeld, onSkip }: { onHeld: () => void; onSkip: ()
   const dim = useSharedValue(1); // the noise's opacity (.hpill has a .3 s opacity transition)
   const clock = useSharedValue(0);
   const press = useSharedValue(1);
+  const boom = useSharedValue(0); // the moon turning into the sun, 0 → 1
   const holding = useRef(false);
   const held = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -108,8 +127,10 @@ export function WelcomeHold({ onHeld, onSkip }: { onHeld: () => void; onSkip: ()
     dim.set(withTiming(0, { duration: 300 }));
     press.set(withTiming(1, { duration: 200 }));
     setLabel('Paused.');
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    timer.current = setTimeout(onHeld, rm ? 0 : 650);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
+    setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}), 120);
+    if (!rm) boom.set(withTiming(1, { duration: 1000, easing: Easing.out(Easing.cubic) }));
+    timer.current = setTimeout(onHeld, rm ? 0 : 1100);
   };
 
   const start = () => {
@@ -138,7 +159,19 @@ export function WelcomeHold({ onHeld, onSkip }: { onHeld: () => void; onSkip: ()
   };
 
   const ring = useAnimatedProps(() => ({ strokeDashoffset: RING_C * (1 - k.value) }));
+  // The moon's shadow slides off as you hold: a crescent becomes a full moon.
+  const shade = useAnimatedProps(() => ({ cx: 76 + 70 * k.value }));
   const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: press.value }] }));
+  const moonStyle = useAnimatedStyle(() => ({ opacity: interpolate(boom.value, [0, 0.3], [1, 0], 'clamp') }));
+  const sunStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(boom.value, [0, 0.12], [0, 1], 'clamp'),
+    transform: [{ scale: interpolate(boom.value, [0, 0.35, 0.65, 1], [0.5, 1.5, 1.18, 1.25]) }],
+  }));
+  const waveStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(boom.value, [0, 0.08, 0.8], [0, 0.9, 0], 'clamp'),
+    transform: [{ scale: interpolate(boom.value, [0, 0.8], [0.7, 4.6], 'clamp') }],
+  }));
+  const flashStyle = useAnimatedStyle(() => ({ opacity: interpolate(boom.value, [0, 0.14, 0.6], [0, 0.85, 0], 'clamp') }));
 
   return (
     <>
@@ -171,27 +204,43 @@ export function WelcomeHold({ onHeld, onSkip }: { onHeld: () => void; onSkip: ()
           accessibilityLabel="Press and hold to pause the noise"
           onAccessibilityTap={onSkip}
         >
-          <Animated.View style={pressStyle}>
-            <Svg width={168} height={168} viewBox="0 0 120 120">
-              <Circle cx={60} cy={60} r={52} fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth={6} />
-              <AnimatedCircle
-                cx={60}
-                cy={60}
-                r={52}
-                fill="none"
-                stroke="#B9CBFF"
-                strokeWidth={6}
-                strokeLinecap="round"
-                strokeDasharray={`${RING_C} ${RING_C}`}
-                rotation={-90}
-                originX={60}
-                originY={60}
-                animatedProps={ring}
-              />
-              <Circle cx={60} cy={60} r={39} fill="#4361FF" />
-              <Rect x={48.5} y={44} width={8.5} height={32} rx={3.5} fill="#FFFFFF" />
-              <Rect x={63} y={44} width={8.5} height={32} rx={3.5} fill="#FFFFFF" />
-            </Svg>
+          <Animated.View style={[{ width: 168, height: 168 }, pressStyle]}>
+            {/* BOOM: a shockwave ring, rays, and the sun where the moon was */}
+            <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 34, top: 34, width: 100, height: 100, borderRadius: 50, borderWidth: 4, borderColor: '#FFE6CF' }, waveStyle]} />
+            {!rm && RAYS.map((a) => <Ray key={a} angle={a} boom={boom} />)}
+            <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 28, top: 28, width: 112, height: 112, borderRadius: 56, shadowColor: '#FFB59A', shadowOpacity: 0.9, shadowRadius: 24, backgroundColor: '#FFC48A' }, sunStyle]}>
+              <LinearGradient colors={['#FFF1C9', '#FFC48A', '#F0899F']} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={{ flex: 1, borderRadius: 56 }} />
+            </Animated.View>
+            {/* the moon, filling up as you hold */}
+            <Animated.View style={moonStyle}>
+              <Svg width={168} height={168} viewBox="0 0 120 120">
+                <Defs>
+                  <ClipPath id="holdMoon">
+                    <Circle cx={60} cy={60} r={39} />
+                  </ClipPath>
+                </Defs>
+                <Circle cx={60} cy={60} r={52} fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth={6} />
+                <AnimatedCircle
+                  cx={60}
+                  cy={60}
+                  r={52}
+                  fill="none"
+                  stroke={MOON}
+                  strokeWidth={6}
+                  strokeLinecap="round"
+                  strokeDasharray={`${RING_C} ${RING_C}`}
+                  rotation={-90}
+                  originX={60}
+                  originY={60}
+                  animatedProps={ring}
+                />
+                <Circle cx={60} cy={60} r={42} fill={MOON} opacity={0.14} />
+                <Circle cx={60} cy={60} r={39} fill={MOON} />
+                <G clipPath="url(#holdMoon)">
+                  <AnimatedCircle cy={54} r={39} fill="#1E2058" animatedProps={shade} />
+                </G>
+              </Svg>
+            </Animated.View>
           </Animated.View>
         </Pressable>
         <Text style={[type.h2, { marginTop: 20, textAlign: 'center' }]} accessibilityLiveRegion="polite">
@@ -199,6 +248,8 @@ export function WelcomeHold({ onHeld, onSkip }: { onHeld: () => void; onSkip: ()
         </Text>
         <Text style={[type.small, { marginTop: 4, textAlign: 'center' }]}>to pause the noise</Text>
       </StepBody>
+      {/* the warm flash of the boom, over everything */}
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: '#FFE6CF' }, flashStyle]} />
     </>
   );
 }

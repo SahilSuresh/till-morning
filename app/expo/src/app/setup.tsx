@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { DeviceMobile, EyeSlash, Heart, type Icon, LockKey, MoonStars, Timer, ToggleRight } from '../ui/ph';
+import { DeviceMobile, EyeSlash, Heart, type Icon, LockKey, Timer, ToggleRight } from '../ui/ph';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 import { DeviceActivitySelectionSheetViewPersisted } from 'react-native-device-activity';
@@ -15,13 +15,13 @@ import { PauseBackground } from '../ui/backgrounds';
 import { BreathRing } from '../ui/BreathRing';
 import { Button, Card, Chip, Rise, TextLink, useReduceMotion } from '../ui/components';
 import { Hl } from '../ui/Hl';
-import { Mascot } from '../ui/Mascot';
-import { IconTile, LetterTile, MonoLabel, PopIn, UnderlineLink } from '../ui/onboarding/bits';
+import { IconTile, LetterTile, MonoLabel, UnderlineLink } from '../ui/onboarding/bits';
 import { ObHeader } from '../ui/onboarding/ObHeader';
 import { AskingHint, ConnectedNote } from '../ui/onboarding/ScreenTimeHint';
 import { useObSpace } from '../ui/onboarding/space';
 import { NAV, type Nav, StepBody, StepMotionProvider, useRiseDelay, useStepBase, useStepMotion } from '../ui/onboarding/StepMotion';
-import { TourStage } from '../ui/onboarding/TourStage';
+import { BasketFill, MoonPeek, NotifBanner, PopTag, ShelfRow, ShopShutters, TrolleyRollIn } from '../ui/onboarding/NightBits';
+import { ShelfTag, TagTitle } from '../ui/ShelfTag';
 import { WelcomeHold } from '../ui/onboarding/WelcomeHold';
 import { color, font, type } from '../ui/theme';
 
@@ -197,7 +197,7 @@ function Welcome({ onNext }: { onNext: () => void }) {
         </>
       }
     >
-      <Mascot source={require('../../assets/mascots/welcome.webp')} size={224} delay={base} accessibilityLabel="The Till Morning mascot hugging a giant pause button" />
+      <TrolleyRollIn delay={base} />
       <Rise delay={rd(120)}>
         <Text style={[type.display, { marginTop: 28, textAlign: 'center' }]} accessibilityLabel="Shop on purpose.">
           Shop on{' '}
@@ -211,16 +211,12 @@ function Welcome({ onNext }: { onNext: () => void }) {
           That was Till Morning: a pause between you and the apps that make you spend. Anything you want waits its turn.
         </Text>
       </Rise>
-      <Rise delay={rd(300)} style={{ marginTop: 36, alignSelf: 'stretch', flexDirection: 'row', gap: 8 }}>
-        {TRUST.map(([Glyph, label]) => (
-          <View key={label} style={{ flex: 1, alignItems: 'center', gap: 8 }}>
-            <IconTile>
-              <Glyph size={22} weight="bold" color="#6EF0BF" />
-            </IconTile>
-            <Text style={{ fontFamily: font.bodyBold, fontSize: 13, lineHeight: 16, color: color.text2, textAlign: 'center' }}>{label}</Text>
-          </View>
+      {/* the three promises pop in one after another, as little shelf tags */}
+      <View style={{ marginTop: 28, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
+        {TRUST.map(([Glyph, label], i) => (
+          <PopTag key={label} delay={base + 850 + i * 170} icon={<Glyph size={14} weight="bold" color="#FFFFFF" />} label={label} />
         ))}
-      </Rise>
+      </View>
     </StepBody>
   );
 }
@@ -232,28 +228,7 @@ function Story({ onNext }: { onNext: () => void }) {
   const rd = useRiseDelay();
   return (
     <StepBody contentStyle={{ paddingHorizontal: 32, paddingTop: 24 }} footer={<Button variant="white" label="Next" onPress={onNext} />}>
-      <PopIn delay={base} style={{ alignSelf: 'flex-start' }}>
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={{
-            width: 96,
-            height: 96,
-            borderRadius: 48,
-            backgroundColor: color.sun,
-            borderWidth: 3,
-            borderColor: '#FFFFFF',
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: '#020312',
-            shadowOpacity: 0.55,
-            shadowRadius: 8,
-            shadowOffset: { width: 0, height: 6 },
-          }}
-        >
-          <MoonStars size={46} weight="bold" color={color.inkOnBright} />
-        </View>
-      </PopIn>
+      <BasketFill delay={base} />
       <Rise delay={rd(120)}>
         <Text style={[type.display, { marginTop: 28 }]} accessibilityLabel="The 11 PM scroll">
           The{' '}
@@ -284,6 +259,7 @@ const SCREEN_TIME_ROWS: [Icon, string][] = [
 ];
 
 function ScreenTime({ onAllowed }: { onAllowed: () => void }) {
+  const base = useStepBase();
   const rd = useRiseDelay();
   const [denied, setDenied] = useState(false);
   // asking: iOS's alert is up · connected: shown for a moment before moving on
@@ -327,6 +303,9 @@ function ScreenTime({ onAllowed }: { onAllowed: () => void }) {
         )
       }
     >
+      <View style={{ alignItems: 'center', marginBottom: 18 }}>
+        <ShopShutters delay={base} />
+      </View>
       <Rise delay={rd(0)}>
         <Text style={type.h1}>Let Till Morning put up the shield</Text>
       </Rise>
@@ -364,12 +343,29 @@ function ScreenTime({ onAllowed }: { onAllowed: () => void }) {
 
 // ---- 1e UK apps: the one instruction screen before Apple's list (P:L1253) -------------
 
-const UK_ROWS: [string, string, string][] = [
-  ['D', '#5EE9B5', 'Deliveroo, Just Eat, Uber Eats'],
-  ['S', '#FF8F78', 'SHEIN, Temu, ASOS, Vinted'],
+// Each shelf: the apps' first letters hopping on, and their names under it.
+const UK_SHELVES: [[string, string][], string][] = [
+  [
+    [
+      ['D', '#5EE9B5'],
+      ['J', '#FFC94D'],
+      ['U', '#A78BFA'],
+    ],
+    'Deliveroo, Just Eat, Uber Eats',
+  ],
+  [
+    [
+      ['S', '#FF8F78'],
+      ['T', '#FF9F43'],
+      ['A', '#93A5FF'],
+      ['V', '#5EE9B5'],
+    ],
+    'SHEIN, Temu, ASOS, Vinted',
+  ],
 ];
 
 function UkApps({ onOpen }: { onOpen: () => void }) {
+  const base = useStepBase();
   const rd = useRiseDelay();
   return (
     <StepBody
@@ -387,16 +383,11 @@ function UkApps({ onOpen }: { onOpen: () => void }) {
       <Rise delay={rd(60)}>
         <Text style={[type.body, { marginTop: 8 }]}>Next, Apple shows your apps. Tick Shopping & Food, then tap Done. It already includes:</Text>
       </Rise>
-      <Rise delay={rd(100)} style={{ marginTop: 20 }}>
-        <Card style={{ padding: 16, gap: 12 }}>
-          {UK_ROWS.map(([l, bg, t]) => (
-            <View key={l} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <LetterTile letter={l} bg={bg} />
-              <Text style={[type.title, { flex: 1 }]}>{t}</Text>
-            </View>
-          ))}
-        </Card>
-      </Rise>
+      <View style={{ marginTop: 18, gap: 16 }}>
+        {UK_SHELVES.map(([tiles, caption], i) => (
+          <ShelfRow key={caption} tiles={tiles} caption={caption} delay={base + 200 + i * 420} />
+        ))}
+      </View>
       <Rise delay={rd(160)} style={{ marginTop: 12 }}>
         {/* .uk-also: violet card with its own bottom edge */}
         <View style={{ borderRadius: 22, backgroundColor: '#3B2E8F', paddingBottom: 3 }}>
@@ -442,7 +433,7 @@ function Notify({ onNext }: { onNext: () => void }) {
         </>
       }
     >
-      <Mascot source={require('../../assets/mascots/bubble.webp')} size={160} delay={base} />
+      <NotifBanner delay={base} />
       <Rise delay={rd(100)}>
         <Text style={[type.h1, { marginTop: 12, textAlign: 'center' }]}>One tap into your pause</Text>
       </Rise>
@@ -504,6 +495,7 @@ function DemoRun({ again, onReplay }: { again: boolean; onReplay: () => void }) 
     >
       <View style={{ marginTop: 20 }}>
         <BreathRing total={DEMO_SECS} left={DEMO_SECS} done={false} size={220} orbSize={204} autoplay={{ delay: DEMO_DELAY }} />
+        <MoonPeek delay={DEMO_DELAY} duration={DEMO_SECS * 1000} />
       </View>
       {/* Always in the layout, so nothing jumps when they appear. */}
       <Animated.View style={[{ alignSelf: 'stretch', marginTop: 24, gap: 8 }, afterStyle]} accessibilityRole="list" accessibilityLabel="What you can choose after the pause">
@@ -550,7 +542,11 @@ function Tour({ onNext }: { onNext: () => void }) {
       }
     >
       <Chip tone="lilac" size={13} label="When a want hits" />
-      <TourStage />
+      <View style={{ marginTop: 18 }}>
+        <ShelfTag hang="trolley" motion="drop" dropDelay={350} label="From SHEIN" stubLabel="Price" stubValue="£20–50">
+          <TagTitle title="Pink trainers" sub="Ready 08:00 tomorrow" />
+        </ShelfTag>
+      </View>
       <Text style={[type.h1, { marginTop: 24 }]}>Park it till morning</Text>
       <Text style={[type.body, { marginTop: 8 }]}>No name or price needed. The app stays shielded, and you decide tomorrow with a clear head.</Text>
     </StepBody>
