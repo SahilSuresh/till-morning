@@ -9,14 +9,17 @@ import {
 } from 'expo-audio';
 import { File, Paths } from 'expo-file-system';
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Animated, Easing, Linking, Pressable, ScrollView, Text, useAnimatedValue, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle } from 'react-native-svg';
 
 import { getState, setState, useAppState } from '../lib/store';
-import { Button, Card, CircleButton, Tag, TextLink, toast } from '../ui/components';
+import { Button, CircleButton, TextLink, toast, useReduceMotion } from '../ui/components';
 import { IconChevrons } from '../ui/icons';
-import { color, type } from '../ui/theme';
+import { MicrophoneIcon, PauseIcon, PlayIcon } from '../ui/ph';
+import { color, font, type } from '../ui/theme';
 
 const MAX_SECONDS = 20;
 
@@ -132,7 +135,9 @@ export default function Note() {
     ]);
 
   const recording = rec.isRecording;
+  const used = Math.min(1, rec.durationMillis / (MAX_SECONDS * 1000));
   const left = Math.max(0, MAX_SECONDS - Math.floor(rec.durationMillis / 1000));
+  const progress = status.duration > 0 ? Math.min(1, status.currentTime / status.duration) : 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.night }}>
@@ -150,70 +155,181 @@ export default function Note() {
         </CircleButton>
         <Text style={type.h2}>A note from calm you</Text>
       </View>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 12, paddingBottom: 16, alignItems: 'center' }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 12, paddingBottom: 16 }}>
         <Text style={[type.body, { textAlign: 'center' }]}>
           Record a few words while you feel calm. Till Morning plays them in your pause, when the sale noise is loudest.
         </Text>
 
-        <Pressable
-          onPress={toggle}
-          accessibilityRole="button"
-          accessibilityLabel={recording ? 'Stop recording' : 'Record'}
-          style={{
-            marginTop: 28,
-            width: 116,
-            height: 116,
-            borderRadius: 58,
-            backgroundColor: recording ? '#FF8F78' : color.blue,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderWidth: 6,
-            borderColor: recording ? 'rgba(255,143,120,0.35)' : 'rgba(91,118,255,0.35)',
-          }}
-        >
-          {recording ? (
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <View style={{ width: 12, height: 40, borderRadius: 4, backgroundColor: '#FFFFFF' }} />
-              <View style={{ width: 12, height: 40, borderRadius: 4, backgroundColor: '#FFFFFF' }} />
-            </View>
-          ) : (
-            <Text style={{ fontSize: 44 }}>🎙️</Text>
-          )}
-        </Pressable>
-        <Text accessibilityLiveRegion="polite" style={[type.title, { marginTop: 14 }]}>
-          {recording ? `Recording… tap to stop (${left} s)` : draftUri ? 'Recorded. Tap to record again.' : 'Tap to record'}
-        </Text>
-
-        <Text style={[type.label, { marginTop: 26, alignSelf: 'flex-start' }]}>Not sure what to say? Try one of these</Text>
-        <View style={{ marginTop: 10, gap: 8, alignSelf: 'stretch' }}>
-          {ideas().map((idea) => (
-            <Tag key={idea} label={idea} selected={text === idea} onPress={() => setText(idea)} />
-          ))}
+        {/* 1 · Record */}
+        <View style={{ alignItems: 'center', marginTop: 26 }}>
+          <RecordButton recording={recording} used={used} onPress={toggle} />
+          <Text accessibilityLiveRegion="polite" style={[type.title, { marginTop: 14, textAlign: 'center' }]}>
+            {recording ? `Recording… ${left} s left` : draftUri ? 'Recorded. Tap to record again.' : 'Tap to record'}
+          </Text>
+          <Text style={[type.small, { marginTop: 2, textAlign: 'center' }]}>{recording ? 'Tap again to stop' : `Up to ${MAX_SECONDS} seconds`}</Text>
         </View>
 
-        {draftUri && (
-          <Card style={{ marginTop: 20, alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        {/* 2 · Your note: a voice note with a waveform that fills as it plays */}
+        {draftUri && !recording && (
+          <View
+            style={{
+              marginTop: 20,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              padding: 12,
+              borderRadius: 20,
+              backgroundColor: '#1E2256',
+              borderWidth: 1,
+              borderColor: '#3A3F86',
+            }}
+          >
             <Pressable
-              onPress={play}
+              onPress={() => (status.playing ? player.pause() : play())}
               accessibilityRole="button"
-              accessibilityLabel="Play your note"
-              style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(94,233,181,0.16)', alignItems: 'center', justifyContent: 'center' }}
+              accessibilityLabel={status.playing ? 'Pause your note' : 'Play your note'}
+              style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.94 : 1 }] })}
             >
-              <Text style={{ fontSize: 20, color: '#6EF0BF' }}>{status.playing ? '❚❚' : '▶'}</Text>
+              <LinearGradient colors={['#7C4DFF', '#A066FF']} style={{ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
+                {status.playing ? <PauseIcon size={22} weight="fill" color="#FFFFFF" /> : <PlayIcon size={22} weight="fill" color="#FFFFFF" />}
+              </LinearGradient>
             </Pressable>
-            <View style={{ flex: 1 }}>
-              <Text style={type.label}>Your note · {secs} s</Text>
-              <Text style={[type.title, { marginTop: 2 }]}>{text ? `“${text}”` : 'In your own words'}</Text>
+            <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
+              <Waveform progress={progress} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text numberOfLines={1} style={[type.small, { flex: 1, color: color.text }]}>
+                  {text ? `“${text}”` : 'Your note'}
+                </Text>
+                <Text style={{ fontFamily: font.display, fontSize: 13, color: MOON }}>0:{String(secs).padStart(2, '0')}</Text>
+              </View>
             </View>
-          </Card>
+          </View>
         )}
-        <Text style={[type.small, { marginTop: 14, textAlign: 'center' }]}>Saved on this phone only.</Text>
+
+        {/* 3 · Ideas */}
+        <Text style={[type.label, { marginTop: 24 }]}>Not sure what to say? Try one of these</Text>
+        <View style={{ marginTop: 10, gap: 8 }} accessibilityRole="radiogroup">
+          {ideas().map((idea) => {
+            const on = text === idea;
+            return (
+              <Pressable
+                key={idea}
+                onPress={() => setText(on ? '' : idea)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: on }}
+                style={({ pressed }) => ({
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  paddingVertical: 11,
+                  paddingHorizontal: 14,
+                  borderRadius: 16,
+                  borderWidth: 1.5,
+                  borderColor: on ? '#9B5CF6' : '#3A3F86',
+                  backgroundColor: on ? '#6A3DE8' : pressed ? '#262B6A' : '#1E2256',
+                })}
+              >
+                <Text style={{ fontFamily: font.display, fontSize: 22, lineHeight: 22, color: on ? MOON : '#8A8EC6' }}>“</Text>
+                <Text style={{ flex: 1, fontFamily: font.bodyBold, fontSize: 14.5, lineHeight: 19, color: on ? '#FFFFFF' : color.text }}>{idea}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text style={[type.small, { marginTop: 18, textAlign: 'center' }]}>Saved on this phone only.</Text>
         {saved && <TextLink label="Delete my note" style={{ color: color.text3 }} onPress={remove} />}
       </ScrollView>
-      <View style={{ paddingHorizontal: 28, paddingBottom: insets.bottom + 12, paddingTop: 8 }}>
-        <Button label="Save my note" disabled={!draftUri || recording} onPress={save} />
+      <View style={{ paddingHorizontal: 24, paddingBottom: insets.bottom + 12, paddingTop: 8 }}>
+        <Button variant="night" label="Save my note" disabled={!draftUri || recording} onPress={save} />
       </View>
     </View>
   );
 }
 
+const MOON = '#FFE7A3';
+const RING = 2 * Math.PI * 64;
+
+/** The big record button: purple with a mic; coral while recording, with a ring filling up to 20 s and a soft pulse. */
+function RecordButton({ recording, used, onPress }: { recording: boolean; used: number; onPress: () => void }) {
+  const rm = useReduceMotion();
+  const pulse = useAnimatedValue(0);
+  useEffect(() => {
+    if (!recording || rm) {
+      pulse.setValue(0);
+      return;
+    }
+    const loop = Animated.loop(Animated.timing(pulse, { toValue: 1, duration: 1300, easing: Easing.out(Easing.quad), useNativeDriver: true }));
+    loop.start();
+    return () => loop.stop();
+  }, [recording, rm, pulse]);
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={recording ? 'Stop recording' : 'Record'}
+      style={{ width: 140, height: 140, alignItems: 'center', justifyContent: 'center' }}
+    >
+      {({ pressed }) => (
+        <>
+          {recording && (
+            <Animated.View
+              style={{
+                position: 'absolute',
+                width: 120,
+                height: 120,
+                borderRadius: 60,
+                backgroundColor: '#FF8F78',
+                opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0] }),
+                transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] }) }],
+              }}
+            />
+          )}
+          {/* how much of the 20 seconds is used */}
+          <Svg width={140} height={140} style={{ position: 'absolute' }}>
+            <Circle cx={70} cy={70} r={64} stroke="rgba(167,139,250,0.22)" strokeWidth={5} fill="none" />
+            {recording && (
+              <Circle
+                cx={70}
+                cy={70}
+                r={64}
+                stroke={MOON}
+                strokeWidth={5}
+                fill="none"
+                strokeLinecap="round"
+                strokeDasharray={RING}
+                strokeDashoffset={RING * (1 - used)}
+                transform="rotate(-90 70 70)"
+              />
+            )}
+          </Svg>
+          <View style={{ borderRadius: 56, backgroundColor: recording ? '#C2553F' : '#4B2BB0', paddingBottom: pressed ? 1 : 4, marginTop: pressed ? 3 : 0 }}>
+            <LinearGradient
+              colors={recording ? ['#FF8F78', '#FF6F5B'] : ['#7C4DFF', '#A066FF']}
+              style={{ width: 112, height: 112, borderRadius: 56, alignItems: 'center', justifyContent: 'center' }}
+            >
+              {recording ? (
+                <View style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: '#FFFFFF' }} />
+              ) : (
+                <MicrophoneIcon size={48} weight="fill" color="#FFFFFF" />
+              )}
+            </LinearGradient>
+          </View>
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+const BARS = Array.from({ length: 32 }, (_, i) => 0.3 + 0.7 * Math.abs(Math.sin(i * 1.7) * Math.cos(i * 0.6)));
+
+/** A voice-note waveform: the played part in moon yellow, the rest in faint lavender. */
+function Waveform({ progress }: { progress: number }) {
+  const played = Math.round(progress * BARS.length);
+  return (
+    <View style={{ height: 26, flexDirection: 'row', alignItems: 'center', gap: 2.5 }} accessibilityElementsHidden>
+      {BARS.map((h, i) => (
+        <View key={i} style={{ flex: 1, height: 4 + h * 22, borderRadius: 2, backgroundColor: i < played ? MOON : 'rgba(196,181,253,0.38)' }} />
+      ))}
+    </View>
+  );
+}
