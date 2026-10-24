@@ -212,7 +212,7 @@ export function BottomSheet({
   const [mounted, setMounted] = useState(visible);
   const [sheetH, setSheetH] = useState(0);
   const v = useRef(new Animated.Value(0)).current;
-  const { drag, handlers, reset } = useDragToClose(onClose);
+  const { drag, handlers, reset, onScroll } = useDragToClose(onClose);
 
   useEffect(() => {
     if (visible) {
@@ -233,6 +233,7 @@ export function BottomSheet({
       </Animated.View>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1, justifyContent: 'flex-end' }} pointerEvents="box-none">
         <Animated.View
+          {...handlers}
           accessibilityViewIsModal
           accessibilityLabel={label}
           onLayout={(e) => setSheetH(e.nativeEvent.layout.height)}
@@ -254,11 +255,13 @@ export function BottomSheet({
               flexShrink: 1,
             }}
           >
-            {/* the handle: grab it and drag down to close */}
-            <View {...handlers} accessibilityHint="Drag down to close" style={{ marginTop: -12, paddingTop: 12, paddingBottom: 16, alignItems: 'center' }}>
+            {/* the handle (drag down anywhere on the sheet to close it) */}
+            <View accessibilityHint="Drag down to close" style={{ marginTop: -12, paddingTop: 12, paddingBottom: 16, alignItems: 'center' }}>
               <View style={{ width: 40, height: 6, borderRadius: 3, backgroundColor: '#343A80' }} />
             </View>
             <ScrollView
+              onScroll={onScroll}
+              scrollEventThrottle={32}
               bounces={false}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: pad }}

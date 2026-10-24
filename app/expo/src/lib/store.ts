@@ -120,6 +120,8 @@ export type AppState = {
   rateAsked: number[];
   // Your apps: habit per app and apps switched off (keys from the native module)
   habits: Record<string, Habit>;
+  // For "Other": what tempts you in that app, in your words (used on its shield)
+  habitOther: Record<string, string>;
   offApps: string[];
   // Note from calm you: a recording on this phone, plus the words it was based on
   note: { uri: string; text: string; secs: number } | null;
@@ -197,6 +199,7 @@ export const initialState: AppState = {
   lapsed: false,
   rateAsked: [],
   habits: {},
+  habitOther: {},
   offApps: [],
   note: null,
   buddy: { on: false, name: '', phone: '' },

@@ -19,7 +19,7 @@ export function WhichAppSheet({ visible, apps, onClose }: { visible: boolean; ap
   const habits = useAppState((s) => s.habits);
   const coolOffs = useAppState((s) => s.coolOffs);
   const now = Date.now();
-  const { drag, handlers, reset } = useDragToClose(onClose);
+  const { drag, handlers, reset, onScroll } = useDragToClose(onClose);
   useEffect(() => {
     if (visible) reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -37,6 +37,7 @@ export function WhichAppSheet({ visible, apps, onClose }: { visible: boolean; ap
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(6,6,28,0.5)' }} onPress={onClose} accessibilityLabel="Close" />
       <Animated.View
+        {...handlers}
         accessibilityLabel="Choose an app for your Shopping Pass"
         style={{
           transform: [{ translateY: drag }],
@@ -51,13 +52,13 @@ export function WhichAppSheet({ visible, apps, onClose }: { visible: boolean; ap
           maxHeight: '80%',
         }}
       >
-        {/* Grab here (the handle and the title) and drag down to close */}
-        <View {...handlers} accessibilityHint="Drag down to close">
+        {/* Drag down anywhere on the sheet to close it */}
+        <View accessibilityHint="Drag down to close">
           <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: '#3A3F86', marginBottom: 16 }} />
           <Text style={[type.h1, { fontSize: 24, lineHeight: 28 }]}>Which app do you need?</Text>
           <Text style={[type.body, { marginTop: 6 }]}>You’ll get the usual pause first. Then say what you need, set a limit and tear your ticket.</Text>
         </View>
-        <ScrollView style={{ marginTop: 12 }}>
+        <ScrollView style={{ marginTop: 12 }} onScroll={onScroll} scrollEventThrottle={32}>
           {apps.length ? (
             apps.map((a, i) => {
               const until = a.name ? coolOffs[a.name] ?? 0 : 0;

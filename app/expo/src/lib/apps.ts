@@ -73,12 +73,14 @@ export function budgetFor(key: string) {
 }
 
 /** The shield's first line: your message → challenge → goal → the app's habit (L1427). */
-export function shieldLine1(habit?: Habit) {
+export function shieldLine1(habit?: Habit, key?: string) {
   const s = getState();
   const ch = activeChallenge();
   if (s.settings.shieldMsg.trim()) return s.settings.shieldMsg.trim();
   if (ch) return ch.line(ch.day);
   if (s.goal.trim()) return `You’re saving for ${s.goal.trim()}.`;
+  const own = habit === 'other' && key ? s.habitOther[key]?.trim() : '';
+  if (own) return `${own} again? Is this a planned purchase?`;
   return SHIELD_LINE[habit ?? 'other'];
 }
 
@@ -105,7 +107,7 @@ export function writeAppLines() {
     DA.userDefaultsClearWithPrefix('tm_nightsub::');
     const s = getState();
     for (const { key } of myApps()) {
-      const l1 = shieldLine1(s.habits[key]);
+      const l1 = shieldLine1(s.habits[key], key);
       const l2 = shieldLine2(key);
       DA.userDefaultsSet(`tm_sub::${key}`, l2 ? `${l1}\n${l2}` : l1);
       if (s.habits[key] === 'takeaways' && mealLine()) DA.userDefaultsSet(`tm_nightsub::${key}`, mealLine());

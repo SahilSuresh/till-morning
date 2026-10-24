@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppLabel, editApps, hasTmNative } from '../../modules/tm-native';
@@ -13,6 +13,47 @@ import { lose } from '../lib/xp';
 import { Card, CircleButton, Tag, toast } from '../ui/components';
 import { IconChevrons } from '../ui/icons';
 import { color, font, type } from '../ui/theme';
+
+/** "Other": a box for what tempts you in this app, in your words. It goes on this app's shield. */
+function OtherBox({ appKey, appLabel }: { appKey: string; appLabel: string }) {
+  const saved = useAppState((s) => s.habitOther[appKey] ?? '');
+  const [focused, setFocused] = useState(false);
+  return (
+    <View style={{ gap: 6 }}>
+      <Text style={[type.label, { color: '#C4B5FD' }]}>What gets you in {appLabel}?</Text>
+      <TextInput
+        value={saved}
+        onChangeText={(t) => setState((s) => ({ habitOther: { ...s.habitOther, [appKey]: t } }))}
+        onFocus={() => setFocused(true)}
+        onBlur={() => {
+          setFocused(false);
+          applyShieldLook();
+        }}
+        maxLength={40}
+        returnKeyType="done"
+        autoCapitalize="sentences"
+        placeholder="e.g. Game top-ups, late-night snacks"
+        placeholderTextColor={color.placeholder}
+        selectionColor="#A78BFA"
+        accessibilityLabel={`What gets you in ${appLabel}`}
+        style={{
+          backgroundColor: '#12153A',
+          borderWidth: 1.5,
+          borderColor: focused ? '#A78BFA' : '#3A3F86',
+          borderRadius: 14,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          fontFamily: font.bodySemi,
+          fontSize: 16,
+          color: color.text,
+        }}
+      />
+      <Text style={[type.small, { fontSize: 12.5 }]}>
+        {saved.trim() ? `Its shield will ask: “${saved.trim()} again? Is this a planned purchase?”` : 'Its shield will ask in your words.'}
+      </Text>
+    </View>
+  );
+}
 
 /** Your apps (appsTab, L2082): a switch, a habit and a budget for each protected app. */
 export default function YourApps() {
@@ -63,7 +104,13 @@ export default function YourApps() {
         </CircleButton>
         <Text style={type.h2}>Your apps</Text>
       </View>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 12, paddingBottom: insets.bottom + 24, gap: 12 }}>
+      {/* automaticallyAdjustKeyboardInsets keeps the box you're typing in above the keyboard */}
+      <ScrollView
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 12, paddingBottom: insets.bottom + 24, gap: 12 }}
+      >
         <Text style={type.body}>Shielded apps show the Till Morning shield when you open them.</Text>
 
         <Pressable onPress={() => router.push('/budget')} accessibilityRole="button">
@@ -108,6 +155,7 @@ export default function YourApps() {
                   <Tag key={h} label={HABIT_LABEL[h]} selected={habits[a.key] === h} onPress={() => pickHabit(a.key, h)} />
                 ))}
               </View>
+              {habits[a.key] === 'other' && <OtherBox appKey={a.key} appLabel={a.name ?? 'this app'} />}
               {b ? <Text style={type.small}>Budget: {money(b)} a month</Text> : null}
             </Card>
           );

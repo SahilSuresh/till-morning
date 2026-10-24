@@ -322,7 +322,7 @@ export default function Today() {
         contentContainerStyle={{
           paddingTop: insets.top + 10,
           paddingHorizontal: 24,
-          paddingBottom: 16,
+          paddingBottom: 28,
         }}
       >
         {/* The greeting, with tonight's sky on the right: moon and stars, or the sun by day */}
@@ -386,32 +386,23 @@ export default function Today() {
         )}
 
         {next && (
-          <Rise key={next.key} delay={60} style={{ marginTop: 16 }}>
+          <Rise key={next.key} delay={60} style={{ marginTop: 6 }}>
             <NextTag step={next} />
           </Rise>
         )}
+        {/* 3 · Get a ticket: right under the cards, with the same spacing */}
+        {showBottom && (
+          <Rise delay={90} style={{ marginTop: 20, gap: 12, alignItems: 'center' }}>
+            {showTry && <ShutterTry targetRef={tryRef} appName={summary.names[0]} onPress={tryIt} />}
+            {!pass &&
+              (night ? (
+                <SleepingTicket targetRef={passRef} endHour={settings.nlTo} onPress={getPass} />
+              ) : (
+                <PassButton targetRef={passRef} night={false} nightTo={hh(settings.nlTo)} onPress={getPass} />
+              ))}
+          </Rise>
+        )}
       </ScrollView>
-
-      {/* 3 · Get a ticket: between the content and the tab bar, not over the content */}
-      {showBottom && (
-        <View
-          style={{
-            paddingHorizontal: 24,
-            paddingTop: 8,
-            paddingBottom: 12,
-            gap: 12,
-            alignItems: 'center',
-          }}
-        >
-          {showTry && <ShutterTry targetRef={tryRef} appName={summary.names[0]} onPress={tryIt} />}
-          {!pass &&
-            (night ? (
-              <SleepingTicket targetRef={passRef} endHour={settings.nlTo} onPress={getPass} />
-            ) : (
-              <PassButton targetRef={passRef} night={false} nightTo={hh(settings.nlTo)} onPress={getPass} />
-            ))}
-        </View>
-      )}
 
       <WhichAppSheet visible={!!whichApps} apps={whichApps ?? []} onClose={() => setWhichApps(null)} />
 
