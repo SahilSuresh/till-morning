@@ -15,26 +15,34 @@
       "distribution": "internal",
       "environment": "development",
       "channel": "development",
-      "env": { "APP_ENV": "development" }
+      "env": {
+        "APP_ENV": "development"
+      }
     },
     "preview": {
       "extends": "base",
       "distribution": "internal",
       "environment": "preview",
       "channel": "preview",
-      "env": { "APP_ENV": "preview" }
+      "env": {
+        "APP_ENV": "preview"
+      }
     },
     "production": {
       "extends": "base",
       "autoIncrement": true,
       "environment": "production",
       "channel": "production",
-      "env": { "APP_ENV": "production" }
+      "env": {
+        "APP_ENV": "production"
+      }
     }
   },
   "submit": {
     "production": {
-      "ios": {}
+      "ios": {
+        "ascAppId": "6826001952"
+      }
     }
   }
 }
