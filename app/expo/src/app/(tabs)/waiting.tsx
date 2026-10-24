@@ -13,7 +13,7 @@ import type { SpotRef } from '../../ui/Spotlight';
 import { useBoundaryNow, useTickWhileFocused } from '../../ui/tabs/clock';
 import { type RoomView, takeRoomView } from '../../ui/tabs/roomView';
 import { type ScrollRef, TabTip } from '../../ui/tabs/TabTip';
-import { LetGoShelf, RoomEmpty, WantTag } from '../../ui/tabs/WaitingParts';
+import { LetGoShelf, Rail, RailTag, RoomEmpty } from '../../ui/tabs/WaitingParts';
 import { color, font, type } from '../../ui/theme';
 
 /** roomTab() from the prototype (P:L2117–2129; CSS P:L551–573). */
@@ -81,9 +81,9 @@ export default function Waiting() {
                   accessibilityState={{ selected: on }}
                   style={{ flex: 1 }}
                 >
-                  {/* box-shadow: 0 3px 0 #2A3BC0 */}
-                  {on && <View style={{ position: 'absolute', left: 0, right: 0, top: 3, bottom: -3, borderRadius: 99, backgroundColor: '#2A3BC0' }} />}
-                  <View style={{ borderRadius: 99, paddingVertical: 8, paddingHorizontal: 4, alignItems: 'center', backgroundColor: on ? color.blue : 'transparent' }}>
+                  {/* Night Trolley purple, like the pass button */}
+                  {on && <View style={{ position: 'absolute', left: 0, right: 0, top: 3, bottom: -3, borderRadius: 99, backgroundColor: '#4B2BB0' }} />}
+                  <View style={{ borderRadius: 99, paddingVertical: 8, paddingHorizontal: 4, alignItems: 'center', backgroundColor: on ? '#8A5BFF' : 'transparent' }}>
                     <Text style={{ fontFamily: font.bodyHeavy, fontSize: 13.5, color: on ? '#FFFFFF' : color.text2 }}>
                       {label} {n}
                     </Text>
@@ -95,15 +95,26 @@ export default function Waiting() {
         </Rise>
 
         <Rise delay={100} style={{ marginTop: 16, gap: 12 }}>
+          {/* Option A: the tags hang from a moon-yellow rail, each from the one above */}
           {view === 'waiting' &&
             (waiting.length ? (
-              waiting.map((w, i) => <WantTag key={w.id} want={w} now={now} ready={false} index={i} />)
+              <View>
+                <Rail />
+                {waiting.map((w, i) => (
+                  <RailTag key={w.id} want={w} now={now} ready={false} index={i} />
+                ))}
+              </View>
             ) : (
               <RoomEmpty text="Nothing is waiting. Next time you want something, choose “Park it till morning” in the pause, or park it from a screenshot." />
             ))}
           {view === 'ready' &&
             (ready.length ? (
-              ready.map((w, i) => <WantTag key={w.id} want={w} now={now} ready index={i} />)
+              <View>
+                <Rail />
+                {ready.map((w, i) => (
+                  <RailTag key={w.id} want={w} now={now} ready index={i} />
+                ))}
+              </View>
             ) : (
               <RoomEmpty text="Nothing is ready yet. Wants come back here when their wait is over, often at 08:00." />
             ))}

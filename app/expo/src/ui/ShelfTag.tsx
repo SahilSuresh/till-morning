@@ -18,6 +18,13 @@ const TROLLEY = 72; // the trolley it hangs from once parked
 // Where the string ties onto the trolley: the basket's front-left corner (24, 32 in the 64 × 52 glyph).
 const TIE = { x: (24 * TROLLEY) / 64, y: (32 * TROLLEY) / 64 };
 const TROLLEY_TOP = TIE.y + 22;
+const RAIL_TOP = 14; // a short string up to the rail (or the tag above)
+
+/** Purple by night; sunrise pink once it's ready to decide. */
+const TONES = {
+  night: { from: '#6A3DE8', to: '#9B5CF6', edge: '#4524A8' },
+  dawn: { from: '#8A4FD8', to: '#E2789A', edge: '#6A2E7E' },
+} as const;
 
 /** The tag outline: cut corners on the left (where the eyelet is), round corners on the right. */
 function tagPath(w: number, h: number, y: number) {
@@ -52,6 +59,8 @@ export function ShelfTag({
   stubLabel,
   stubValue,
   hang = 'star',
+  tone = 'night',
+  compact,
   motion = 'none',
   dropDelay = 120,
   poke,
@@ -62,7 +71,10 @@ export function ShelfTag({
   stubLabel: string;
   stubValue: string;
   /** What the string goes up to: a little star, or your trolley once it's parked. */
-  hang?: 'star' | 'trolley';
+  hang?: 'star' | 'trolley' | 'rail';
+  tone?: keyof typeof TONES;
+  /** A shorter tag for lists (the waiting room). */
+  compact?: boolean;
   /** nudge: a small swing every few seconds. drop: falls in and swings to rest. */
   motion?: 'none' | 'nudge' | 'drop';
   /** How long to wait before dropping in (so it lands as a sheet finishes rising). */
@@ -75,8 +87,9 @@ export function ShelfTag({
 }) {
   const rm = useReduceMotion();
   const [size, setSize] = useState({ w: 0, h: 0 });
-  const top = hang === 'trolley' ? TROLLEY_TOP : STAR_TOP;
-  const anchorY = hang === 'trolley' ? TIE.y : 4;
+  const top = hang === 'trolley' ? TROLLEY_TOP : hang === 'rail' ? RAIL_TOP : STAR_TOP;
+  const anchorY = hang === 'trolley' ? TIE.y : hang === 'rail' ? 0 : 4;
+  const c = TONES[tone];
 
   const swing = useAnimatedValue(0);
   const drop = useAnimatedValue(motion === 'drop' && !rm ? 0 : 1);
@@ -162,12 +175,12 @@ export function ShelfTag({
           <Svg width={w} height={top + h + EDGE} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
             <Defs>
               <SvgGradient id="shelfTag" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor="#6A3DE8" />
-                <Stop offset="1" stopColor="#9B5CF6" />
+                <Stop offset="0" stopColor={c.from} />
+                <Stop offset="1" stopColor={c.to} />
               </SvgGradient>
             </Defs>
             {/* the chunky edge underneath, like our buttons */}
-            <Path d={tagPath(w, h, top + EDGE)} fill="#4524A8" />
+            <Path d={tagPath(w, h, top + EDGE)} fill={c.edge} />
             <Path d={tagPath(w, h, top)} fill="url(#shelfTag)" />
             {/* a few stars on the label */}
             <Path d={star(w - STUB - 18, top + 14, 4)} fill={MOON} opacity={0.75} />
@@ -184,7 +197,7 @@ export function ShelfTag({
               strokeLinecap="round"
             />
             {/* the eyelet and the string up to what it hangs from */}
-            <Line x1={HOLE_X} y1={hang === 'trolley' ? anchorY : 9} x2={HOLE_X} y2={holeY - 6} stroke="#C4B5FD" strokeWidth={1.6} />
+            <Line x1={HOLE_X} y1={hang === 'star' ? 9 : anchorY} x2={HOLE_X} y2={holeY - 6} stroke="#C4B5FD" strokeWidth={1.6} />
             <Circle cx={HOLE_X} cy={holeY} r={6} fill={color.night} stroke="rgba(255,255,255,0.6)" strokeWidth={2} />
             {hang === 'star' && <Path d={star(HOLE_X, 5, 5)} fill={MOON} />}
           </Svg>
@@ -210,9 +223,9 @@ export function ShelfTag({
             const { width, height } = e.nativeEvent.layout;
             if (Math.abs(width - w) > 0.5 || Math.abs(height - h) > 0.5) setSize({ w: width, h: height });
           }}
-          style={{ minHeight: 80, flexDirection: 'row', alignItems: 'center' }}
+          style={{ minHeight: compact ? 66 : 80, flexDirection: 'row', alignItems: 'center' }}
         >
-          <View style={{ flex: 1, minWidth: 0, paddingLeft: 40, paddingRight: 12, paddingVertical: 13 }}>
+          <View style={{ flex: 1, minWidth: 0, paddingLeft: 40, paddingRight: 12, paddingVertical: compact ? 10 : 13 }}>
             <Text style={{ fontFamily: font.bodyHeavy, fontSize: 10.5, letterSpacing: 1.2, textTransform: 'uppercase', color: '#E3D9FF' }} numberOfLines={1}>
               {label}
             </Text>

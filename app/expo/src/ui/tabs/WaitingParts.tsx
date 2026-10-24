@@ -9,6 +9,7 @@ import { AppLabel } from '../../../modules/tm-native';
 import { formatDuration, formatReady, knownApp, priceText } from '../../lib/core';
 import { workTime } from '../../lib/rules';
 import type { ParkedWant } from '../../lib/store';
+import { ShelfTag, TagTitle } from '../ShelfTag';
 import { color, font } from '../theme';
 
 // GRADS from the prototype (P:L967): each want gets its own colour.
@@ -228,5 +229,69 @@ export function RoomEmpty({ text }: { text: string }) {
     <View style={{ padding: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#343A80', borderRadius: 18 }}>
       <Text style={{ fontFamily: font.bodySemi, fontSize: 14, lineHeight: 20, color: color.text3, textAlign: 'center' }}>{text}</Text>
     </View>
+  );
+}
+
+// ---- Night Trolley · Part 3, option A: the tag rail ---------------------------------------------
+
+const RAIL = '#FFE7A3';
+
+/** Time left, short enough for the tag's stub: "8h 12m", "45m", or the day when it's far off. */
+function shortLeft(ms: number, readyAt: number) {
+  if (ms > 36 * 3600000) return new Date(readyAt).toLocaleDateString('en-GB', { weekday: 'short' });
+  const m = Math.max(1, Math.round(ms / 60000));
+  const h = Math.floor(m / 60);
+  return h ? `${h}h ${String(m % 60).padStart(2, '0')}m` : `${m}m`;
+}
+
+/** The moon-yellow rail the tags hang from, with a soft glow and a knob at each end. */
+export function Rail() {
+  return (
+    <View style={{ height: 8, justifyContent: 'center', marginHorizontal: -6 }} accessibilityElementsHidden>
+      <View style={{ position: 'absolute', left: 0, right: 0, height: 8, borderRadius: 4, backgroundColor: RAIL, opacity: 0.16 }} />
+      <View style={{ height: 3, borderRadius: 2, backgroundColor: RAIL }} />
+      <View style={{ position: 'absolute', left: -2, width: 8, height: 8, borderRadius: 4, backgroundColor: RAIL }} />
+      <View style={{ position: 'absolute', right: -2, width: 8, height: 8, borderRadius: 4, backgroundColor: RAIL }} />
+    </View>
+  );
+}
+
+/**
+ * A parked want as a purple shelf tag on the rail: the stub counts down ("WAITS 8h 12m"). Once it's
+ * ready the tag turns sunrise pink with "Decide" on the stub, and tapping it opens the decision.
+ */
+export function RailTag({ want, now, ready, index }: { want: ParkedWant; now: number; ready: boolean; index: number }) {
+  const name = wantName(want);
+  const price = priceText(want);
+  const work = want.band === 'exact' && want.price ? ` · about ${workTime(want.price)} of work` : '';
+  const left = shortLeft(want.readyAt - now, want.readyAt);
+  return (
+    <Pressable
+      onPress={() => ready && router.push({ pathname: '/decide', params: { id: want.id } })}
+      disabled={!ready}
+      accessibilityRole={ready ? 'button' : undefined}
+      accessibilityLabel={
+        ready
+          ? `${name}. ${price}. Ready. Decide now`
+          : `${name}. ${price}. ${formatDuration(want.readyAt - now)} left, ready ${formatReady(want.readyAt, now)}`
+      }
+    >
+      {({ pressed }) => (
+        <View style={{ transform: [{ scale: pressed ? 0.98 : 1 }] }}>
+          <ShelfTag
+            hang="rail"
+            compact
+            tone={ready ? 'dawn' : 'night'}
+            motion="drop"
+            dropDelay={80 + Math.min(index, 6) * 90}
+            label={knownApp(want.app) ? `From ${want.app}` : 'Parked'}
+            stubLabel={ready ? 'Ready' : 'Waits'}
+            stubValue={ready ? 'Decide' : left}
+          >
+            <TagTitle title={name} sub={ready ? 'You slept on it. Still want it?' : `${price}${work} · ready ${formatReady(want.readyAt, now)}`} />
+          </ShelfTag>
+        </View>
+      )}
+    </Pressable>
   );
 }
