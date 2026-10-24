@@ -243,10 +243,17 @@ export function WelcomeHold({ onHeld, onSkip }: { onHeld: () => void; onSkip: ()
             </Animated.View>
           </Animated.View>
         </Pressable>
-        {/* Full width and re-made when the words change, so a longer label stays centred */}
-        <Text key={label} style={[type.h2, { marginTop: 20, alignSelf: 'stretch', textAlign: 'center' }]} accessibilityLiveRegion="polite">
-          {label}
-        </Text>
+        {/* A fixed full-width box with the words pinned across it, so any label sits exactly in the middle */}
+        <View style={{ marginTop: 20, alignSelf: 'stretch', height: 26 }}>
+          <Text
+            key={label}
+            numberOfLines={1}
+            style={[type.h2, { position: 'absolute', left: 0, right: 0, top: 0, textAlign: 'center' }]}
+            accessibilityLiveRegion="polite"
+          >
+            {label}
+          </Text>
+        </View>
         <Text style={[type.small, { marginTop: 4, alignSelf: 'stretch', textAlign: 'center' }]}>to pause the noise</Text>
       </StepBody>
       {/* the warm flash of the boom, over everything */}
