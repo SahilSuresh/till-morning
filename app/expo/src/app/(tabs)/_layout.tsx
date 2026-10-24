@@ -8,9 +8,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppState } from '../../lib/store';
 import { TAB_BAR_HEIGHT } from '../../ui/layout';
 import { PassStrip } from '../../ui/tabs/PassStrip';
-import { SwipeTabList } from '../../ui/tabs/SwipeBar';
-import { TabButton, TabScene, WaitingTabButton } from '../../ui/tabs/TabChrome';
+import { TabBar, type TabDef } from '../../ui/tabs/TabBar';
+import { TabScene } from '../../ui/tabs/TabChrome';
 import { color } from '../../ui/theme';
+
+const TABS: TabDef[] = [
+  { name: 'index', label: 'Today', Icon: HouseIcon },
+  { name: 'waiting', label: 'Waiting', Icon: HourglassMediumIcon },
+  { name: 'me', label: 'Me', Icon: UserIcon },
+  { name: 'settings', label: 'Settings', Icon: GearSixIcon },
+];
 
 /** The default tab slot render (expo-router/ui), with each tab's content wrapped for its enter animation. */
 function renderTab(descriptor: TabsDescriptor, { isFocused, loaded, detachInactiveScreens }: TabsSlotRenderOptions) {
@@ -46,14 +53,14 @@ export default function TabsLayout() {
       </TabList>
       <PassStrip />
       {/* .tabbar: sits below the content (not over it), margin 4px 20px 30px above the home indicator */}
-      <SwipeTabList
+      <TabBar
+        tabs={TABS}
         style={{
           marginTop: 4,
           marginHorizontal: 20,
           marginBottom: insets.bottom > 0 ? Math.max(12, insets.bottom - 4) : 16,
           height: TAB_BAR_HEIGHT,
-          padding: 6,
-          gap: 4,
+          paddingVertical: 6,
           borderRadius: 999,
           backgroundColor: 'rgb(26,30,83)',
           borderWidth: 1,
@@ -64,20 +71,7 @@ export default function TabsLayout() {
           shadowOffset: { width: 0, height: 12 },
           justifyContent: 'flex-start',
         }}
-      >
-        <TabTrigger name="index" href="/" asChild>
-          <TabButton label="Today" Icon={HouseIcon} />
-        </TabTrigger>
-        <TabTrigger name="waiting" href="/waiting" asChild>
-          <WaitingTabButton label="Waiting" Icon={HourglassMediumIcon} />
-        </TabTrigger>
-        <TabTrigger name="me" href="/me" asChild>
-          <TabButton label="Me" Icon={UserIcon} />
-        </TabTrigger>
-        <TabTrigger name="settings" href="/settings" asChild>
-          <TabButton label="Settings" Icon={GearSixIcon} />
-        </TabTrigger>
-      </SwipeTabList>
+      />
     </Tabs>
   );
 }
