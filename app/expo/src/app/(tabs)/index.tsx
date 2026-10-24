@@ -20,7 +20,6 @@ import { useTarget } from '../../ui/tabs/spot';
 import {
   CheckInNudge,
   type NextStep,
-  NextStepRow,
   PassButton,
   PassTicket,
   SaleBanner,
@@ -31,7 +30,8 @@ import {
   useShieldSummary,
   WaitCard,
 } from '../../ui/tabs/TodayParts';
-import { NightPassButton, ShutterTry } from '../../ui/tabs/BottomBits';
+import { ShutterTry, SleepingTicket } from '../../ui/tabs/BottomBits';
+import { NextTag } from '../../ui/tabs/NextTag';
 import { TrolleyRoute } from '../../ui/tabs/TrolleyRoute';
 import { WhichAppSheet } from '../../ui/WhichAppSheet';
 import { type } from '../../ui/theme';
@@ -218,6 +218,8 @@ export default function Today() {
         tone: 'sun',
         isNew: true,
         chip: `New · day ${unlock.day}`,
+        tag: `New · day ${unlock.day}`,
+        stub: { label: 'Day', value: String(unlock.day) },
         title: unlock.t,
         sub: unlock.kick,
         go: () => router.push({ pathname: '/unlock', params: { k: unlock.k } }),
@@ -227,6 +229,8 @@ export default function Today() {
         key: 'recap',
         Icon: CalendarCheckIcon,
         tone: 'lav',
+        tag: 'Sunday recap',
+        stub: { label: 'Takes', value: '1 min' },
         title: 'Your week with Till Morning',
         sub: 'Sunday recap: pauses, waits and passes',
         go: () => router.push('/recap'),
@@ -236,6 +240,8 @@ export default function Today() {
         key: 'parcel',
         Icon: PackageIcon,
         tone: 'sun',
+        tag: 'Sticker goal done',
+        stub: { label: parcels > 1 ? 'Parcels' : 'Parcel', value: String(parcels) },
         title: parcels > 1 ? `${parcels} parcels to open` : 'A parcel to open',
         sub: 'You finished a sticker goal',
         go: () => router.push('/parcel'),
@@ -248,6 +254,7 @@ export default function Today() {
               key: 'habits',
               Icon: ClipboardTextIcon,
               tone: 'hush' as const,
+              stub: { label: 'Takes', value: '1 min' },
               title: 'Pick a habit for each app',
               sub: 'So each shield asks the right question',
               go: () => router.push('/apps'),
@@ -259,6 +266,7 @@ export default function Today() {
         key: 'budget',
         Icon: PiggyBankIcon,
         tone: 'sun',
+        stub: { label: 'Takes', value: '1 min' },
         title: 'Set a monthly budget',
         sub: 'One total, split across your apps',
         go: () => router.push('/budget'),
@@ -268,6 +276,7 @@ export default function Today() {
         key: 'passintro',
         Icon: TicketIcon,
         tone: 'lav',
+        stub: { label: 'Takes', value: '2 min' },
         title: 'Meet the Shopping Pass',
         sub: 'How to shop on purpose, and your usual pass length',
         go: () => router.push('/passintro'),
@@ -277,6 +286,7 @@ export default function Today() {
         key: 'note',
         Icon: MicrophoneIcon,
         tone: 'lav',
+        stub: { label: 'Takes', value: '1 min' },
         title: 'Record a note from calm you',
         sub: 'It plays in your pause',
         go: () => router.push('/note'),
@@ -286,13 +296,15 @@ export default function Today() {
         key: 'bank',
         Icon: LockKeyIcon,
         tone: 'mint',
+        stub: { label: 'Takes', value: '2 min' },
         title: 'Add a bank limit (optional)',
         sub: 'An extra barrier your bank enforces',
         go: () => router.push('/bank'),
         done: setupDone[4] === '1',
       },
     ];
-    return setup.find((x) => !x.done) ?? null;
+    const first = setup.find((x) => !x.done);
+    return first ? { ...first, tag: `Next up · ${setup.indexOf(first) + 1} of ${setup.length}` } : null;
   })();
 
   // ---- Bottom block actions ----
@@ -427,7 +439,7 @@ export default function Today() {
 
         {next && (
           <Rise key={next.key} delay={60} style={{ marginTop: 16 }}>
-            <NextStepRow step={next} />
+            <NextTag step={next} />
           </Rise>
         )}
       </ScrollView>
@@ -446,7 +458,7 @@ export default function Today() {
           <ShutterTry targetRef={tryRef} appName={summary.names[0]} onPress={tryIt} />
           {!pass &&
             (night ? (
-              <NightPassButton targetRef={passRef} endHour={settings.nlTo} onPress={getPass} />
+              <SleepingTicket targetRef={passRef} endHour={settings.nlTo} onPress={getPass} />
             ) : (
               <PassButton targetRef={passRef} night={false} nightTo={hh(settings.nlTo)} onPress={getPass} />
             ))}

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Animated, Easing, Pressable, Text, useAnimatedValue, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import type { ParkedWant } from '../../lib/store';
@@ -76,7 +76,7 @@ const until = (ms: number) => {
 };
 
 export function TrolleyRoute({
-  now,
+  now: nowProp,
   startHour,
   nightLockOn,
   open,
@@ -98,12 +98,12 @@ export function TrolleyRoute({
 }) {
   const rm = useReduceMotion();
   // The countdown moves every half minute without re-rendering the rest of Today.
-  const [tick, setTick] = useState(Date.now());
+  const [tick, setTick] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setTick(Date.now()), 30000);
     return () => clearInterval(t);
   }, []);
-  now = Math.max(now, tick);
+  const now = Math.max(nowProp, tick);
   const { start, end, night } = tonight(now, startHour);
   const stops = stopsFor(startHour, start, end, nightLockOn);
   const onBoard = open.filter((w) => w.readyAt > now).length;
@@ -124,7 +124,7 @@ export function TrolleyRoute({
   const filled = trolleyIndex * ROW;
 
   // A little wobble on the trolley wheel every few seconds.
-  const wob = useRef(new Animated.Value(0)).current;
+  const wob = useAnimatedValue(0);
   useEffect(() => {
     if (rm) return;
     const loop = Animated.loop(
@@ -163,7 +163,17 @@ export function TrolleyRoute({
 
       {/* The route */}
       <View style={{ marginTop: 22, position: 'relative' }} accessibilityRole="list" accessibilityLabel="Tonight’s route">
-        <View style={{ position: 'absolute', left: DOT / 2 - 1.5, top: lineTop, width: 3, height: lineHeight, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.16)' }} />
+        <View
+          style={{
+            position: 'absolute',
+            left: DOT / 2 - 1.5,
+            top: lineTop,
+            width: 3,
+            height: lineHeight,
+            borderRadius: 2,
+            backgroundColor: 'rgba(255,255,255,0.16)',
+          }}
+        />
         <View style={{ position: 'absolute', left: DOT / 2 - 1.5, top: lineTop, width: 3, height: filled, borderRadius: 2, backgroundColor: MOON }} />
         {rows.map((r) =>
           r.kind === 'trolley' ? (
@@ -207,7 +217,9 @@ export function TrolleyRoute({
                 }}
               />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: font.bodyBold, fontSize: 15, lineHeight: 20, color: r.stop.end ? DAWN : r.done ? color.text2 : color.text }}>{r.stop.title}</Text>
+                <Text style={{ fontFamily: font.bodyBold, fontSize: 15, lineHeight: 20, color: r.stop.end ? DAWN : r.done ? color.text2 : color.text }}>
+                  {r.stop.title}
+                </Text>
                 {r.stop.end && ready ? (
                   <Text style={{ fontFamily: font.bodyHeavy, fontSize: 12.5, color: color.mint }}>{ready} ready to decide · tap</Text>
                 ) : r.stop.sub ? (

@@ -343,6 +343,10 @@ export type NextStep = {
   sub: string;
   chip?: string;
   isNew?: boolean;
+  /** The small line on the shelf tag, e.g. "Next up · 2 of 5". */
+  tag?: string;
+  /** The tag's "price" stub, e.g. Takes / 1 min. */
+  stub?: { label: string; value: string };
   go: () => void;
 };
 
