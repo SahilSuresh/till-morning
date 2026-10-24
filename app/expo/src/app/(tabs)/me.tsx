@@ -5,15 +5,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppState } from '../../lib/store';
 import { TopGlow } from '../../ui/backgrounds';
-import { Card, Chip, Rise } from '../../ui/components';
+import { Card, Rise } from '../../ui/components';
 import { useTabBarSpace } from '../../ui/layout';
 import { MorningCard } from '../../ui/MorningCard';
 import { RankCard } from '../../ui/RankCard';
 import type { SpotRef } from '../../ui/Spotlight';
-import { BankSealCard, NoteCard, StickerGoals } from '../../ui/tabs/MeParts';
+import { SkyCorner } from '../../ui/SkyCorner';
+import { BankSealCard, NoteCard } from '../../ui/tabs/MeParts';
+import { DecisionsReceipt, ParcelButton, StickerShelf } from '../../ui/tabs/MeNight';
 import { type ScrollRef, TabTip } from '../../ui/tabs/TabTip';
 import { XpRules } from '../../ui/tabs/XpRules';
-import { color, font, type } from '../../ui/theme';
+import { color, type } from '../../ui/theme';
 
 /** progressTab() from the prototype (P:L2090–2116): rank, Morning card, stickers, your note, XP rules, recent decisions. */
 export default function Me() {
@@ -31,10 +33,12 @@ export default function Me() {
     <View style={{ flex: 1 }}>
       <TopGlow />
       <ScrollView ref={scrollRef} contentContainerStyle={{ paddingTop: insets.top + 10, paddingHorizontal: 24, paddingBottom: tabSpace }}>
-        <Rise>
+        {/* Me, with tonight's sky on the right like Today */}
+        <Rise style={{ height: 44, justifyContent: 'center' }}>
           <Text accessibilityRole="header" style={type.h1}>
             Me
           </Text>
+          <SkyCorner style={{ top: 2 }} />
         </Rise>
 
         <Rise delay={40} style={{ marginTop: 16 }}>
@@ -51,8 +55,10 @@ export default function Me() {
           </Rise>
         )}
 
-        <Rise delay={80} style={{ marginTop: 20 }}>
-          <StickerGoals />
+        {/* the sticker book: stickers on a shelf, tap to open the whole book */}
+        <Rise delay={80} style={{ marginTop: 20, gap: 12 }}>
+          <StickerShelf />
+          <ParcelButton />
         </Rise>
 
         {helped.asked > 0 && (
@@ -90,37 +96,9 @@ export default function Me() {
           </Card>
         </Rise>
 
-        {/* Recent decisions */}
+        {/* Recent decisions, printed as a Till Morning receipt */}
         <Rise delay={160} style={{ marginTop: 24 }}>
-          <Text accessibilityRole="header" style={type.h2}>
-            Recent decisions
-          </Text>
-          {recent.length ? (
-            <View style={{ marginTop: 8 }}>
-              <Card style={{ padding: 0, overflow: 'hidden' }}>
-                {recent.map((e, i) => (
-                  <View
-                    key={`${e.at}-${i}`}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: i ? 1.5 : 0, borderColor: color.divider }}
-                  >
-                    <Text style={{ width: 44, fontFamily: font.bodyBold, fontSize: 12.5, color: color.text3, fontVariant: ['tabular-nums'] }}>
-                      {new Date(e.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                    </Text>
-                    <Text style={{ flex: 1, fontFamily: font.bodySemi, fontSize: 14.5, lineHeight: 19, color: color.text }}>{e.label}</Text>
-                    <Chip tone={e.amount > 0 ? 'mint' : e.amount < 0 ? 'peach' : 'paper'} label={`${e.amount > 0 ? '+' : e.amount < 0 ? '−' : ''}${Math.abs(e.amount)} XP`} />
-                  </View>
-                ))}
-              </Card>
-            </View>
-          ) : (
-            <View style={{ marginTop: 8 }}>
-              <Card style={{ padding: 16 }}>
-                <Text style={{ fontFamily: font.body, fontSize: 16, lineHeight: 22, color: color.text }}>
-                  Your decisions show up here. Open a shielded app from your Home Screen to make your first one.
-                </Text>
-              </Card>
-            </View>
-          )}
+          <DecisionsReceipt entries={recent} />
         </Rise>
       </ScrollView>
 

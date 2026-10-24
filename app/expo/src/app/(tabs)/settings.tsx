@@ -14,7 +14,10 @@ import { hh } from '../../lib/rules';
 import { getScreenTimeStatus } from '../../lib/screenTime';
 import { type AppState, resetState, setState, useAppState } from '../../lib/store';
 import { lose, xpToast } from '../../lib/xp';
-import { Card, Tag, toast } from '../../ui/components';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Tag, toast } from '../../ui/components';
+import { SkyCorner } from '../../ui/SkyCorner';
+import { NightShopCard } from '../../ui/tabs/SettingsNight';
 import { Enter, Tile, type TileTone } from '../../ui/flow/kit';
 import { IconCaret } from '../../ui/icons';
 import { TimePick } from '../../ui/TimePick';
@@ -77,12 +80,16 @@ function Row({
   );
 }
 
+/** A section heading in moon-yellow small caps, with a little star. */
 function Head({ title, d }: { title: string; d: number }) {
   return (
     <Enter d={d}>
-      <Text accessibilityRole="header" style={[type.h2, { marginTop: 24, marginBottom: 8 }]}>
-        {title}
-      </Text>
+      <View style={{ marginTop: 26, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+        <Text style={{ fontSize: 11, color: '#FFE7A3' }}>✦</Text>
+        <Text accessibilityRole="header" style={{ fontFamily: font.bodyHeavy, fontSize: 12.5, letterSpacing: 1.4, textTransform: 'uppercase', color: '#FFE7A3' }}>
+          {title}
+        </Text>
+      </View>
     </Enter>
   );
 }
@@ -91,7 +98,11 @@ function Head({ title, d }: { title: string; d: number }) {
 function Group({ children, d, style }: { children: ReactNode; d: number; style?: object }) {
   return (
     <Enter d={d} style={style}>
-      <Card style={{ padding: 0, overflow: 'hidden' }}>{children}</Card>
+      <View style={{ borderRadius: 22, backgroundColor: '#15184A', paddingBottom: 3 }}>
+        <LinearGradient colors={['#1E2256', '#23286A']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 22, borderWidth: 1, borderColor: '#3A3F86', overflow: 'hidden' }}>
+          {children}
+        </LinearGradient>
+      </View>
     </Enter>
   );
 }
@@ -102,7 +113,7 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: bool
       value={value}
       onValueChange={onChange}
       accessibilityLabel={label}
-      trackColor={{ true: color.blue, false: '#2B2F69' }}
+      trackColor={{ true: '#7C4DFF', false: '#2B2F69' }}
       ios_backgroundColor="#2B2F69"
     />
   );
@@ -284,13 +295,23 @@ export default function Settings() {
   return (
     <View style={{ flex: 1, backgroundColor: color.night }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 6, paddingHorizontal: 24, paddingBottom: tabSpace }} keyboardShouldPersistTaps="handled">
-        <Enter>
+        <Enter style={{ height: 44, justifyContent: 'center' }}>
           <Text accessibilityRole="header" style={type.h1}>
             Settings
           </Text>
+          <SkyCorner style={{ top: 2 }} />
         </Enter>
 
-        <Group d={40} style={{ marginTop: 20 }}>
+        <Enter d={30} style={{ marginTop: 18 }}>
+          <NightShopCard
+            on={shieldsOn && count.apps + count.categories > 0}
+            apps={count.categories ? `${count.apps} apps and ${count.categories} categor${count.categories === 1 ? 'y' : 'ies'}` : `${count.apps} app${count.apps === 1 ? '' : 's'}`}
+            nightLock={st.nlOn ? `${hh(st.nlFrom)}–${hh(st.nlTo)}` : null}
+            pauseSeconds={st.pauseSeconds}
+          />
+        </Enter>
+
+        <Group d={40} style={{ marginTop: 12 }}>
           <Row
             first
             Icon={ShieldCheckIcon}
