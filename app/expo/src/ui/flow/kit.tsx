@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { easeOut, springOut, useReduceMotion } from '../components';
+import { useDragToClose } from '../useDragToClose';
 
 // Small pieces shared by the core-loop screens (pause, pass, check-in, decide, urgent) and Settings.
 
@@ -211,9 +212,11 @@ export function BottomSheet({
   const [mounted, setMounted] = useState(visible);
   const [sheetH, setSheetH] = useState(0);
   const v = useRef(new Animated.Value(0)).current;
+  const { drag, handlers, reset } = useDragToClose(onClose);
 
   useEffect(() => {
     if (visible) {
+      reset();
       setMounted(true);
       Animated.timing(v, { toValue: 1, duration: rm ? 0 : 420, easing: easeOut, useNativeDriver: true }).start();
     } else {
@@ -221,7 +224,7 @@ export function BottomSheet({
         if (finished) setMounted(false);
       });
     }
-  }, [visible, rm, v]);
+  }, [visible, rm, v, reset]);
 
   return (
     <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
@@ -235,7 +238,7 @@ export function BottomSheet({
           onLayout={(e) => setSheetH(e.nativeEvent.layout.height)}
           style={{
             maxHeight: height * 0.92,
-            transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [sheetH || height, 0] }) }],
+            transform: [{ translateY: Animated.add(v.interpolate({ inputRange: [0, 1], outputRange: [sheetH || height, 0] }), drag) }],
           }}
         >
           <View
@@ -251,7 +254,10 @@ export function BottomSheet({
               flexShrink: 1,
             }}
           >
-            <View style={{ alignSelf: 'center', width: 40, height: 6, borderRadius: 3, backgroundColor: '#343A80', marginBottom: 16 }} />
+            {/* the handle: grab it and drag down to close */}
+            <View {...handlers} accessibilityHint="Drag down to close" style={{ marginTop: -12, paddingTop: 12, paddingBottom: 16, alignItems: 'center' }}>
+              <View style={{ width: 40, height: 6, borderRadius: 3, backgroundColor: '#343A80' }} />
+            </View>
             <ScrollView
               bounces={false}
               keyboardShouldPersistTaps="handled"

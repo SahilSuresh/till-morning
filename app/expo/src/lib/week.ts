@@ -74,8 +74,8 @@ export function recapDue(now = Date.now()) {
 export const thisWeek = weekNo;
 
 export const COACH_TIPS = [
-  { t: 'Your shields are up', d: 'These are the shop apps Till Morning watches. They pause before they open. Tap here to change them.' },
   { t: 'Your trolley', d: 'When a want hits, park it and it waits here till morning, with the time left. Then you decide with a clear head.' },
+  { t: 'Your shields are up', d: 'These are the shop apps Till Morning watches. They pause before they open. Tap here to change them.' },
   { t: 'Need to shop for real?', d: 'Get a pass: say what you need, set a limit and a timer. The app locks again after.' },
   { t: 'Try it once now', d: 'Open a shopping app from your home screen and park something. New tips arrive here over your first week.' },
 ];

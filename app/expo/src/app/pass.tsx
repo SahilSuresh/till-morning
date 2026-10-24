@@ -7,7 +7,7 @@ import { AppLabel } from '../../modules/tm-native';
 import { knownApp, passesToday, recentShieldedApp, startPass } from '../lib/core';
 import { getState, type PassReason } from '../lib/store';
 import { Chip, CircleButton, OptionCard, toast } from '../ui/components';
-import { Enter, useEntered, useFootPad, useHeadPad } from '../ui/flow/kit';
+import { Enter, useEntered, useFootPad } from '../ui/flow/kit';
 import { IconLock, IconMinus, IconPlus, IconX } from '../ui/icons';
 import { TearTicket } from '../ui/TearTicket';
 import { color, font, type } from '../ui/theme';
@@ -33,7 +33,6 @@ const fieldStyle = {
 
 /** Start a Shopping Pass (V.pass, P:L1525): why, what and a limit, how long, then tear the ticket. */
 export default function Pass() {
-  const headPad = useHeadPad();
   const footPad = useFootPad();
   const entered = useEntered();
   const params = useLocalSearchParams<{ app?: string; fromRoom?: string; need?: string; limit?: string }>();
@@ -65,7 +64,9 @@ export default function Pass() {
   return (
     <View style={{ flex: 1, backgroundColor: color.night }}>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-        <View style={{ paddingTop: headPad, paddingHorizontal: 24, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* It opens as a sheet now: pull it down to close (same as Cancel) */}
+        <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: '#3A3F86', marginTop: 8 }} />
+        <View style={{ paddingTop: 10, paddingHorizontal: 24, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <CircleButton label="Cancel" onPress={() => router.replace(fromRoom ? '/waiting' : '/')}>
             <IconX />
           </CircleButton>

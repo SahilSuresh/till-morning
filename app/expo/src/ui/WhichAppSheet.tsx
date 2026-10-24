@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { Animated, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppLabel } from '../../modules/tm-native';
@@ -8,6 +9,7 @@ import { useAppState } from '../lib/store';
 import { TextLink, toast } from './components';
 import { IconCaret } from './icons';
 import { color, type } from './theme';
+import { useDragToClose } from './useDragToClose';
 
 const hhmm = (t: number) => new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
@@ -17,6 +19,11 @@ export function WhichAppSheet({ visible, apps, onClose }: { visible: boolean; ap
   const habits = useAppState((s) => s.habits);
   const coolOffs = useAppState((s) => s.coolOffs);
   const now = Date.now();
+  const { drag, handlers, reset } = useDragToClose(onClose);
+  useEffect(() => {
+    if (visible) reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   const pick = (a: MyApp) => {
     const until = a.name ? coolOffs[a.name] ?? 0 : 0;
@@ -29,9 +36,10 @@ export function WhichAppSheet({ visible, apps, onClose }: { visible: boolean; ap
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(6,6,28,0.5)' }} onPress={onClose} accessibilityLabel="Close" />
-      <View
+      <Animated.View
         accessibilityLabel="Choose an app for your Shopping Pass"
         style={{
+          transform: [{ translateY: drag }],
           backgroundColor: color.sheet,
           borderTopWidth: 1.5,
           borderColor: '#2E3374',
@@ -43,9 +51,12 @@ export function WhichAppSheet({ visible, apps, onClose }: { visible: boolean; ap
           maxHeight: '80%',
         }}
       >
-        <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: '#3A3F86', marginBottom: 16 }} />
-        <Text style={[type.h1, { fontSize: 24, lineHeight: 28 }]}>Which app do you need?</Text>
-        <Text style={[type.body, { marginTop: 6 }]}>You’ll get the usual pause first. Then say what you need, set a limit and tear your ticket.</Text>
+        {/* Grab here (the handle and the title) and drag down to close */}
+        <View {...handlers} accessibilityHint="Drag down to close">
+          <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: '#3A3F86', marginBottom: 16 }} />
+          <Text style={[type.h1, { fontSize: 24, lineHeight: 28 }]}>Which app do you need?</Text>
+          <Text style={[type.body, { marginTop: 6 }]}>You’ll get the usual pause first. Then say what you need, set a limit and tear your ticket.</Text>
+        </View>
         <ScrollView style={{ marginTop: 12 }}>
           {apps.length ? (
             apps.map((a, i) => {
@@ -72,7 +83,7 @@ export function WhichAppSheet({ visible, apps, onClose }: { visible: boolean; ap
           )}
         </ScrollView>
         <TextLink label="Not now" style={{ color: color.text3 }} onPress={onClose} />
-      </View>
+      </Animated.View>
     </Modal>
   );
 }

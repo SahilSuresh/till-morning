@@ -1,25 +1,28 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import type { ReactNode } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { type ReactNode, useEffect } from 'react';
+import { Animated, Easing, Pressable, Text, useAnimatedValue, View } from 'react-native';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { AppLabel } from '../../../modules/tm-native';
 import type { MyApp } from '../../lib/apps';
 import { formatDuration, knownApp, priceText } from '../../lib/core';
 import type { ParkedWant } from '../../lib/store';
-import { CaretRightIcon, ShieldCheckIcon } from '../ph';
+import { useReduceMotion } from '../components';
+import { CaretRightIcon } from '../ph';
 import type { SpotRef } from '../Spotlight';
+import { StFace } from '../StFace';
 import { color, font } from '../theme';
-import { TrolleyIcon } from './TrolleyRoute';
 
-// Today, kept simple: one card for the shields (which apps), one for your trolley (what's
-// waiting), then the pass button. Same night colours as the rest of Night Trolley.
+// Today, kept simple: your trolley first (the big card: what's waiting), then a smaller card
+// for the shields (which apps), then the pass button. Night Trolley colours throughout.
 
 const MOON = '#FFE7A3';
-const ICON = 40;
-const MAX_ICONS = 6;
+const ICON = 34;
+const MAX_ICONS = 7;
 const MAX_ROWS = 3;
+const ITEM_COLOURS = ['#A78BFA', '#5EE9B5', MOON];
 
-function Card({ children, targetRef, onPress, label }: { children: ReactNode; targetRef: SpotRef; onPress?: () => void; label: string }) {
+function Card({ children, art, targetRef, onPress, label }: { children: ReactNode; art?: ReactNode; targetRef: SpotRef; onPress?: () => void; label: string }) {
   return (
     <Pressable onPress={onPress} disabled={!onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={label}>
       {({ pressed }) => (
@@ -36,117 +39,44 @@ function Card({ children, targetRef, onPress, label }: { children: ReactNode; ta
           >
             {children}
           </LinearGradient>
+          {art}
         </View>
       )}
     </Pressable>
   );
 }
 
-function Head({ icon, title, right }: { icon: ReactNode; title: string; right?: ReactNode }) {
+/** A big trolley with one box per thing on board (up to three), giving a little roll now and then. */
+function TrolleyArt({ items, width = 112 }: { items: number; width?: number }) {
+  const rm = useReduceMotion();
+  const roll = useAnimatedValue(0);
+  useEffect(() => {
+    if (rm) return;
+    const t = (toValue: number, duration: number) => Animated.timing(roll, { toValue, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true });
+    const loop = Animated.loop(Animated.sequence([Animated.delay(3400), t(1, 240), t(-0.6, 260), t(0.25, 220), t(0, 220)]));
+    loop.start();
+    return () => loop.stop();
+  }, [rm, roll]);
+  const n = Math.min(items, 3);
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      {icon}
-      <Text style={{ flex: 1, fontFamily: font.display, fontSize: 18, lineHeight: 23, color: color.text }} numberOfLines={1}>
-        {title}
-      </Text>
-      {right}
-    </View>
-  );
-}
-
-/** Which apps are shielded, as their icons, and whether the shields are working. */
-export function ShieldsCard({
-  targetRef,
-  on,
-  title,
-  line,
-  apps,
-  categories,
-  action,
-  onPress,
-}: {
-  targetRef: SpotRef;
-  on: boolean;
-  title: string;
-  line: string;
-  apps: MyApp[];
-  categories: number;
-  action?: ReactNode;
-  onPress?: () => void;
-}) {
-  const shown = apps.slice(0, MAX_ICONS);
-  const more = apps.length - shown.length;
-  const names = apps.map((a) => a.name).filter((n): n is string => !!n && knownApp(n));
-  return (
-    <Card targetRef={targetRef} onPress={onPress} label={`${title}. ${names.length ? names.join(', ') + '. ' : ''}${line}`}>
-      <Head
-        icon={
-          <View
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: 10,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: on ? 'rgba(94,233,181,0.16)' : 'rgba(255,255,255,0.08)',
-            }}
-          >
-            <ShieldCheckIcon size={18} weight="bold" color={on ? color.mintText : color.text3} />
-          </View>
-        }
-        title={title}
-        right={onPress ? <CaretRightIcon size={18} weight="bold" color={color.text3} /> : undefined}
-      />
-      {on && (shown.length > 0 || categories > 0) && (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-          {shown.map((a) => (
-            <View
-              key={a.key}
-              style={{
-                width: ICON,
-                height: ICON,
-                borderRadius: 11,
-                backgroundColor: 'rgba(255,255,255,0.08)',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}
-            >
-              {a.token ? (
-                <AppLabel appKey={a.key} mode="icon" size={28} align="center" style={{ width: ICON, height: ICON }} />
-              ) : (
-                <Text style={{ fontFamily: font.bodyHeavy, fontSize: 17, color: color.text }}>{(a.name ?? '?').charAt(0).toUpperCase()}</Text>
-              )}
-            </View>
-          ))}
-          {more > 0 && <Bubble text={`+${more}`} />}
-          {categories > 0 && <Bubble text={categories === 1 ? '+ a category' : `+ ${categories} categories`} wide />}
-        </View>
-      )}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 12 }}>
-        <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: on ? color.mint : color.coral }} />
-        <Text style={{ flex: 1, fontFamily: font.bodyBold, fontSize: 13, color: color.text2 }}>{line}</Text>
-      </View>
-      {action ? <View style={{ marginTop: 14 }}>{action}</View> : null}
-    </Card>
-  );
-}
-
-function Bubble({ text, wide }: { text: string; wide?: boolean }) {
-  return (
-    <View
+    <Animated.View
       style={{
-        height: ICON,
-        minWidth: ICON,
-        paddingHorizontal: wide ? 12 : 0,
-        borderRadius: 11,
-        backgroundColor: 'rgba(167,139,250,0.16)',
-        alignItems: 'center',
-        justifyContent: 'center',
+        transform: [
+          { translateX: roll.interpolate({ inputRange: [-1, 1], outputRange: [-3, 3] }) },
+          { rotate: roll.interpolate({ inputRange: [-1, 1], outputRange: ['-3deg', '3deg'] }) },
+        ],
       }}
     >
-      <Text style={{ fontFamily: font.bodyHeavy, fontSize: 13, color: '#C4B5FD' }}>{text}</Text>
-    </View>
+      <Svg width={width} height={(width * 52) / 64} viewBox="0 0 64 52">
+        {n > 0 && <Rect x={23} y={4} width={11} height={12} rx={2} fill={ITEM_COLOURS[0]} transform="rotate(-8 28 10)" />}
+        {n > 1 && <Rect x={35} y={2} width={10} height={14} rx={2} fill={ITEM_COLOURS[1]} />}
+        {n > 2 && <Rect x={46} y={7} width={10} height={9} rx={2} fill={ITEM_COLOURS[2]} transform="rotate(7 51 11)" />}
+        <Path d="M18 14h40l-6 18H24z" fill="#3A2F8F" opacity={0.94} />
+        <Path d="M4 6h9l7 26h32l6-18H17" fill="none" stroke={MOON} strokeWidth={3.6} strokeLinecap="round" strokeLinejoin="round" />
+        <Circle cx={25} cy={44} r={4.8} fill={MOON} />
+        <Circle cx={49} cy={44} r={4.8} fill={MOON} />
+      </Svg>
+    </Animated.View>
   );
 }
 
@@ -156,7 +86,7 @@ const left = (w: ParkedWant, now: number) => {
   return formatDuration(ms).replace(' min', 'm').replace(' h', 'h');
 };
 
-/** Your waiting list: up to three things in your trolley, ready ones first. */
+/** The big card: your trolley and what's waiting in it, ready ones first. */
 export function TrolleyCard({
   targetRef,
   open,
@@ -187,16 +117,17 @@ export function TrolleyCard({
           : 'Your trolley is empty'
       }
     >
-      <Head
-        icon={
-          <View style={{ width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,231,163,0.12)' }}>
-            <TrolleyIcon size={20} />
-          </View>
-        }
-        title={open.length ? `Your trolley · ${open.length}` : 'Your trolley'}
-        right={open.length ? <Text style={{ fontFamily: font.bodyHeavy, fontSize: 13, color: '#C4B5FD' }}>See all</Text> : undefined}
-      />
-      {sub ? <Text style={{ marginTop: 4, marginLeft: 40, fontFamily: font.bodyBold, fontSize: 12.5, color: color.text3 }}>{sub}</Text> : null}
+      {/* Title on the left, the big trolley on the right */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={{ fontFamily: font.display, fontSize: 24, lineHeight: 29, color: color.text }}>Your trolley</Text>
+          <Text style={{ marginTop: 2, fontFamily: font.bodyBold, fontSize: 13, lineHeight: 18, color: color.text2 }}>
+            {open.length ? `${open.length} ${open.length === 1 ? 'thing' : 'things'} on board` : 'Empty · lovely and light'}
+          </Text>
+          {sub ? <Text style={{ marginTop: 2, fontFamily: font.bodyBold, fontSize: 12.5, lineHeight: 17, color: MOON }}>{sub}</Text> : null}
+        </View>
+        <TrolleyArt items={open.length} />
+      </View>
 
       {rows.length ? (
         <View style={{ marginTop: 12, gap: 8 }}>
@@ -262,15 +193,104 @@ export function TrolleyCard({
               </Pressable>
             );
           })}
-          {more > 0 && (
-            <Text style={{ fontFamily: font.bodyBold, fontSize: 12.5, color: color.text3, textAlign: 'center' }}>+ {more} more in the waiting room</Text>
-          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 2 }}>
+            <Text style={{ fontFamily: font.bodyHeavy, fontSize: 13, color: '#C4B5FD' }}>
+              {more > 0 ? `See all ${open.length} in the waiting room` : 'Open the waiting room'}
+            </Text>
+            <CaretRightIcon size={14} weight="bold" color="#C4B5FD" />
+          </View>
         </View>
       ) : (
         <Text style={{ marginTop: 10, fontFamily: font.bodySemi, fontSize: 14, lineHeight: 20, color: color.text2 }}>
-          Empty. When a want hits, park it and it waits here till morning.
+          When a want hits, park it and it waits here till morning.
         </Text>
       )}
     </Card>
+  );
+}
+
+/** The smaller card: whether the shields are working, and which apps, as their icons. */
+export function ShieldsCard({
+  targetRef,
+  on,
+  title,
+  line,
+  apps,
+  categories,
+  action,
+  onPress,
+}: {
+  targetRef: SpotRef;
+  on: boolean;
+  title: string;
+  line: string;
+  apps: MyApp[];
+  categories: number;
+  action?: ReactNode;
+  onPress?: () => void;
+}) {
+  const shown = apps.slice(0, MAX_ICONS);
+  const more = apps.length - shown.length;
+  const names = apps.map((a) => a.name).filter((n): n is string => !!n && knownApp(n));
+  return (
+    <Card targetRef={targetRef} onPress={onPress} label={`${title}. ${names.length ? names.join(', ') + '. ' : ''}${line}`}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <StFace size={44} off={!on} breathe={on} />
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={{ fontFamily: font.display, fontSize: 17, lineHeight: 22, color: color.text }} numberOfLines={1}>
+            {title}
+          </Text>
+          <Text style={{ fontFamily: font.bodyBold, fontSize: 12.5, lineHeight: 17, color: color.text2 }} numberOfLines={2}>
+            {line}
+          </Text>
+        </View>
+        {onPress ? <CaretRightIcon size={18} weight="bold" color={color.text3} /> : null}
+      </View>
+      {on && (shown.length > 0 || categories > 0) && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 12 }}>
+          {shown.map((a) => (
+            <View
+              key={a.key}
+              style={{
+                width: ICON,
+                height: ICON,
+                borderRadius: 10,
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+              }}
+            >
+              {a.token ? (
+                <AppLabel appKey={a.key} mode="icon" size={24} align="center" style={{ width: ICON, height: ICON }} />
+              ) : (
+                <Text style={{ fontFamily: font.bodyHeavy, fontSize: 15, color: color.text }}>{(a.name ?? '?').charAt(0).toUpperCase()}</Text>
+              )}
+            </View>
+          ))}
+          {more > 0 && <Bubble text={`+${more}`} />}
+          {categories > 0 && <Bubble text={categories === 1 ? '+ a category' : `+ ${categories} categories`} wide />}
+        </View>
+      )}
+      {action ? <View style={{ marginTop: 14 }}>{action}</View> : null}
+    </Card>
+  );
+}
+
+function Bubble({ text, wide }: { text: string; wide?: boolean }) {
+  return (
+    <View
+      style={{
+        height: ICON,
+        minWidth: ICON,
+        paddingHorizontal: wide ? 12 : 0,
+        borderRadius: 10,
+        backgroundColor: 'rgba(167,139,250,0.16)',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Text style={{ fontFamily: font.bodyHeavy, fontSize: 12.5, color: '#C4B5FD' }}>{text}</Text>
+    </View>
   );
 }

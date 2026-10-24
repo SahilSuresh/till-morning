@@ -142,7 +142,7 @@ function RootLayout() {
         }}
       >
         <Stack.Screen name="pause" options={{ animation: 'fade', gestureEnabled: false }} />
-        <Stack.Screen name="pass" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="pass" options={{ presentation: 'modal', gestureEnabled: true }} />
         <Stack.Screen name="checkin" options={{ animation: 'fade' }} />
         <Stack.Screen name="decide" options={{ animation: 'fade' }} />
         <Stack.Screen name="parcel" options={{ animation: 'fade' }} />

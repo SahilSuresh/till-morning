@@ -1,10 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import { Animated, Easing, useAnimatedValue, View } from 'react-native';
+import Svg, { Circle, Defs, Mask, Rect } from 'react-native-svg';
 
 import { useReduceMotion } from './components';
 
-// The little sky in a sheet's corner, following the clock in Night Trolley colours:
+// The little sky in a corner (the park sheet, Today's header), following the clock in Night Trolley colours:
 // night: moon-yellow crescent and twinkling stars
 // dawn 05:00–08:00: the moon fades and sinks, a peach-to-pink sun rises over a lavender horizon
 // day: a small soft peach sun (never plain yellow)
@@ -12,8 +13,8 @@ import { useReduceMotion } from './components';
 
 const MOON = '#FFE7A3';
 const W = 92;
-const H = 46;
-const HORIZON = 38; // y of the horizon line; anything below it is hidden
+const HORIZON = 38; // y of the horizon line; the box ends just below it, so anything that sets is hidden
+const H = HORIZON + 2;
 const SINK = 32; // how far a body drops when it has set
 
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
@@ -31,7 +32,8 @@ export function skyAt(at: number) {
   return { sun, moon: 1 - sun };
 }
 
-export function SkyCorner({ bg }: { bg: string }) {
+/** Works on any background (nothing is painted to hide the horizon). */
+export function SkyCorner({ style }: { style?: object }) {
   const rm = useReduceMotion();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -68,7 +70,7 @@ export function SkyCorner({ bg }: { bg: string }) {
   const glow = rm ? 1 : tw.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.12, 1] });
 
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', right: 0, top: 0, width: W, height: H, overflow: 'hidden' }}>
+    <View pointerEvents="none" style={[{ position: 'absolute', right: 0, top: 0, width: W, height: H, overflow: 'hidden' }, style]}>
       {/* a dawn wash behind the sun */}
       {sun > 0 && (
         <View
@@ -108,9 +110,15 @@ export function SkyCorner({ bg }: { bg: string }) {
           >
             {/* a soft glow (a plain disc, cheaper than a shadow) */}
             <View style={{ position: 'absolute', left: -5, top: -5, width: 34, height: 34, borderRadius: 17, backgroundColor: MOON, opacity: 0.18 }} />
-            <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: MOON, overflow: 'hidden' }}>
-              <View style={{ position: 'absolute', left: 8, top: -5, width: 24, height: 24, borderRadius: 12, backgroundColor: bg }} />
-            </View>
+            <Svg width={24} height={24}>
+              <Defs>
+                <Mask id="crescent">
+                  <Rect width={24} height={24} fill="#FFFFFF" />
+                  <Circle cx={20} cy={7} r={12} fill="#000000" />
+                </Mask>
+              </Defs>
+              <Circle cx={12} cy={12} r={12} fill={MOON} mask="url(#crescent)" />
+            </Svg>
           </Animated.View>
         </View>
       )}
@@ -135,8 +143,7 @@ export function SkyCorner({ bg }: { bg: string }) {
         </View>
       )}
 
-      {/* below the horizon: hidden, with a thin lavender line while the sun is near it */}
-      <View style={{ position: 'absolute', left: 0, right: 0, top: HORIZON, bottom: 0, backgroundColor: bg }} />
+      {/* a thin lavender horizon while the sun is near it (anything below is outside the box) */}
       <View
         style={{
           position: 'absolute',

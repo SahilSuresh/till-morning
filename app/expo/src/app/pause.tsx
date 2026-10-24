@@ -764,7 +764,7 @@ function ParkSheet({
   return (
     <BottomSheet visible={mode !== null} onClose={() => onMode(null)} label="Park it till morning">
       <View>
-        <SkyCorner bg={SHEET_BG} />
+        <SkyCorner />
         <Text accessibilityRole="header" style={[type.h2, { fontSize: 24, lineHeight: 28.8, paddingRight: 60 }]}>
           Write the shelf tag
         </Text>

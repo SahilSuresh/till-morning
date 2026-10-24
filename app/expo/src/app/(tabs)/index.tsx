@@ -20,6 +20,7 @@ import { useTarget } from '../../ui/tabs/spot';
 import { CheckInNudge, type NextStep, PassButton, PassTicket, SaleBanner, shieldedList, shieldedTitle, useShieldSummary } from '../../ui/tabs/TodayParts';
 import { ShutterTry, SleepingTicket } from '../../ui/tabs/BottomBits';
 import { NextTag } from '../../ui/tabs/NextTag';
+import { SkyCorner } from '../../ui/SkyCorner';
 import { ShieldsCard, TrolleyCard } from '../../ui/tabs/SimpleToday';
 import { WhichAppSheet } from '../../ui/WhichAppSheet';
 import { type } from '../../ui/theme';
@@ -54,7 +55,7 @@ const untilText = (ms: number) => {
 };
 
 // COACH_TIPS (src/lib/week.ts) in order, and what each one points at (data-coach in the prototype).
-const COACH_KEYS = ['status', 'wait', 'pass', 'try'] as const;
+const COACH_KEYS = ['wait', 'status', 'pass', 'try'] as const;
 type CoachKey = (typeof COACH_KEYS)[number];
 const COACH_RADIUS: Record<CoachKey, number> = {
   status: 22,
@@ -324,10 +325,12 @@ export default function Today() {
           paddingBottom: 16,
         }}
       >
-        <Rise>
+        {/* The greeting, with tonight's sky on the right: moon and stars, or the sun by day */}
+        <Rise style={{ height: 44, justifyContent: 'center' }}>
           <Text accessibilityRole="header" style={type.h1}>
             {greeting(now)}
           </Text>
+          <SkyCorner style={{ top: 2 }} />
         </Rise>
 
         {checkIn && (
@@ -342,23 +345,9 @@ export default function Today() {
           </Rise>
         )}
 
-        {/* 1 · Which apps are shielded */}
-        <Rise delay={30} style={{ marginTop: 20 }}>
-          <ShieldsCard
-            targetRef={statusRef}
-            on={!!status.working}
-            title={status.working ? 'Shields on' : status.title}
-            line={status.working ? `${shieldedTitle(summary)} · checked ${ago(lastCheckAt, now)}` : status.sub}
-            apps={shieldedApps}
-            categories={summary.categories}
-            action={status.action}
-            onPress={status.working ? () => router.push('/apps') : undefined}
-          />
-        </Rise>
-
-        {/* 2 · What's waiting in your trolley */}
+        {/* 1 · What's waiting in your trolley (the big card) */}
         {!lapsed && (
-          <Rise delay={60} style={{ marginTop: 12 }}>
+          <Rise delay={30} style={{ marginTop: 18 }}>
             <TrolleyCard
               targetRef={waitRef}
               open={open}
@@ -375,6 +364,20 @@ export default function Today() {
             />
           </Rise>
         )}
+
+        {/* 2 · Which apps are shielded (smaller, under the trolley) */}
+        <Rise delay={60} style={{ marginTop: 12 }}>
+          <ShieldsCard
+            targetRef={statusRef}
+            on={!!status.working}
+            title={status.working ? 'Shields on' : status.title}
+            line={status.working ? `${shieldedTitle(summary)} · checked ${ago(lastCheckAt, now)}` : status.sub}
+            apps={shieldedApps}
+            categories={summary.categories}
+            action={status.action}
+            onPress={status.working ? () => router.push('/apps') : undefined}
+          />
+        </Rise>
 
         {!lapsed && settings.sale && (
           <Rise delay={40} style={{ marginTop: 12 }}>
