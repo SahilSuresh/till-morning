@@ -6,7 +6,7 @@ import { cancelPassEnd, scheduleParkedReady, schedulePassEnd } from './notify';
 import { breakDay, bump, FREE_PASSES } from './progress';
 import { activeChallenge, inSchedule, isTreatNight, saleOn } from './rules';
 import { dayKey, getState, type ParkedWant, type PriceBand, setState, type ShoppingPass } from './store';
-import { endPassActivities, reloadWidgets, startPassActivity } from '../../modules/tm-native';
+import { endPassActivities, reloadWidgets, startPassActivity, startPassPip, stopPassPip } from '../../modules/tm-native';
 import { shieldLine1, shieldLine2, writeAppLines } from './apps';
 import { award } from './xp';
 
@@ -148,8 +148,11 @@ export async function syncShields() {
     return;
   }
 
-  if (inSchedule(now)) DA.blockSelection({ activitySelectionId: PROTECTED_ID });
-  if (s.pass) DA.addSelectionToWhitelistAndUpdateBlock({ activitySelectionId: PASS_APP_ID });
+  const passOn = !!s.pass && s.pass.endsAt > now;
+  // A pass for every app (from Today, or the urgent door) lifts the block outright: more reliable
+  // than whitelisting whole categories. A one-app pass whitelists just that app.
+  if (inSchedule(now) && !(passOn && s.pass?.wholeSelection)) DA.blockSelection({ activitySelectionId: PROTECTED_ID });
+  if (passOn && !s.pass?.wholeSelection) DA.addSelectionToWhitelistAndUpdateBlock({ activitySelectionId: PASS_APP_ID });
   if (s.takeawaysChosen && isTreatNight(now)) DA.addSelectionToWhitelistAndUpdateBlock({ activitySelectionId: TAKEAWAYS_ID });
 
   // When to shield: evenings 18:00–06:00, or Saturday and Sunday.
@@ -306,7 +309,7 @@ function components(at: number) {
 export async function startPass(draft: Omit<ShoppingPass, 'id' | 'startedAt' | 'endsAt' | 'wholeSelection'>) {
   const now = Date.now();
   const recent = recentShieldedApp();
-  const wholeSelection = !(recent && recent.name === draft.app);
+  let wholeSelection = !(recent && recent.name === draft.app);
   const pass: ShoppingPass = {
     ...draft,
     id: String(now),
@@ -318,9 +321,17 @@ export async function startPass(draft: Omit<ShoppingPass, 'id' | 'startedAt' | '
 
   if (ios) {
     // Copy the app (or every protected app, when started from Home) into the pass selection.
-    const source = wholeSelection ? PROTECTED_ID : LAST_SHIELDED_ID;
-    DA.union({ activitySelectionId: source }, { activitySelectionId: source }, { persistAsActivitySelectionId: PASS_APP_ID, stripToken: true });
-    DA.addSelectionToWhitelistAndUpdateBlock({ activitySelectionId: PASS_APP_ID });
+    const copy = (source: string) =>
+      DA.union({ activitySelectionId: source }, { activitySelectionId: source }, { persistAsActivitySelectionId: PASS_APP_ID, stripToken: true });
+    copy(wholeSelection ? PROTECTED_ID : LAST_SHIELDED_ID);
+    // If the one app couldn't be copied, open all of them rather than leave the pass locked.
+    const m = DA.activitySelectionMetadata({ activitySelectionId: PASS_APP_ID });
+    if (!wholeSelection && (!m || m.applicationCount + m.categoryCount + m.webDomainCount === 0)) {
+      wholeSelection = true;
+      pass.wholeSelection = true;
+      delete pass.key;
+      copy(PROTECTED_ID);
+    }
 
     // Re-lock even if Till Morning is closed. Screen Time schedules must be at least
     // 15 minutes long, so the interval starts in the past and ends when the pass does.
@@ -363,6 +374,8 @@ export async function startPass(draft: Omit<ShoppingPass, 'id' | 'startedAt' | '
     if (before >= FREE_PASSES) breakDay('you used a third Shopping Pass');
     track('shopping_pass_started', { minutes: pass.minutes });
   }
+  // Apply the unlock now that the pass is saved, so a shield re-sync can't wipe it.
+  await syncShields();
   schedulePassEnd(pass).catch(() => {});
   // The countdown you can keep an eye on from inside the shop: Lock Screen and Dynamic Island.
   startPassActivity(
@@ -371,6 +384,8 @@ export async function startPass(draft: Omit<ShoppingPass, 'id' | 'startedAt' | '
     pass.startedAt,
     pass.endsAt,
   );
+  // And a floating countdown over the shop itself (iPhones without a Dynamic Island).
+  startPassPip(pass.urgent ? 'Urgent pass' : knownApp(pass.app) ? `${pass.app} pass` : 'Shopping pass', pass.startedAt, pass.endsAt);
   return pass;
 }
 
@@ -384,7 +399,9 @@ export function endPass(early = false) {
   }
   if (early) cancelPassEnd(pass);
   endPassActivities();
+  stopPassPip();
   setState({ pass: null, pendingCheckIn: pass.urgent ? getState().pendingCheckIn : pass });
+  syncShields(); // re-blocks everything a whole-selection pass lifted
   return pass.urgent ? (knownApp(pass.app) ? `${pass.app} is locked again. Sleep well.` : 'Locked again. Sleep well.') : null;
 }
 

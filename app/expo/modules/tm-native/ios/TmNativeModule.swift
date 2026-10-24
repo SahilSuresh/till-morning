@@ -135,6 +135,17 @@ public class TmNativeModule: Module {
       TmLive.endAll()
     }
 
+    // Floating countdown over other apps (Picture in Picture) for a running pass.
+    Function("startPassPip") { (title: String, startedAt: Double, endsAt: Double) -> Bool in
+      guard TmPipTimer.isSupported else { return false }
+      TmPipTimer.shared.start(title: title, startedAt: startedAt, endsAt: endsAt)
+      return true
+    }
+
+    Function("stopPassPip") {
+      TmPipTimer.shared.stop()
+    }
+
     // Widgets read "tm_widget" from the App Group; this asks iOS to redraw them now.
     Function("reloadWidgets") {
       TmLive.reloadWidgets()

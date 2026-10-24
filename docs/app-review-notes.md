@@ -29,6 +29,13 @@ Till Morning helps people stop impulse buying. They choose their shopping and ta
 | Day 2–7 tips on Today | first week | Tips only. Every feature they mention is already available from the first launch (Your rules, Shopping Pass, stickers on Me, voice note, basket screenshot) |
 | Rating prompt | Apple's own `SKStoreReviewController`, after a calm win on day 4+ | System controlled |
 
+**Shopping Pass countdown outside the app**
+- While a Shopping Pass runs, the countdown shows as a Live Activity (Lock Screen and Dynamic Island) and as a small floating Picture-in-Picture window, so people can see the time left while they shop in another app. The PiP window is a rendered countdown (no audio, no video content from the network); this is why the app declares the "Audio, AirPlay, and Picture in Picture" background mode. It closes itself a few seconds after the pass ends.
+
+**Share and Safari**
+- Share extension: in any app, Share → Till Morning parks a screenshot (the total is read on the phone with Vision) or a link.
+- Till Morning for Safari: runs only on a fixed list of shop sites, notices checkout pages, and offers to park the basket. Turn it on in Settings → Apps → Safari → Extensions. The app explains this on its "Caught at checkout" page.
+
 **Permissions and why**
 - Screen Time (Family Controls): to put the shield on the apps the person picks.
 - Notifications: "Tap to start your pause", pass ended, and "your parked want is ready".
