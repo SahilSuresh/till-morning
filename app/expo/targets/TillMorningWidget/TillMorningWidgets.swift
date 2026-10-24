@@ -28,6 +28,7 @@ private let tmText = tmColor(0xF3F2FF)
 private let tmText2 = tmColor(0xB4B6E4)
 private let tmViolet = tmColor(0x7E3FF2)
 private let tmPink = tmColor(0xB455F0)
+private let tmMoon = tmColor(0xFFE7A3)
 private let tmMint = tmColor(0x5EE9B5)
 private let tmLilac = tmColor(0xC4B5FD)
 
@@ -179,35 +180,62 @@ struct TmWidgetRouter: View {
 
 // MARK: - Shopping Pass Live Activity
 
+/// The ticket badge: violet-to-pink, like the Shopping Pass ticket in the app.
+struct TmTicketBadge: View {
+  var size: CGFloat = 44
+  var body: some View {
+    ZStack {
+      RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
+        .fill(LinearGradient(colors: [tmViolet, tmPink], startPoint: .topLeading, endPoint: .bottomTrailing))
+      Image(systemName: "ticket.fill").font(.system(size: size * 0.42, weight: .bold)).foregroundStyle(.white)
+    }
+    .frame(width: size, height: size)
+  }
+}
+
+/// Lock Screen: which pass (the app), what you came for and your limit, a big moon-yellow
+/// countdown, a progress bar, and the time the app locks again. Night Trolley colours.
 struct TmPassLockScreen: View {
   let context: ActivityViewContext<TmPassAttributes>
   var body: some View {
     let s = context.state
-    VStack(alignment: .leading, spacing: 10) {
-      HStack(spacing: 10) {
-        Image(systemName: "ticket.fill").font(.system(size: 18, weight: .bold)).foregroundStyle(.white)
-        VStack(alignment: .leading, spacing: 1) {
-          Text(context.attributes.title).font(.system(size: 15, weight: .bold, design: .rounded)).foregroundStyle(.white)
+    let over = context.isStale || s.endsAt <= Date()
+    VStack(alignment: .leading, spacing: 12) {
+      HStack(alignment: .center, spacing: 12) {
+        TmTicketBadge()
+        VStack(alignment: .leading, spacing: 2) {
+          Text(context.attributes.title).font(.system(size: 16, weight: .bold, design: .rounded)).foregroundStyle(tmText).lineLimit(1)
           if !context.attributes.need.isEmpty {
             Text(context.attributes.need).font(.system(size: 13, weight: .medium, design: .rounded))
-              .foregroundStyle(.white.opacity(0.8)).lineLimit(1)
+              .foregroundStyle(tmText2).lineLimit(1)
           }
         }
         Spacer(minLength: 0)
-        if context.isStale || s.endsAt <= Date() {
-          Text("Locked again").font(.system(size: 15, weight: .bold, design: .rounded)).foregroundStyle(.white)
+        if over {
+          Text("Locked again").font(.system(size: 15, weight: .bold, design: .rounded)).foregroundStyle(tmMoon)
         } else {
-          Text(timerInterval: s.startedAt...s.endsAt, countsDown: true)
-            .font(.system(size: 28, weight: .bold, design: .rounded)).monospacedDigit()
-            .foregroundStyle(.white).multilineTextAlignment(.trailing).frame(width: 96, alignment: .trailing)
+          VStack(alignment: .trailing, spacing: 0) {
+            Text(timerInterval: s.startedAt...s.endsAt, countsDown: true)
+              .font(.system(size: 30, weight: .bold, design: .rounded)).monospacedDigit()
+              .foregroundStyle(tmMoon).multilineTextAlignment(.trailing).frame(width: 104, alignment: .trailing)
+            Text("left").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(tmText2)
+          }
         }
       }
       ProgressView(timerInterval: s.startedAt...s.endsAt, countsDown: true) { EmptyView() } currentValueLabel: { EmptyView() }
-        .tint(.white)
+        .tint(tmMoon)
+      HStack(spacing: 6) {
+        Image(systemName: "lock.fill").font(.system(size: 11, weight: .bold)).foregroundStyle(tmText2)
+        (Text("Locks again at ") + Text(s.endsAt, style: .time))
+          .font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(tmText2)
+        Spacer(minLength: 0)
+        Image(systemName: "moon.stars.fill").font(.system(size: 11, weight: .bold)).foregroundStyle(tmMoon)
+        Text("Till Morning").font(.system(size: 12, weight: .bold, design: .rounded)).foregroundStyle(tmText2)
+      }
     }
     .padding(16)
-    .activityBackgroundTint(tmViolet)
-    .activitySystemActionForegroundColor(.white)
+    .activityBackgroundTint(tmCard)
+    .activitySystemActionForegroundColor(tmText)
   }
 }
 
@@ -218,31 +246,37 @@ struct TmPassActivity: Widget {
     } dynamicIsland: { context in
       DynamicIsland {
         DynamicIslandExpandedRegion(.leading) {
-          Label("Pass", systemImage: "ticket.fill").font(.system(size: 14, weight: .bold, design: .rounded))
-            .foregroundStyle(tmPink)
+          HStack(spacing: 8) {
+            TmTicketBadge(size: 30)
+            Text(context.attributes.title).font(.system(size: 14, weight: .bold, design: .rounded)).lineLimit(1)
+          }
         }
         DynamicIslandExpandedRegion(.trailing) {
           Text(timerInterval: context.state.startedAt...context.state.endsAt, countsDown: true)
-            .font(.system(size: 20, weight: .bold, design: .rounded)).monospacedDigit()
-            .multilineTextAlignment(.trailing).frame(width: 80, alignment: .trailing)
+            .font(.system(size: 22, weight: .bold, design: .rounded)).monospacedDigit().foregroundStyle(tmMoon)
+            .multilineTextAlignment(.trailing).frame(width: 84, alignment: .trailing)
         }
         DynamicIslandExpandedRegion(.bottom) {
           VStack(alignment: .leading, spacing: 6) {
-            Text(context.attributes.need.isEmpty ? context.attributes.title : context.attributes.need)
-              .font(.system(size: 13, weight: .medium, design: .rounded)).lineLimit(1)
+            if !context.attributes.need.isEmpty {
+              Text(context.attributes.need).font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundStyle(tmText2).lineLimit(1)
+            }
             ProgressView(timerInterval: context.state.startedAt...context.state.endsAt, countsDown: true) {
               EmptyView()
             } currentValueLabel: {
               EmptyView()
             }
-            .tint(tmPink)
+            .tint(tmMoon)
+            (Text("Locks again at ") + Text(context.state.endsAt, style: .time))
+              .font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(tmText2)
           }
         }
       } compactLeading: {
         Image(systemName: "ticket.fill").foregroundStyle(tmPink)
       } compactTrailing: {
         Text(timerInterval: context.state.startedAt...context.state.endsAt, countsDown: true)
-          .monospacedDigit().font(.system(size: 14, weight: .bold, design: .rounded))
+          .monospacedDigit().font(.system(size: 14, weight: .bold, design: .rounded)).foregroundStyle(tmMoon)
           .frame(width: 48, alignment: .trailing)
       } minimal: {
         Image(systemName: "ticket.fill").foregroundStyle(tmPink)

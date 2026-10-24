@@ -142,7 +142,11 @@ function RootLayout() {
         }}
       >
         <Stack.Screen name="pause" options={{ animation: 'fade', gestureEnabled: false }} />
-        <Stack.Screen name="pass" options={{ presentation: 'modal', gestureEnabled: true }} />
+        {/* The pass is our own sheet (drag down anywhere to close), over a see-through screen */}
+        <Stack.Screen
+          name="pass"
+          options={{ presentation: 'transparentModal', animation: 'slide_from_bottom', gestureEnabled: false, contentStyle: { backgroundColor: 'transparent' } }}
+        />
         <Stack.Screen name="checkin" options={{ animation: 'fade' }} />
         <Stack.Screen name="decide" options={{ animation: 'fade' }} />
         <Stack.Screen name="parcel" options={{ animation: 'fade' }} />

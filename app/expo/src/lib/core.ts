@@ -380,7 +380,10 @@ export async function startPass(draft: Omit<ShoppingPass, 'id' | 'startedAt' | '
   // The countdown you can keep an eye on from inside the shop: Lock Screen and Dynamic Island.
   startPassActivity(
     pass.urgent ? 'Urgent · 10 minutes' : knownApp(pass.app) ? `${pass.app} pass` : 'Shopping pass',
-    pass.need || { specific: 'Something specific', browsing: 'Just browsing', unsure: 'Not sure yet' }[pass.reason] || '',
+    // What you came for, and your limit: "Pink trainers · up to £20"
+    [pass.need || { specific: 'Something specific', browsing: 'Just browsing', unsure: 'Not sure yet' }[pass.reason] || '', pass.limit ? `up to £${pass.limit}` : '']
+      .filter(Boolean)
+      .join(' · '),
     pass.startedAt,
     pass.endsAt,
   );
