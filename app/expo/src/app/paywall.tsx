@@ -122,7 +122,11 @@ export default function Paywall() {
   return (
     <View style={{ flex: 1 }}>
       <TopGlow />
-      <ScrollView contentContainerStyle={{ paddingTop: sp.top(56), paddingHorizontal: 24, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
+      {/* Centred between the top and the button, so it sits right on every iPhone size */}
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingTop: sp.top(24), paddingHorizontal: 24, paddingBottom: 16 }}
+        showsVerticalScrollIndicator={false}
+      >
         <Rise delay={40}>
           <Text accessibilityRole="header" accessibilityLabel="Your free week: 7 nights free" style={[type.h1, { textAlign: 'center' }]}>
             7 nights free

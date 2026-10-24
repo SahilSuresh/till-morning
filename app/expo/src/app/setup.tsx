@@ -12,15 +12,13 @@ import { askNotificationPermission } from '../lib/notify';
 import { requestScreenTimeAccess } from '../lib/screenTime';
 import { setState } from '../lib/store';
 import { PauseBackground } from '../ui/backgrounds';
-import { BreathRing } from '../ui/BreathRing';
 import { Button, Card, Chip, Rise, TextLink, useReduceMotion } from '../ui/components';
 import { Hl } from '../ui/Hl';
 import { IconTile, LetterTile, MonoLabel, UnderlineLink } from '../ui/onboarding/bits';
 import { ObHeader } from '../ui/onboarding/ObHeader';
 import { AskingHint, ConnectedNote } from '../ui/onboarding/ScreenTimeHint';
-import { useObSpace } from '../ui/onboarding/space';
 import { NAV, type Nav, StepBody, StepMotionProvider, useRiseDelay, useStepBase, useStepMotion } from '../ui/onboarding/StepMotion';
-import { BasketFill, MoonPeek, NotifBanner, PopTag, ShelfRow, ShopShutters, TrolleyRollIn } from '../ui/onboarding/NightBits';
+import { BasketFill, MoonTimer, NotifStack, PopTag, ShelfRow, ShopShutters, TrolleyScene } from '../ui/onboarding/NightBits';
 import { ShelfTag, TagTitle } from '../ui/ShelfTag';
 import { WelcomeHold } from '../ui/onboarding/WelcomeHold';
 import { color, font, type } from '../ui/theme';
@@ -184,20 +182,19 @@ const TRUST: [Icon, string][] = [
 ];
 
 function Welcome({ onNext }: { onNext: () => void }) {
-  const sp = useObSpace();
   const base = useStepBase();
   const rd = useRiseDelay();
   return (
     <StepBody
-      contentStyle={{ paddingHorizontal: 32, paddingTop: sp.top(80), paddingBottom: 8, alignItems: 'center' }}
+      contentStyle={{ paddingHorizontal: 32, paddingTop: 8, paddingBottom: 8, alignItems: 'center' }}
       footer={
         <>
-          <Button label="Let’s get started" onPress={onNext} />
+          <Button variant="night" label="Let’s get started" onPress={onNext} />
           <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>7 days free, then pick a plan</Text>
         </>
       }
     >
-      <TrolleyRollIn delay={base} />
+      <TrolleyScene delay={base} />
       <Rise delay={rd(120)}>
         <Text style={[type.display, { marginTop: 28, textAlign: 'center' }]} accessibilityLabel="Shop on purpose.">
           Shop on{' '}
@@ -214,7 +211,7 @@ function Welcome({ onNext }: { onNext: () => void }) {
       {/* the three promises pop in one after another, as little shelf tags */}
       <View style={{ marginTop: 28, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
         {TRUST.map(([Glyph, label], i) => (
-          <PopTag key={label} delay={base + 850 + i * 170} icon={<Glyph size={14} weight="bold" color="#FFFFFF" />} label={label} />
+          <PopTag key={label} index={i} delay={base + 1350 + i * 170} icon={<Glyph size={14} weight="bold" color="#FFFFFF" />} label={label} />
         ))}
       </View>
     </StepBody>
@@ -297,7 +294,7 @@ function ScreenTime({ onAllowed }: { onAllowed: () => void }) {
           <ConnectedNote />
         ) : (
           <>
-            <Button label={denied ? 'Try again' : 'Allow Screen Time'} onPress={allowScreenTime} />
+            <Button variant="night" label={denied ? 'Try again' : 'Allow Screen Time'} onPress={allowScreenTime} />
             <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>Next, a quick tip on which apps to pick.</Text>
           </>
         )
@@ -372,7 +369,7 @@ function UkApps({ onOpen }: { onOpen: () => void }) {
       contentStyle={{ paddingHorizontal: 28, paddingTop: 12, paddingBottom: 8 }}
       footer={
         <>
-          <Button label="Open Apple’s app list" onPress={onOpen} />
+          <Button variant="night" label="Open Apple’s app list" onPress={onOpen} />
           <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>You can change this any time.</Text>
         </>
       }
@@ -423,6 +420,7 @@ function Notify({ onNext }: { onNext: () => void }) {
       footer={
         <>
           <Button
+            variant="night"
             label="Allow notifications"
             onPress={async () => {
               await askNotificationPermission();
@@ -433,7 +431,7 @@ function Notify({ onNext }: { onNext: () => void }) {
         </>
       }
     >
-      <NotifBanner delay={base} />
+      <NotifStack delay={base} />
       <Rise delay={rd(100)}>
         <Text style={[type.h1, { marginTop: 12, textAlign: 'center' }]}>One tap into your pause</Text>
       </Rise>
@@ -494,8 +492,8 @@ function DemoRun({ again, onReplay }: { again: boolean; onReplay: () => void }) 
       style={{ alignSelf: 'stretch', alignItems: 'center' }}
     >
       <View style={{ marginTop: 20 }}>
-        <BreathRing total={DEMO_SECS} left={DEMO_SECS} done={false} size={220} orbSize={204} autoplay={{ delay: DEMO_DELAY }} />
-        <MoonPeek delay={DEMO_DELAY} duration={DEMO_SECS * 1000} />
+        {/* the pause timer as a moon waxing to full while the ring fills */}
+        <MoonTimer seconds={DEMO_SECS} delay={DEMO_DELAY} />
       </View>
       {/* Always in the layout, so nothing jumps when they appear. */}
       <Animated.View style={[{ alignSelf: 'stretch', marginTop: 24, gap: 8 }, afterStyle]} accessibilityRole="list" accessibilityLabel="What you can choose after the pause">
@@ -537,7 +535,7 @@ function Tour({ onNext }: { onNext: () => void }) {
       footer={
         <>
           <Text style={[type.small, { textAlign: 'center' }]}>More arrives on Today during your first week.</Text>
-          <Button label="Continue" onPress={onNext} style={{ marginTop: 12 }} />
+          <Button variant="night" label="Continue" onPress={onNext} style={{ marginTop: 12 }} />
         </>
       }
     >

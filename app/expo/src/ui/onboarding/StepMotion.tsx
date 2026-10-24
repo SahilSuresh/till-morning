@@ -146,7 +146,8 @@ export function StepBody({
     <>
       <Animated.View entering={enter === 'tour' ? m.tourIn : m.bodyIn} exiting={m.bodyOut} style={{ flex: 1 }}>
         {scroll ? (
-          <ScrollView contentContainerStyle={[{ flexGrow: 1 }, contentStyle]} showsVerticalScrollIndicator={false}>
+          // Centred in the space between the header and the footer, so short screens don't leave a gap at the bottom.
+          <ScrollView contentContainerStyle={[{ flexGrow: 1, justifyContent: 'center' }, contentStyle]} showsVerticalScrollIndicator={false}>
             {children}
           </ScrollView>
         ) : (
