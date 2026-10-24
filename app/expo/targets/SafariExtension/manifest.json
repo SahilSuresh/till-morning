@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Till Morning",
   "short_name": "Till Morning",
-  "description": "Spots checkout pages on shop sites and offers to park your basket till morning. It reads the page on your phone; nothing is sent anywhere.",
+  "description": "Spots checkout pages and offers to park your basket till morning. Reads the page on your phone only.",
   "version": "1.0",
   "icons": {
     "48": "icon-48.png",
