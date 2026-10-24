@@ -18,7 +18,7 @@ import { IconTile, LetterTile, MonoLabel, UnderlineLink } from '../ui/onboarding
 import { ObHeader } from '../ui/onboarding/ObHeader';
 import { AskingHint, ConnectedNote } from '../ui/onboarding/ScreenTimeHint';
 import { NAV, type Nav, StepBody, StepMotionProvider, useRiseDelay, useStepBase, useStepMotion } from '../ui/onboarding/StepMotion';
-import { BasketFill, MoonTimer, NotifStack, PopTag, ShelfRow, ShopShutters, TrolleyScene } from '../ui/onboarding/NightBits';
+import { MoonTimer, NotifStack, PopTag, ScrollScene, ShelfRow, ShopShutters, TrolleyScene } from '../ui/onboarding/NightBits';
 import { ShelfTag, TagTitle } from '../ui/ShelfTag';
 import { WelcomeHold } from '../ui/onboarding/WelcomeHold';
 import { color, font, type } from '../ui/theme';
@@ -224,10 +224,11 @@ function Story({ onNext }: { onNext: () => void }) {
   const base = useStepBase();
   const rd = useRiseDelay();
   return (
-    <StepBody contentStyle={{ paddingHorizontal: 32, paddingTop: 24 }} footer={<Button variant="white" label="Next" onPress={onNext} />}>
-      <BasketFill delay={base} />
+    <StepBody contentStyle={{ paddingHorizontal: 32, paddingTop: 8, alignItems: 'center' }} footer={<Button variant="white" label="Next" onPress={onNext} />}>
+      {/* the story as a picture: the phone scrolling at night, the trolley filling up */}
+      <ScrollScene delay={base} />
       <Rise delay={rd(120)}>
-        <Text style={[type.display, { marginTop: 28 }]} accessibilityLabel="The 11 PM scroll">
+        <Text style={[type.display, { marginTop: 22, textAlign: 'center' }]} accessibilityLabel="The 11 PM scroll">
           The{' '}
           <Hl bg={color.sun} tilt={-2} textStyle={type.display} delay={base + 280}>
             11 PM
@@ -236,12 +237,12 @@ function Story({ onNext }: { onNext: () => void }) {
         </Text>
       </Rise>
       <Rise delay={rd(220)}>
-        <Text style={{ marginTop: 20, fontFamily: font.body, fontSize: 18, lineHeight: 29, color: 'rgba(243,242,255,0.9)' }}>
+        <Text style={{ marginTop: 14, fontFamily: font.body, fontSize: 17, lineHeight: 26, color: 'rgba(243,242,255,0.9)', textAlign: 'center' }}>
           It starts with one harmless tap. Thirty minutes later, you’ve bought a designer cat bed and three “limited edition” mugs you didn’t need.
         </Text>
       </Rise>
       <Rise delay={rd(300)}>
-        <Text style={{ marginTop: 16, fontFamily: font.bodyBold, fontSize: 18, lineHeight: 27, color: color.sun }}>Sound familiar? We’ve all been there.</Text>
+        <Text style={{ marginTop: 12, fontFamily: font.bodyBold, fontSize: 17, lineHeight: 25, color: color.sun, textAlign: 'center' }}>Sound familiar? We’ve all been there.</Text>
       </Rise>
     </StepBody>
   );

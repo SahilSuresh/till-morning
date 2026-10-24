@@ -167,7 +167,16 @@ export function PopTag({ delay, icon, label, index = 0 }: { delay: number; icon?
         ],
       }}
     >
-      <View style={{ borderTopRightRadius: 10, borderBottomRightRadius: 10, borderTopLeftRadius: 4, borderBottomLeftRadius: 4, backgroundColor: '#4524A8', paddingBottom: 2 }}>
+      <View
+        style={{
+          borderTopRightRadius: 10,
+          borderBottomRightRadius: 10,
+          borderTopLeftRadius: 4,
+          borderBottomLeftRadius: 4,
+          backgroundColor: '#4524A8',
+          paddingBottom: 2,
+        }}
+      >
         <View
           style={{
             flexDirection: 'row',
@@ -216,7 +225,13 @@ export function BasketFill({ delay = 0 }: { delay?: number }) {
         ))}
         {/* the front of the basket, over the bottom of the things in it */}
         <Svg width={W} height={H} style={{ position: 'absolute' }}>
-          <Path d={`M${W * 0.03} ${rim + 8} H${W * 0.97} L${W * 0.88} ${H - 3} H${W * 0.12} Z`} fill="rgba(58,47,143,0.94)" stroke={MOON} strokeWidth={3} strokeLinejoin="round" />
+          <Path
+            d={`M${W * 0.03} ${rim + 8} H${W * 0.97} L${W * 0.88} ${H - 3} H${W * 0.12} Z`}
+            fill="rgba(58,47,143,0.94)"
+            stroke={MOON}
+            strokeWidth={3}
+            strokeLinejoin="round"
+          />
           <Path d={`M${W * 0.36} ${rim + 8} V${H - 3} M${W * 0.64} ${rim + 8} V${H - 3}`} stroke="rgba(255,231,163,0.3)" strokeWidth={2} />
         </Svg>
       </View>
@@ -271,8 +286,13 @@ export function ShopShutters({ delay = 0 }: { delay?: number }) {
   const H = Math.round(126 * k);
   const tile = Math.round(46 * k);
   return (
-    <View style={{ width: W, height: H, borderRadius: 14, backgroundColor: '#121548', borderWidth: 2, borderColor: '#3A3F86', overflow: 'hidden' }} accessibilityElementsHidden>
-      <View style={{ position: 'absolute', left: 14, right: 14, top: 22 * k + 12, flexDirection: 'row', flexWrap: 'wrap', gap: 8 * k, justifyContent: 'center' }}>
+    <View
+      style={{ width: W, height: H, borderRadius: 14, backgroundColor: '#121548', borderWidth: 2, borderColor: '#3A3F86', overflow: 'hidden' }}
+      accessibilityElementsHidden
+    >
+      <View
+        style={{ position: 'absolute', left: 14, right: 14, top: 22 * k + 12, flexDirection: 'row', flexWrap: 'wrap', gap: 8 * k, justifyContent: 'center' }}
+      >
         {SHOP_TILES.map(([l, bg]) => (
           <View key={l} style={{ width: tile, height: tile * 0.76, borderRadius: 9, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ fontFamily: font.bodyHeavy, fontSize: 15 * k, color: '#14163A' }}>{l}</Text>
@@ -502,7 +522,11 @@ export function MoonTimer({ seconds, delay = 0, onDone }: { seconds: number; del
   const done = left <= 0;
   return (
     <View style={{ alignItems: 'center' }}>
-      <View style={{ width: S, height: S, alignItems: 'center', justifyContent: 'center' }} accessible accessibilityLabel={done ? 'Pause done' : `${left} seconds left`}>
+      <View
+        style={{ width: S, height: S, alignItems: 'center', justifyContent: 'center' }}
+        accessible
+        accessibilityLabel={done ? 'Pause done' : `${left} seconds left`}
+      >
         {/* a soft halo that swells as you breathe in and settles as you breathe out */}
         <Animated.View
           style={{
@@ -539,12 +563,7 @@ export function MoonTimer({ seconds, delay = 0, onDone }: { seconds: number; del
           </Defs>
           <Circle cx={m / 2} cy={m / 2} r={m / 2 - 1} fill={MOON} />
           <G clipPath="url(#timerMoon)">
-            <AnimatedCircle
-              cx={progress.interpolate({ inputRange: [0, 1], outputRange: [m * 0.68, m * 1.7] })}
-              cy={m * 0.42}
-              r={m / 2 - 1}
-              fill="#2A1E6E"
-            />
+            <AnimatedCircle cx={progress.interpolate({ inputRange: [0, 1], outputRange: [m * 0.68, m * 1.7] })} cy={m * 0.42} r={m / 2 - 1} fill="#2A1E6E" />
           </G>
         </Svg>
         <Text style={{ position: 'absolute', fontFamily: font.display, fontSize: 40 * k, color: done ? '#2A1E6E' : '#FFFFFF', fontVariant: ['tabular-nums'] }}>
@@ -563,5 +582,223 @@ export function MoonTimer({ seconds, delay = 0, onDone }: { seconds: number; del
         {done ? 'Done. Now you choose.' : left > seconds / 2 ? 'Breathe in' : 'Breathe out'}
       </Animated.Text>
     </View>
+  );
+}
+
+// ---- 3 Story: the 11 PM scroll -------------------------------------------------------------------
+
+const FEED: [string, string, string][] = [
+  ['🛏️', '£64', '#FF5F87'],
+  ['☕', '£12', '#FFC94D'],
+  ['👟', '£45', '#5EE9B5'],
+  ['☕', '£12', '#A78BFA'],
+  ['🕯️', '£18', '#FF8F78'],
+  ['☕', '£12', '#93A5FF'],
+];
+const BOUGHT = ['🛏️', '☕', '☕', '☕'];
+
+/**
+ * The 11 PM scroll, told as a picture: a glowing phone scrolls a shop feed while its clock creeps
+ * from 23:01 to 23:34, and the cat bed and three mugs fly one by one into the trolley, which counts up.
+ */
+export function ScrollScene({ delay = 0 }: { delay?: number }) {
+  const rm = useReduceMotion();
+  const k = useFit();
+  const PW = Math.round(150 * k);
+  const PH = Math.round(236 * k);
+  const CARD = Math.round(54 * k);
+  const feed = useLoop(7000, delay);
+  const glow = useLoop(3000, delay);
+  const enter = useOnce(delay, 600, Easing.out(Easing.back(1.4)));
+  const [minute, setMinute] = useState(rm ? 34 : 1);
+  const [count, setCount] = useState(rm ? 4 : 0);
+
+  // 23:01 → 23:34 over about 3 seconds; one more thing in the trolley every 800 ms.
+  useEffect(() => {
+    if (rm) return;
+    let m = 1;
+    let tick: ReturnType<typeof setInterval> | undefined;
+    const start = setTimeout(() => {
+      tick = setInterval(() => {
+        m += 1;
+        setMinute(m);
+        if (m >= 34 && tick) clearInterval(tick);
+      }, 95);
+    }, delay + 400);
+    const adds = BOUGHT.map((_, i) => setTimeout(() => setCount(i + 1), delay + 1300 + i * 800));
+    return () => {
+      clearTimeout(start);
+      if (tick) clearInterval(tick);
+      adds.forEach(clearTimeout);
+    };
+  }, [rm, delay]);
+
+  const rowH = CARD + 8 * k;
+  return (
+    <View style={{ width: PW + 150 * k, height: PH + 16, alignItems: 'center', justifyContent: 'center' }} accessibilityElementsHidden>
+      <Stars
+        spots={[
+          [2, 6, 3],
+          [92, 10, 2.5],
+          [8, 70, 2],
+          [96, 62, 2],
+          [80, 92, 3],
+        ]}
+      />
+      {/* the moon, high on the left */}
+      <View style={{ position: 'absolute', left: 4, top: 6 }}>
+        <Crescent size={Math.round(34 * k)} id="storyMoon" />
+      </View>
+
+      {/* the phone */}
+      <Animated.View
+        style={{
+          width: PW,
+          height: PH,
+          opacity: enter.interpolate({ inputRange: [0, 0.3], outputRange: [0, 1], extrapolate: 'clamp' }),
+          transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [30, 0] }) }, { rotate: '-4deg' }],
+        }}
+      >
+        {/* its glow on the night around it */}
+        <Animated.View
+          style={{
+            position: 'absolute',
+            left: -24,
+            right: -24,
+            top: -20,
+            bottom: -20,
+            borderRadius: 60,
+            backgroundColor: '#B455F0',
+            opacity: glow.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.12, 0.24, 0.12] }),
+          }}
+        />
+        <View style={{ flex: 1, borderRadius: 26 * k, backgroundColor: '#04050E', padding: 5 }}>
+          <View style={{ flex: 1, borderRadius: 22 * k, overflow: 'hidden', backgroundColor: '#2A1E6E' }}>
+            {/* the clock creeping on */}
+            <View
+              style={{
+                height: 26 * k,
+                paddingHorizontal: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                zIndex: 2,
+                backgroundColor: '#2A1E6E',
+              }}
+            >
+              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 11 * k, color: '#FFFFFF', fontVariant: ['tabular-nums'] }}>
+                23:{String(minute).padStart(2, '0')}
+              </Text>
+              <View style={{ width: 18 * k, height: 7 * k, borderRadius: 2, borderWidth: 1, borderColor: 'rgba(255,255,255,0.7)' }} />
+            </View>
+            {/* the shop feed, scrolling on its own */}
+            <View style={{ flex: 1, overflow: 'hidden', paddingHorizontal: 8 }}>
+              <Animated.View style={{ transform: [{ translateY: feed.interpolate({ inputRange: [0, 1], outputRange: [0, -rowH * FEED.length] }) }] }}>
+                {[...FEED, ...FEED].map(([e, price, c], i) => (
+                  <View
+                    key={i}
+                    style={{
+                      height: CARD,
+                      marginBottom: 8 * k,
+                      borderRadius: 12,
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 8,
+                      paddingHorizontal: 8,
+                    }}
+                  >
+                    <View style={{ width: CARD - 16, height: CARD - 16, borderRadius: 9, backgroundColor: c, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 18 * k }}>{e}</Text>
+                    </View>
+                    <View style={{ flex: 1, gap: 4 }}>
+                      <View style={{ height: 5, width: '80%', borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.35)' }} />
+                      <Text style={{ fontFamily: font.bodyHeavy, fontSize: 11 * k, color: MOON }}>{price}</Text>
+                    </View>
+                  </View>
+                ))}
+              </Animated.View>
+            </View>
+          </View>
+        </View>
+      </Animated.View>
+
+      {/* the trolley on the right, filling up */}
+      <View style={{ position: 'absolute', right: 0, top: PH * 0.22, alignItems: 'center' }}>
+        <View>
+          <TrolleyArt width={Math.round(76 * k)} items={Math.min(3, count)} />
+          {count > 0 && (
+            <PopBadge key={count}>
+              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 12, color: '#FFFFFF' }}>{count}</Text>
+            </PopBadge>
+          )}
+        </View>
+      </View>
+      {/* each thing flying from the phone into the trolley */}
+      {BOUGHT.map((e, i) => (
+        <Fly key={i} delay={delay + 900 + i * 800} from={{ x: -10 * k, y: 10 * k }} to={{ x: PW * 0.62 + 40 * k, y: -PH * 0.18 }}>
+          <Text style={{ fontSize: 24 * k }}>{e}</Text>
+        </Fly>
+      ))}
+    </View>
+  );
+}
+
+/** The trolley drawing (static), with up to three things on board. */
+function TrolleyArt({ width, items }: { width: number; items: number }) {
+  return (
+    <Svg width={width} height={(width * 52) / 64} viewBox="0 0 64 52">
+      {ITEMS.slice(0, items).map((it, i) => (
+        <Rect key={i} x={it.x} y={it.y} width={it.w} height={it.h} rx={2} fill={it.c} transform={`rotate(${it.r} ${it.x + it.w / 2} ${it.y + it.h / 2})`} />
+      ))}
+      <Path d="M18 14h40l-6 18H24z" fill="#3A2F8F" opacity={0.94} />
+      <Path d="M4 6h9l7 26h32l6-18H17" fill="none" stroke={MOON} strokeWidth={3.6} strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx={25} cy={44} r={4.8} fill={MOON} />
+      <Circle cx={49} cy={44} r={4.8} fill={MOON} />
+    </Svg>
+  );
+}
+
+function PopBadge({ children }: { children: ReactNode }) {
+  const v = useOnce(0, 380, Easing.out(Easing.back(3)));
+  return (
+    <Animated.View
+      style={{
+        position: 'absolute',
+        top: -8,
+        right: -8,
+        minWidth: 22,
+        height: 22,
+        borderRadius: 11,
+        paddingHorizontal: 5,
+        backgroundColor: '#FF5F87',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }) }],
+      }}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
+/** Flies once from `from` to `to` (relative to the centre), shrinking a little, then fades. */
+function Fly({ delay, from, to, children }: { delay: number; from: { x: number; y: number }; to: { x: number; y: number }; children: ReactNode }) {
+  const v = useOnce(delay, 700, Easing.inOut(Easing.cubic));
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        opacity: v.interpolate({ inputRange: [0, 0.1, 0.85, 1], outputRange: [0, 1, 1, 0] }),
+        transform: [
+          { translateX: v.interpolate({ inputRange: [0, 1], outputRange: [from.x, to.x] }) },
+          { translateY: v.interpolate({ inputRange: [0, 0.5, 1], outputRange: [from.y, Math.min(from.y, to.y) - 40, to.y] }) },
+          { scale: v.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.6, 1.2, 0.7] }) },
+        ],
+      }}
+    >
+      {children}
+    </Animated.View>
   );
 }

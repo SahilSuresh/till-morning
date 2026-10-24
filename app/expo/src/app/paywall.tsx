@@ -139,7 +139,7 @@ export default function Paywall() {
         </View>
 
         {/* The terms in one place: due today, the reminder, when the plan starts */}
-        <Rise delay={520} style={{ marginTop: 18 }}>
+        <Rise delay={1700} style={{ marginTop: 18 }}>
           <View style={{ borderRadius: 18, backgroundColor: '#1E2256', borderWidth: 1, borderColor: '#3A3F86', padding: 14, gap: 4 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <Text style={{ fontFamily: font.bodyHeavy, fontSize: 15.5, color: color.mintText }}>Due today</Text>
@@ -153,14 +153,14 @@ export default function Paywall() {
           </View>
         </Rise>
 
-        <Rise delay={600} style={{ marginTop: 14 }}>
+        <Rise delay={1950} style={{ marginTop: 14 }}>
           <View accessibilityRole="radiogroup" accessibilityLabel="Choose a plan" style={{ gap: 10 }}>
             <PlanTag on={yearly} name="Yearly" sub={`${perMonth} a month`} amount={yearlyPrice} onPress={() => setState({ plan: 'yearly' })} />
             <PlanTag on={!yearly} name="Monthly" sub="Pay as you go" amount={monthlyPrice} onPress={() => setState({ plan: 'monthly' })} />
           </View>
         </Rise>
 
-        <Rise delay={660} style={{ marginTop: 10 }}>
+        <Rise delay={2150} style={{ marginTop: 10 }}>
           <View
             style={{
               flexDirection: 'row',
@@ -246,7 +246,7 @@ function SevenMoons({ remind }: { remind: boolean }) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }} accessible accessibilityLabel={`Seven free nights. ${remind ? 'A reminder on night 5. ' : ''}Your plan starts after night 7.`}>
       {days.map((d, i) => (
-        <MoonPop key={i} delay={rm ? 0 : 120 + i * 70}>
+        <MoonPop key={i} delay={rm ? 0 : 250 + i * 190}>
           <View style={{ alignItems: 'center', gap: 5 }}>
             <View style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}>
               {i === 6 && <View style={{ position: 'absolute', width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: DAWN }} />}
@@ -270,7 +270,7 @@ function MoonPop({ delay, children }: { delay: number; children: ReactNode }) {
   const v = useAnimatedValue(rm ? 1 : 0);
   useEffect(() => {
     if (rm) return;
-    const a = Animated.timing(v, { toValue: 1, duration: 380, delay, easing: Easing.out(Easing.back(2)), useNativeDriver: true });
+    const a = Animated.timing(v, { toValue: 1, duration: 650, delay, easing: Easing.out(Easing.back(1.8)), useNativeDriver: true });
     a.start();
     return () => a.stop();
   }, [rm, v, delay]);
