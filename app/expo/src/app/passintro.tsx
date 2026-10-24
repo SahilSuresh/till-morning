@@ -5,7 +5,8 @@ import { Image, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { setState, useAppState } from '../lib/store';
-import { Button, Chip, CircleButton, Rise, Tag, toast } from '../ui/components';
+import { Button, Chip, CircleButton, Rise, toast } from '../ui/components';
+import { TimePick } from '../ui/TimePick';
 import { IconChevrons, IconTicket } from '../ui/icons';
 import { color, font, gradient, type } from '../ui/theme';
 
@@ -57,12 +58,8 @@ export default function PassIntro() {
           </View>
         </Rise>
         <Text style={[type.title, { marginTop: 22, alignSelf: 'flex-start' }]}>Your usual pass length</Text>
-        <View style={{ marginTop: 10, flexDirection: 'row', gap: 8, alignSelf: 'stretch' }}>
-          {presets.map((m) => (
-            <View key={m} style={{ flex: 1 }}>
-              <Tag label={`${m} min`} selected={mins === m} onPress={() => setMins(m)} />
-            </View>
-          ))}
+        <View style={{ marginTop: 10, alignSelf: 'stretch' }}>
+          <TimePick label="Your usual pass length" options={presets} value={mins} onChange={setMins} min={1} max={120} step={5} unit="min" unitLong="minutes" />
         </View>
         <Text style={[type.small, { marginTop: 12 }]}>You can change it each time, and in Settings.</Text>
       </ScrollView>

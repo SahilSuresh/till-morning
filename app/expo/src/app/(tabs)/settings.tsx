@@ -17,6 +17,7 @@ import { lose, xpToast } from '../../lib/xp';
 import { Card, Tag, toast } from '../../ui/components';
 import { Enter, Tile, type TileTone } from '../../ui/flow/kit';
 import { IconCaret } from '../../ui/icons';
+import { TimePick } from '../../ui/TimePick';
 import { useTabBarSpace } from '../../ui/layout';
 import { color, font, type } from '../../ui/theme';
 
@@ -350,9 +351,30 @@ export default function Settings() {
             <>
               <Cell>
                 <Text style={type.title}>Starts</Text>
-                <Seg label="Night lock starts" options={[[22, '22:00'], [23, '23:00'], [0, '00:00']]} value={st.nlFrom} onPick={(v) => set({ nlFrom: v })} />
+                {/* Hours after midnight count as 24+ so the stepper runs 20:00 → 02:00 without wrapping. */}
+                <TimePick
+                  label="Night lock starts"
+                  options={[22, 23, 24]}
+                  value={st.nlFrom < 12 ? st.nlFrom + 24 : st.nlFrom}
+                  onChange={(v) => set({ nlFrom: v % 24 })}
+                  min={20}
+                  max={26}
+                  unit="h"
+                  unitLong="hours"
+                  format={(v) => hh(v % 24)}
+                />
                 <Text style={[type.title, { marginTop: 16 }]}>Ends</Text>
-                <Seg label="Night lock ends" options={[[6, '06:00'], [7, '07:00'], [8, '08:00']]} value={st.nlTo} onPick={(v) => set({ nlTo: v })} />
+                <TimePick
+                  label="Night lock ends"
+                  options={[6, 7, 8]}
+                  value={st.nlTo}
+                  onChange={(v) => set({ nlTo: v })}
+                  min={4}
+                  max={10}
+                  unit="h"
+                  unitLong="hours"
+                  format={(v) => hh(v)}
+                />
               </Cell>
               <Row
                 Icon={EyeIcon}
@@ -377,11 +399,16 @@ export default function Settings() {
           />
           <Cell>
             <Text style={type.title}>How long the pause lasts</Text>
-            <Seg
+            <TimePick
               label="Pause length"
-              options={[[10, '10 s'], [15, '15 s'], [30, '30 s'], [60, '1 min']]}
+              options={[10, 15, 30, 60]}
               value={st.pauseSeconds}
-              onPick={(v) => set({ pauseSeconds: v })}
+              onChange={(v) => set({ pauseSeconds: v })}
+              min={10}
+              max={300}
+              step={5}
+              unit="s"
+              unitLong="seconds"
             />
           </Cell>
         </Group>
@@ -443,11 +470,17 @@ export default function Settings() {
               <Cell>
                 <Text style={type.title}>Cool-off after you leave</Text>
                 <Text style={type.small}>The app stays locked this long after you walk away.</Text>
-                <Seg
+                <TimePick
                   label="Cool-off length"
-                  options={[[0, 'Off'], [5, '5 min'], [10, '10 min'], [30, '30 min']]}
+                  offOption={0}
+                  options={[5, 10, 30]}
                   value={st.coolOffMinutes}
-                  onPick={(v) => set({ coolOffMinutes: v })}
+                  onChange={(v) => set({ coolOffMinutes: v })}
+                  min={1}
+                  max={120}
+                  step={5}
+                  unit="min"
+                  unitLong="minutes"
                 />
               </Cell>
               <Cell>

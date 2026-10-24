@@ -7,7 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppState } from '../../lib/store';
 import { TAB_BAR_HEIGHT } from '../../ui/layout';
-import { SwipeTabs, TabButton, TabScene, WaitingTabButton } from '../../ui/tabs/TabChrome';
+import { PassStrip } from '../../ui/tabs/PassStrip';
+import { SwipeTabList } from '../../ui/tabs/SwipeBar';
+import { TabButton, TabScene, WaitingTabButton } from '../../ui/tabs/TabChrome';
 import { color } from '../../ui/theme';
 
 /** The default tab slot render (expo-router/ui), with each tab's content wrapped for its enter animation. */
@@ -34,11 +36,17 @@ export default function TabsLayout() {
 
   return (
     <Tabs style={{ flex: 1, backgroundColor: color.night }}>
-      <SwipeTabs>
-        <TabSlot renderFn={renderTab} />
-      </SwipeTabs>
+      <TabSlot renderFn={renderTab} />
+      {/* Route declarations only (headless tabs read them from a direct TabList child). */}
+      <TabList style={{ display: 'none' }}>
+        <TabTrigger name="index" href="/" />
+        <TabTrigger name="waiting" href="/waiting" />
+        <TabTrigger name="me" href="/me" />
+        <TabTrigger name="settings" href="/settings" />
+      </TabList>
+      <PassStrip />
       {/* .tabbar: sits below the content (not over it), margin 4px 20px 30px above the home indicator */}
-      <TabList
+      <SwipeTabList
         style={{
           marginTop: 4,
           marginHorizontal: 20,
@@ -69,7 +77,7 @@ export default function TabsLayout() {
         <TabTrigger name="settings" href="/settings" asChild>
           <TabButton label="Settings" Icon={GearSixIcon} />
         </TabTrigger>
-      </TabList>
+      </SwipeTabList>
     </Tabs>
   );
 }
