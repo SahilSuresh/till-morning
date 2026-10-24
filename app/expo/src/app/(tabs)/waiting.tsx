@@ -13,7 +13,8 @@ import type { SpotRef } from '../../ui/Spotlight';
 import { useBoundaryNow, useTickWhileFocused } from '../../ui/tabs/clock';
 import { type RoomView, takeRoomView } from '../../ui/tabs/roomView';
 import { type ScrollRef, TabTip } from '../../ui/tabs/TabTip';
-import { LetGoShelf, Rail, RailTag, RoomEmpty } from '../../ui/tabs/WaitingParts';
+import { RoomEmptyNight } from '../../ui/tabs/RoomEmptyNight';
+import { LetGoShelf, Rail, RailTag } from '../../ui/tabs/WaitingParts';
 import { color, font, type } from '../../ui/theme';
 
 /** roomTab() from the prototype (P:L2117–2129; CSS P:L551–573). */
@@ -105,7 +106,7 @@ export default function Waiting() {
                 ))}
               </View>
             ) : (
-              <RoomEmpty text="Nothing is waiting. Next time you want something, choose “Park it till morning” in the pause, or park it from a screenshot." />
+              <RoomEmptyNight view="waiting" />
             ))}
           {view === 'ready' &&
             (ready.length ? (
@@ -116,7 +117,7 @@ export default function Waiting() {
                 ))}
               </View>
             ) : (
-              <RoomEmpty text="Nothing is ready yet. Wants come back here when their wait is over, often at 08:00." />
+              <RoomEmptyNight view="ready" />
             ))}
           {view === 'letgo' &&
             (letGo.length ? (
@@ -125,7 +126,7 @@ export default function Waiting() {
                 <LetGoShelf wants={letGo} />
               </View>
             ) : (
-              <RoomEmpty text="Your let-go shelf is empty. When you let something go, it lands here and counts toward a sticker." />
+              <RoomEmptyNight view="letgo" />
             ))}
         </Rise>
 
