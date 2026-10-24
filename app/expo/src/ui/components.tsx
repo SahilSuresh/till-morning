@@ -44,10 +44,12 @@ export function useReduceMotion() {
 
 // ---- Button --------------------------------------------------------------
 
-type ButtonVariant = 'primary' | 'secondary' | 'white' | 'ghost' | 'danger';
+type ButtonVariant = 'primary' | 'night' | 'secondary' | 'white' | 'ghost' | 'danger';
 
 const buttonLook: Record<ButtonVariant, { bg?: string; text: string; border?: string; edge: string }> = {
   primary: { text: color.white, edge: color.blueEdge },
+  // Night Trolley purple, like the Shopping Pass button
+  night: { text: color.white, edge: '#4B2BB0' },
   secondary: { bg: '#1E2256', text: color.text, border: '#343A86', edge: '#343A86' },
   white: { bg: color.white, text: '#2B2FB8', edge: 'rgba(6,6,40,0.38)' },
   ghost: { bg: 'rgba(255,255,255,0.1)', text: color.white, border: 'rgba(255,255,255,0.32)', edge: 'rgba(6,6,40,0.3)' },
@@ -114,6 +116,9 @@ export function Button({
           >
             {variant === 'primary' && (
               <LinearGradient colors={gradient.primary} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />
+            )}
+            {variant === 'night' && (
+              <LinearGradient colors={['#7C4DFF', '#A066FF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />
             )}
             {icon}
             <Text style={[styles.btnText, { color: look.text }]}>{label}</Text>
