@@ -161,7 +161,7 @@ function SleepyFace({ dawn }: { dawn: boolean }) {
     <View style={{ width: 44, height: 44 }}>
       <LinearGradient
         colors={dawn ? ['#FFE7A3', '#FFB547'] : ['#FFF8DE', MOON]}
-        style={{ position: 'absolute', inset: 0, borderRadius: 22, shadowColor: MOON, shadowOpacity: 0.4, shadowRadius: 10 }}
+        style={{ position: 'absolute', inset: 0, borderRadius: 22, backgroundColor: MOON, shadowColor: MOON, shadowOpacity: 0.4, shadowRadius: 10 }}
       />
       <Svg width={44} height={44} viewBox="0 0 44 44">
         {dawn ? (

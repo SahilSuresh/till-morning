@@ -8,7 +8,7 @@ import { hasTmNative } from '../../../modules/tm-native';
 import { type MyApp, myApps } from '../../lib/apps';
 import { endPass, formatReady, shieldChosenApps } from '../../lib/core';
 import { hh, nightOn, pauseSeconds, risky } from '../../lib/rules';
-import { getState, setState, useAppState } from '../../lib/store';
+import { setState, useAppState } from '../../lib/store';
 import { COACH_TIPS, nextUnlock, recapDue } from '../../lib/week';
 import { xpToast } from '../../lib/xp';
 import { TopGlow } from '../../ui/backgrounds';
@@ -17,22 +17,10 @@ import { Spotlight, type SpotRef } from '../../ui/Spotlight';
 import { useBoundaryNow } from '../../ui/tabs/clock';
 import { openRoomOn } from '../../ui/tabs/roomView';
 import { useTarget } from '../../ui/tabs/spot';
-import {
-  CheckInNudge,
-  type NextStep,
-  PassButton,
-  PassTicket,
-  SaleBanner,
-  ShieldChip,
-  shieldedList,
-  shieldedTitle,
-  StatusCard,
-  useShieldSummary,
-  WaitCard,
-} from '../../ui/tabs/TodayParts';
+import { CheckInNudge, type NextStep, PassButton, PassTicket, SaleBanner, shieldedList, shieldedTitle, useShieldSummary } from '../../ui/tabs/TodayParts';
 import { ShutterTry, SleepingTicket } from '../../ui/tabs/BottomBits';
 import { NextTag } from '../../ui/tabs/NextTag';
-import { TrolleyRoute } from '../../ui/tabs/TrolleyRoute';
+import { ShieldsCard, TrolleyCard } from '../../ui/tabs/SimpleToday';
 import { WhichAppSheet } from '../../ui/WhichAppSheet';
 import { type } from '../../ui/theme';
 
@@ -50,6 +38,19 @@ const ago = (at: number, now: number) => {
 const hhmm = (at: number) => {
   const d = new Date(at);
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
+
+/** The next time it's hour:00 (e.g. the Morning Till at 08:00). */
+const nextHour = (now: number, hour: number) => {
+  const d = new Date(now);
+  d.setHours(hour, 0, 0, 0);
+  if (d.getTime() <= now) d.setDate(d.getDate() + 1);
+  return d.getTime();
+};
+const untilText = (ms: number) => {
+  const m = Math.max(1, Math.round(ms / 60000));
+  const h = Math.floor(m / 60);
+  return h ? `${h}h ${String(m % 60).padStart(2, '0')}m` : `${m}m`;
 };
 
 // COACH_TIPS (src/lib/week.ts) in order, and what each one points at (data-coach in the prototype).
@@ -94,22 +95,8 @@ export default function Today() {
   const shielded = summary.apps + summary.categories;
 
   const offTill = shieldsOn && offUntil > now;
-  const on = subscribed && shieldsOn && !lapsed && !offTill;
   const night = nightOn(now);
   const showBottom = !lapsed && shielded > 0;
-
-  // "Shields on" stamps in on the first arrival after the paywall, and whenever the shields come back on.
-  const [stampChip, setStampChip] = useState(() => getState().coachStep === 0);
-  const wasOn = useRef(on);
-  useEffect(() => {
-    if (on && !wasOn.current) setStampChip(true);
-    wasOn.current = on;
-  }, [on]);
-  useEffect(() => {
-    if (!stampChip) return;
-    const t = setTimeout(() => setStampChip(false), 3200);
-    return () => clearTimeout(t);
-  }, [stampChip]);
 
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const statusRef: SpotRef = useRef(null);
@@ -171,40 +158,18 @@ export default function Today() {
     };
   })();
 
-  // ---- Waiting room card ----
+  // ---- Waiting list ----
   const readyN = open.filter((w) => w.readyAt <= now).length;
   const waiting = open.filter((w) => w.readyAt > now).sort((a, b) => a.readyAt - b.readyAt);
-  const wait = (() => {
-    if (readyN)
-      return {
-        tone: 'ready' as const,
-        label: 'Ready now',
-        count: readyN,
-        title: `${readyN} ready to decide`,
-        sub: 'You slept on it. Now you get the final say.',
-        view: 'ready' as const,
-      };
-    if (waiting.length) {
-      const first = waiting[0].readyAt;
-      const when = formatReady(first, now); // "08:00 tomorrow"
-      const day = when.endsWith('today') ? 'later today' : when.endsWith('tomorrow') ? 'tomorrow' : `on ${when.split(' ').slice(1).join(' ')}`;
-      return {
-        tone: 'waiting' as const,
-        label: `Ready at ${hhmm(first)}`,
-        count: waiting.length,
-        title: `${waiting.length} parked want${waiting.length === 1 ? '' : 's'}`,
-        sub: `Decide with a clear head ${day}`,
-        view: 'waiting' as const,
-      };
-    }
-    return {
-      tone: 'empty' as const,
-      label: 'Waiting room',
-      title: 'Nothing parked',
-      sub: 'When a want hits, park it till morning.',
-      view: null,
-    };
-  })();
+  // ---- Today's two cards: the shielded apps, and what's in your trolley ----
+  const shieldedApps = myApps().filter((a) => !offApps.includes(a.key));
+  const trolleySub = night
+    ? `Morning Till opens in ${untilText(nextHour(now, 8) - now)}`
+    : waiting.length
+      ? `Next one ready ${formatReady(waiting[0].readyAt, now)}`
+      : undefined;
+  // "Test the shutters" only until you've met the pause once.
+  const showTry = useAppState((s) => s.pauseLog.length === 0);
 
   // ---- At most one next step: week-one card, Sunday recap, a parcel, then what's left of setup ----
   const next: NextStep | null = (() => {
@@ -340,7 +305,7 @@ export default function Today() {
     status: statusRef,
     wait: waitRef,
     pass: showBottom && !pass ? passRef : null,
-    try: showBottom ? tryRef : null,
+    try: showBottom && showTry ? tryRef : null,
   };
   const steps = COACH_KEYS.map((k, i) => ({ k, ...COACH_TIPS[i] })).filter((s) => targets[s.k]);
   const ci = Math.max(0, Math.min(coachStep, steps.length - 1));
@@ -359,18 +324,10 @@ export default function Today() {
           paddingBottom: 16,
         }}
       >
-        <Rise
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8,
-          }}
-        >
+        <Rise>
           <Text accessibilityRole="header" style={type.h1}>
             {greeting(now)}
           </Text>
-          <ShieldChip on={on} play={stampChip} />
         </Rise>
 
         {checkIn && (
@@ -385,50 +342,38 @@ export default function Today() {
           </Rise>
         )}
 
-        {status.working ? (
-          // Night Trolley · Part 1: tonight as a route to the Morning Till.
-          <Rise delay={30} style={{ marginTop: 22 }}>
-            <TrolleyRoute
-              now={now}
-              startHour={settings.nlOn ? settings.nlFrom : 23}
-              nightLockOn={settings.nlOn}
+        {/* 1 · Which apps are shielded */}
+        <Rise delay={30} style={{ marginTop: 20 }}>
+          <ShieldsCard
+            targetRef={statusRef}
+            on={!!status.working}
+            title={status.working ? 'Shields on' : status.title}
+            line={status.working ? `${shieldedTitle(summary)} · checked ${ago(lastCheckAt, now)}` : status.sub}
+            apps={shieldedApps}
+            categories={summary.categories}
+            action={status.action}
+            onPress={status.working ? () => router.push('/apps') : undefined}
+          />
+        </Rise>
+
+        {/* 2 · What's waiting in your trolley */}
+        {!lapsed && (
+          <Rise delay={60} style={{ marginTop: 12 }}>
+            <TrolleyCard
+              targetRef={waitRef}
               open={open}
-              heroRef={statusRef}
-              trolleyRef={waitRef}
-              onTrolley={() => {
-                openRoomOn('waiting');
+              now={now}
+              sub={trolleySub}
+              onSeeAll={() => {
+                openRoomOn(readyN ? 'ready' : 'waiting');
                 router.navigate('/waiting');
               }}
               onReady={() => {
                 openRoomOn('ready');
                 router.navigate('/waiting');
               }}
-              checkedLine={`${shieldedTitle(summary)} · checked ${ago(lastCheckAt, now)}`}
             />
           </Rise>
-        ) : (
-          <>
-            <Rise delay={30} style={{ marginTop: 20 }}>
-              <StatusCard targetRef={statusRef} face={status.face} title={status.title} sub={status.sub} action={status.action} working={status.working} />
-            </Rise>
-
-            {!lapsed && (
-              <Rise delay={60} style={{ marginTop: 12 }}>
-                <WaitCard
-                  targetRef={waitRef}
-                  tone={wait.tone}
-                  label={wait.label}
-                  count={wait.count}
-                  title={wait.title}
-                  sub={wait.sub}
-                  onPress={() => {
-                    if (wait.view) openRoomOn(wait.view);
-                    router.navigate('/waiting');
-                  }}
-                />
-              </Rise>
-            )}
-          </>
         )}
 
         {!lapsed && settings.sale && (
@@ -444,7 +389,7 @@ export default function Today() {
         )}
       </ScrollView>
 
-      {/* Between the content and the tab bar, not over the content */}
+      {/* 3 · Get a ticket: between the content and the tab bar, not over the content */}
       {showBottom && (
         <View
           style={{
@@ -455,7 +400,7 @@ export default function Today() {
             alignItems: 'center',
           }}
         >
-          <ShutterTry targetRef={tryRef} appName={summary.names[0]} onPress={tryIt} />
+          {showTry && <ShutterTry targetRef={tryRef} appName={summary.names[0]} onPress={tryIt} />}
           {!pass &&
             (night ? (
               <SleepingTicket targetRef={passRef} endHour={settings.nlTo} onPress={getPass} />

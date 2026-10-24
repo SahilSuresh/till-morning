@@ -101,14 +101,13 @@ export function SkyCorner({ bg }: { bg: string }) {
             style={{
               width: 24,
               height: 24,
-              shadowColor: MOON,
-              shadowOpacity: 0.55,
-              shadowRadius: 8,
               transform: rm
                 ? []
                 : [{ rotate: tw.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: ['-7deg', '0deg', '7deg', '0deg', '-7deg'] }) }],
             }}
           >
+            {/* a soft glow (a plain disc, cheaper than a shadow) */}
+            <View style={{ position: 'absolute', left: -5, top: -5, width: 34, height: 34, borderRadius: 17, backgroundColor: MOON, opacity: 0.18 }} />
             <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: MOON, overflow: 'hidden' }}>
               <View style={{ position: 'absolute', left: 8, top: -5, width: 24, height: 24, borderRadius: 12, backgroundColor: bg }} />
             </View>
@@ -124,6 +123,7 @@ export function SkyCorner({ bg }: { bg: string }) {
               width: 24,
               height: 24,
               borderRadius: 12,
+              backgroundColor: '#FFB59A',
               shadowColor: '#FFB59A',
               shadowOpacity: 0.7,
               shadowRadius: 10,
