@@ -99,9 +99,9 @@ export function ShelfTag({
     return () => loop.stop();
   }, [rm, motion, swing, drop, dropDelay]);
 
-  // The star it hangs from glints now and then.
+  // The star it hangs from glints now and then (Park it only; Today's tag stays as it is).
   useEffect(() => {
-    if (rm || motion === 'none' || hang !== 'star') return;
+    if (rm || motion !== 'drop' || hang !== 'star') return;
     const loop = Animated.loop(
       Animated.sequence([
         Animated.delay(1600),
@@ -189,7 +189,7 @@ export function ShelfTag({
             {hang === 'star' && <Path d={star(HOLE_X, 5, 5)} fill={MOON} />}
           </Svg>
         )}
-        {hang === 'star' && motion !== 'none' && (
+        {hang === 'star' && motion === 'drop' && (
           <Animated.View
             pointerEvents="none"
             style={{
