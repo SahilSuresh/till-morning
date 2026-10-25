@@ -232,17 +232,32 @@ export default function Settings() {
     }
   };
 
+  // Easy to mix up with night lock, so the pop-up says what it does and offers night lock on its own.
   const askOffTill = () =>
     Alert.alert(
-      'Turn off till tomorrow?',
-      'Every shield comes off now and turns back on by itself at 07:00 tomorrow. You keep your XP and your waiting room. Today just won’t get a stamp.',
+      'Turn every shield off?',
+      `All your apps open with no pause until 07:00. You keep your XP and your waiting room, but today won’t get a stamp.${
+        st.nlOn ? '\n\nOnly want passes back at night? Turn off night lock instead and your shields stay on.' : ''
+      }`,
       [
         { text: 'Keep shields on', style: 'cancel' },
+        ...(st.nlOn
+          ? [
+              {
+                text: 'Only turn off night lock',
+                onPress: () => {
+                  set({ nlOn: false });
+                  toast('Night lock off. Your shields stay on.');
+                },
+              },
+            ]
+          : []),
         {
-          text: 'Turn off till 07:00',
+          text: 'Turn every shield off',
+          style: 'destructive' as const,
           onPress: () => {
             turnOffTillTomorrow();
-            toast('Shields are off till 07:00 tomorrow');
+            toast('Every shield is off till 07:00');
           },
         },
       ],
@@ -325,15 +340,15 @@ export default function Settings() {
               <Row
                 Icon={MoonStarsIcon}
                 tone="hush"
-                label="Off till tomorrow"
-                sub="Back on by itself at 07:00"
+                label="Every shield is off till 07:00"
+                sub="Tap to turn them back on now"
                 onPress={() => {
                   const r = shieldChosenApps();
                   toast(r ? xpToast(r, 'Shields are back on') : 'Shields are back on');
                 }}
               />
             ) : (
-              <Row Icon={MoonStarsIcon} tone="hush" label="Turn off till tomorrow" sub="Every shield comes back on at 07:00" onPress={askOffTill} />
+              <Row Icon={MoonStarsIcon} tone="hush" label="Turn every shield off till 07:00" sub="All apps open with no pause until morning" onPress={askOffTill} />
             ))}
           <Row
             Icon={SquaresFourIcon}
