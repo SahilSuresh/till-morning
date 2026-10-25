@@ -116,13 +116,10 @@ b = blank(0.1, R)
 add(b, 0, glass(2093, 0.06, R, attack=0.001, decay=70, bright=0.1), R)
 save('select', finish(room(b, R), 0.15, R))
 
-# tab: a soft click, like the iPhone keyboard (picked from the demo, option A)
-click, y = [], 0.0
-for i in range(int(0.025 * R)):
-    t = i / R
-    y += 0.5 * (random.uniform(-1, 1) - y)
-    click.append(y * min(1.0, t / 0.0005) * math.exp(-260 * t) + 0.6 * math.sin(TAU * 2600 * t) * min(1.0, t / 0.0005) * math.exp(-300 * t))
-save('tab', finish(room(click + [0.0] * int(0.06 * R), R, taps=((0.021, 0.25), (0.039, 0.16), (0.061, 0.09))), 0.22, R))
+# tab: a soft round tock (option H on the sound demo)
+b = blank(0.16, R)
+add(b, 0, glass(523.25, 0.12, R, attack=0.002, decay=30, bright=0.3), R)
+save('tab', finish(room(lowpass(b, 0.45), R), 0.2, R))
 
 # next: two glassy notes going up (D6 → A6)
 b = blank(0.5, R)
@@ -142,25 +139,23 @@ for name, f0, f1 in [('toggle_on', 520, 880), ('toggle_off', 880, 520)]:
     add(b, 0, glide(f0, f1, 0.14, R, decay=18), R)
     save(name, finish(room(lowpass(b, 0.5), R), 0.22, R, fade=0.04))
 
-# hold: a warm chord swelling and rising an octave as the moon fills (2.6 s)
-dur = 2.6
-n = int(dur * R)
-b = []
-phases = [0.0] * 6
-voices = [(1.0, 1.0), (1.003, 0.6), (1.5, 0.55), (1.497, 0.35), (2.0, 0.35), (3.0, 0.0)]
-for i in range(n):
-    t = i / R
-    k = i / n
-    base = 220 * (2 ** k)  # A3 → A4
-    v = 0.0
-    for j, (m, a) in enumerate(voices):
-        phases[j] += TAU * base * m / R
-        amp = a if j < 5 else 0.18 * k  # a bright top joins as it fills
-        v += amp * math.sin(phases[j])
-    swell = 0.08 + 0.92 * (k ** 1.6)
-    breathe = 0.9 + 0.1 * math.sin(TAU * (3 + 4 * k) * t)
-    b.append(v * swell * breathe)
-save('hold', finish(room(lowpass(b, 0.3), R), 0.32, R, fade=0.05))
+# hold: soft notes that climb and come faster as the moon fills, the last one landing just
+# before 2.5 s (when the moon is full and the boom takes over). Short notes, so letting go stops cleanly.
+HOLD = 2.5
+PENTA = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.7, 1318.5, 1568.0, 1760.0, 2093.0, 2349.3, 2637.0]
+b = blank(HOLD, R)
+times, t, gap = [], 0.0, 0.34
+while t < HOLD - 0.12:
+    times.append(t)
+    t += gap
+    gap = max(0.075, gap * 0.82)
+for j, t0 in enumerate(times):
+    k = j / max(1, len(times) - 1)
+    f = PENTA[min(len(PENTA) - 1, round(k * (len(PENTA) - 1)))]
+    note = glass(f, 0.22, R, attack=0.003, decay=22, bright=0.12)
+    add(b, t0, note, R, 0.55 + 0.45 * k)
+b = room(lowpass(b, 0.55), R)[: int(HOLD * R)]
+save('hold', finish(b, 0.3, R, fade=0.03))
 
 # boom: a soft warm thump, an airy whoosh, then a sunrise of bells (C6 E6 G6 C7)
 b = blank(2.0, R)

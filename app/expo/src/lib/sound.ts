@@ -28,6 +28,8 @@ export type Sound = keyof typeof SRC;
 const POOL = 4;
 const players: Partial<Record<Sound, AudioPlayer[]>> = {};
 const turn: Partial<Record<Sound, number>> = {};
+// Bumped by stop(), so a sound that was about to start after a rewind doesn't start after all.
+const gen: Partial<Record<Sound, number>> = {};
 let count = 0;
 
 function pool(name: Sound) {
@@ -81,11 +83,12 @@ export function play(name: Sound) {
       p.pause();
     }
     const player = p;
+    const g = gen[name] ?? 0;
+    const go = () => {
+      if ((gen[name] ?? 0) === g) player.play();
+    };
     if (player.currentTime > 0.005) {
-      player
-        .seekTo(0)
-        .then(() => player.play())
-        .catch(() => player.play());
+      player.seekTo(0).then(go).catch(go);
     } else {
       player.play();
     }
@@ -96,6 +99,7 @@ export function play(name: Sound) {
 
 /** Stops a sound that's playing (e.g. the hold hum when you let go early). */
 export function stop(name: Sound) {
+  gen[name] = (gen[name] ?? 0) + 1;
   try {
     for (const p of players[name] ?? []) {
       p.pause();
