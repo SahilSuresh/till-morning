@@ -152,6 +152,7 @@ export function TearTicket({
   const tear = () => {
     if (tornRef.current) return;
     play('tear');
+    setTimeout(() => play('chime'), 360);
     tornRef.current = true;
     setTorn(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});

@@ -111,10 +111,11 @@ b = blank(0.14, R)
 add(b, 0, glide(480, 760, 0.1, R, decay=34), R)
 save('tap', finish(room(lowpass(b, 0.5), R), 0.2, R))
 
-# select: a tiny glass tick
-b = blank(0.1, R)
-add(b, 0, glass(2093, 0.06, R, attack=0.001, decay=70, bright=0.1), R)
-save('select', finish(room(b, R), 0.15, R))
+# select: a clear little "pip" for chips and choices (habits, prices, reasons)
+b = blank(0.16, R)
+add(b, 0, glass(1318.5, 0.1, R, attack=0.002, decay=34, bright=0.2), R)
+add(b, 0.03, glass(1975.5, 0.08, R, attack=0.002, decay=40, bright=0.1), R, 0.45)
+save('select', finish(room(lowpass(b, 0.6), R), 0.24, R))
 
 # tab: a soft round tock (option H on the sound demo)
 b = blank(0.16, R)
@@ -176,15 +177,22 @@ for j, f in enumerate([1046.5, 1318.5, 1568.0]):
     add(b, j * 0.075, bell(f, 0.9, R, 5.0), R, 0.8)
 save('chime', finish(room(b, R), 0.32, R, fade=0.2))
 
-# tear: a soft paper tear
+# tear: a proper "rrrip" — crackly bursts of paper that get brighter and faster, about 0.4 s
+TEAR = 0.42
 out, y = [], 0.0
-for i in range(int(0.24 * R)):
+burst = 0.0
+for i in range(int(TEAR * R)):
     t = i / R
-    k = t / 0.24
-    a = 0.25 + 0.5 * k
+    k = t / TEAR
+    if random.random() < 0.0016 + 0.004 * k:  # the fibres giving way, more often as it goes
+        burst = 1.0
+    burst *= 0.9985
+    a = 0.18 + 0.6 * k
     y += a * (random.uniform(-1, 1) - y)
-    out.append(y * (0.55 + 0.45 * (random.random() > 0.5)) * math.sin(math.pi * k) ** 0.7)
-save('tear', finish(lowpass(out, 0.6), 0.3, R))
+    shape = math.sin(math.pi * min(1, k * 1.15)) ** 0.5
+    out.append(y * (0.45 + 0.55 * burst) * shape)
+out = lowpass(out, 0.7)
+save('tear', finish(room(out, R, taps=((0.017, 0.2), (0.033, 0.12))), 0.46, R, fade=0.03))
 
 # pop: a bubbly pop for things appearing
 b = blank(0.14, R)

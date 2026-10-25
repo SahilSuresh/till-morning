@@ -27,7 +27,6 @@ import { activeChallenge, DAY_NAMES, hh, nextTreat, nightOn, pauseSeconds, risky
 import { getState, type ParkedWant, type PriceBand, setState, useAppState } from '../lib/store';
 import { award, xpToast } from '../lib/xp';
 import { PauseBackground } from '../ui/backgrounds';
-import { BreathRing } from '../ui/BreathRing';
 import { NotePlayer } from '../ui/NotePlayer';
 import { Button, Chip, easeOut, Tag, TextLink, toast, useReduceMotion } from '../ui/components';
 import { BottomSheet, Enter, NlSky, useFootPad, useHeadPad, WrFull } from '../ui/flow/kit';
@@ -39,6 +38,7 @@ import { TrolleyIcon } from '../ui/tabs/TrolleyRoute';
 import { color, font, type } from '../ui/theme';
 import { play, useCalmMusic } from '../lib/sound';
 import { Pressable } from '../ui/Pressable';
+import { MoonBreath } from '../ui/MoonBreath';
 
 const hhmm = (at: number) => {
   const d = new Date(at);
@@ -125,7 +125,8 @@ const PauseRing = memo(function PauseRing({ total, startedAt, onDone }: { total:
     }, 250);
     return () => clearInterval(t);
   }, [total, startedAt]);
-  return <BreathRing total={total} left={left} done={left <= 0} />;
+  // The moon timer: the ring fills and the moon waxes to full, with Breathe in / Breathe out.
+  return <MoonBreath total={total} left={left} done={left <= 0} />;
 });
 
 /** "What's this one about?" with the coach's reply. Answering only re-renders this part. */

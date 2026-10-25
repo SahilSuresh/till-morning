@@ -14,6 +14,7 @@ import { Card, CircleButton, Tag, toast } from '../ui/components';
 import { IconChevrons } from '../ui/icons';
 import { color, font, type } from '../ui/theme';
 import { Pressable } from '../ui/Pressable';
+import { play } from '../lib/sound';
 
 /** "Other": a box for what tempts you in this app, in your words. It goes on this app's shield. */
 function OtherBox({ appKey, appLabel }: { appKey: string; appLabel: string }) {
@@ -144,8 +145,11 @@ export default function YourApps() {
                 {a.token && (
                   <Switch
                     value={on}
-                    onValueChange={(v) => toggle(a.key, v)}
-                    trackColor={{ true: color.blue, false: '#2B2F69' }}
+                    onValueChange={(v) => {
+                      play(v ? 'toggleOn' : 'toggleOff');
+                      toggle(a.key, v);
+                    }}
+                    trackColor={{ true: '#7C4DFF', false: '#2B2F69' }}
                     ios_backgroundColor="#2B2F69"
                     accessibilityLabel={`Shield ${a.name ?? 'this app'}`}
                   />
