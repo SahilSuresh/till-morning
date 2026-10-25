@@ -1,0 +1,112 @@
+# Till Morning for iPhone → TestFlight, built and signed on Codemagic's Macs (no Apple ID login).
+# Start it in Codemagic: the till-morning app → Start new build → "Till Morning for iPhone".
+#
+# One-time setup in Codemagic:
+#  • this repository (SahilSuresh/till-morning)
+#  • an environment variable group called tillmorning_appstore with:
+#      APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER,
+#      APP_STORE_CONNECT_PRIVATE_KEY (the .p8 key's text),
+#      CERTIFICATE_PRIVATE_KEY (an RSA key for the distribution certificate),
+#      EXPO_PUBLIC_REVENUECAT_IOS_KEY, EXPO_PUBLIC_SENTRY_DSN
+#
+# The Apple side is already done: the seven App IDs (app + Screen Time extensions + widget +
+# Share and Safari extensions) with Family Controls and the app group group.com.andrej.tillmorning.
+
+workflows:
+  ios-testflight:
+    name: Till Morning for iPhone
+    instance_type: mac_mini_m2
+    max_build_duration: 75
+    working_directory: app/expo
+    environment:
+      node: 22
+      xcode: 26.6
+      cocoapods: default
+      groups:
+        - tillmorning_appstore
+      vars:
+        # A store build: test tools off and no over-the-air updates (App Review guideline 5.6).
+        APP_ENV: production
+        APPLE_TEAM_ID: HXPN3USWQ5
+        APP_VERSION: "1.0.0"
+        # The app in App Store Connect (its Apple ID): build numbers follow on from TestFlight's latest.
+        APP_STORE_APPLE_ID: "6826001952"
+        # Sentry symbol upload needs a token this build doesn't have; never fail the build over it.
+        SENTRY_ALLOW_FAILURE: "true"
+        SENTRY_DISABLE_AUTO_UPLOAD: "true"
+        BUNDLE_IDS: >-
+          com.andrej.tillmorning com.andrej.tillmorning.ShieldConfiguration com.andrej.tillmorning.ShieldAction
+          com.andrej.tillmorning.ActivityMonitorExtension com.andrej.tillmorning.TillMorningWidget
+          com.andrej.tillmorning.ShareExtension com.andrej.tillmorning.SafariExtension
+    scripts:
+      - name: Which Xcode and Node
+        script: |
+          xcodebuild -version
+          node -v
+
+      # Keys pasted into Codemagic can lose their line breaks: scripts/pem.py writes proper key files.
+      - name: Keys
+        script: |
+          set -e
+          python3 scripts/pem.py APP_STORE_CONNECT_PRIVATE_KEY /tmp/asc.p8 "PRIVATE KEY"
+          python3 scripts/pem.py CERTIFICATE_PRIVATE_KEY /tmp/certificate.pem "RSA PRIVATE KEY"
+
+      # One more than TestFlight's latest build (EAS made builds up to 7).
+      - name: Build number
+        script: |
+          set -e
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key @file:/tmp/asc.p8 || echo 7)
+          echo "Latest in TestFlight: $LATEST"
+          echo "TM_BUILD=$((LATEST + 1))" >> $CM_ENV
+
+      - name: Install
+        script: npm ci
+
+      # Expo writes the iPhone project (with the Screen Time, widget, Share and Safari targets) from app.json.
+      - name: Expo prebuild
+        script: npx expo prebuild --platform ios --clean --non-interactive
+
+      # Every target gets the same version and build number (Apple wants the extensions to match the app).
+      - name: Version and build number
+        script: |
+          set -e
+          cd ios
+          sed -i '' -E "s/CURRENT_PROJECT_VERSION = [^;]+;/CURRENT_PROJECT_VERSION = $TM_BUILD;/g; s/MARKETING_VERSION = [^;]+;/MARKETING_VERSION = $APP_VERSION;/g" *.xcodeproj/project.pbxproj
+          find . -name Info.plist -not -path "./Pods/*" -not -path "./build/*" | while read -r plist; do
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $TM_BUILD" "$plist" 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $APP_VERSION" "$plist" 2>/dev/null || true
+          done
+          echo "Version $APP_VERSION ($TM_BUILD)"
+
+      - name: Signing
+        script: |
+          set -e
+          ASC="--issuer-id $APP_STORE_CONNECT_ISSUER_ID --key-id $APP_STORE_CONNECT_KEY_IDENTIFIER --private-key @file:/tmp/asc.p8"
+          keychain initialize
+          for id in $BUNDLE_IDS; do
+            app-store-connect fetch-signing-files "$id" --type IOS_APP_STORE --create --delete-stale-profiles \
+              --certificate-key @file:/tmp/certificate.pem $ASC
+          done
+          keychain add-certificates
+          xcode-project use-profiles --project ios/*.xcodeproj
+
+      - name: Build
+        script: |
+          set -e
+          WORKSPACE=$(ls -d ios/*.xcworkspace | head -1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "Building $SCHEME"
+          xcode-project build-ipa --workspace "$WORKSPACE" --scheme "$SCHEME"
+
+      # Uploads only: the internal TestFlight group "Team (Expo)" gets every build without review.
+      - name: To TestFlight
+        script: |
+          app-store-connect publish --path build/ios/ipa/*.ipa \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key @file:/tmp/asc.p8
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
