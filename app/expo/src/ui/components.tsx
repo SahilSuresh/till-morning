@@ -5,7 +5,6 @@ import {
   AccessibilityInfo,
   Animated,
   Easing,
-  Pressable,
   type StyleProp,
   StyleSheet,
   Text,
@@ -17,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { play, type Sound } from '../lib/sound';
 import { color, font, gradient, radius, type } from './theme';
+import { Pressable } from './Pressable';
 
 export const easeOut = Easing.bezier(0.2, 0.8, 0.2, 1);
 export const springOut = Easing.bezier(0.34, 1.56, 0.64, 1);
@@ -92,6 +92,7 @@ export function Button({
   return (
     <Animated.View style={[{ alignSelf: 'stretch', transform: [{ scale: bump }] }, style]}>
     <Pressable
+      sound={null}
       onPress={() => {
         Haptics.selectionAsync().catch(() => {});
         if (sound) play(sound);

@@ -1,9 +1,10 @@
 import { type ReactNode, useEffect } from 'react';
-import { Platform, Pressable, type StyleProp, Text, type TextStyle, View, type ViewStyle } from 'react-native';
+import { Platform, type StyleProp, Text, type TextStyle, View, type ViewStyle } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
 import { useReduceMotion } from '../components';
 import { font } from '../theme';
+import { Pressable } from '../Pressable';
 
 const SPRING = Easing.bezier(0.34, 1.56, 0.64, 1); // --spring
 

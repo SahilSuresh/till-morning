@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { CheckCircleIcon, LightningIcon, ShoppingBagIcon, WarningCircleIcon } from '../ui/ph';
 import { useState } from 'react';
-import { Animated, KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Animated, KeyboardAvoidingView, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppLabel } from '../../modules/tm-native';
@@ -13,6 +13,7 @@ import { IconLock, IconMinus, IconPlus, IconX } from '../ui/icons';
 import { TearTicket } from '../ui/TearTicket';
 import { color, font, type } from '../ui/theme';
 import { useDragToClose } from '../ui/useDragToClose';
+import { Pressable } from '../ui/Pressable';
 
 const REASONS: { id: PassReason; label: string }[] = [
   { id: 'specific', label: 'I need something specific' },
@@ -84,7 +85,7 @@ export default function Pass() {
   return (
     <View style={{ flex: 1 }}>
       <Animated.View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(4,5,22,0.62)', opacity: dim }}>
-        <Pressable style={{ flex: 1 }} onPress={close} accessibilityRole="button" accessibilityLabel="Close" />
+        <Pressable sound="back" style={{ flex: 1 }} onPress={close} accessibilityRole="button" accessibilityLabel="Close" />
       </Animated.View>
       <Animated.View
         {...handlers}

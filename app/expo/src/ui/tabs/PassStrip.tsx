@@ -1,13 +1,14 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { AppLabel } from '../../../modules/tm-native';
 import { knownApp } from '../../lib/core';
 import { useAppState } from '../../lib/store';
 import { CaretRightIcon, TicketIcon } from '../ph';
 import { font } from '../theme';
+import { Pressable } from '../Pressable';
 
 const mmss = (ms: number) => {
   const t = Math.max(0, Math.ceil(ms / 1000));

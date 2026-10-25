@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, useIsFocused } from 'expo-router';
 import { CaretRightIcon, HandPointingIcon, type Icon, type IconWeight, MoonStarsIcon, ShieldCheckIcon, TicketIcon } from '../ph';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { AppState, Platform, Pressable, Text, View } from 'react-native';
+import { AppState, Platform, Text, View } from 'react-native';
 import R from 'react-native-reanimated';
 
 import { AppLabel } from '../../../modules/tm-native';
@@ -17,6 +17,7 @@ import { color, font, type } from '../theme';
 import { ago, lastSeenAt, useTickWhileFocused } from './clock';
 import { ringPulse, SPRING, stamp, wiggle } from './motion';
 import { Tile, type TileTone } from './Tile';
+import { Pressable } from '../Pressable';
 
 // ---- What's shielded --------------------------------------------------------------------------
 

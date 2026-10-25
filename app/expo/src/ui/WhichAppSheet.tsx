@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect } from 'react';
-import { Animated, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Animated, Modal, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppLabel } from '../../modules/tm-native';
@@ -10,6 +10,7 @@ import { TextLink, toast } from './components';
 import { IconCaret } from './icons';
 import { color, font, type } from './theme';
 import { useDragToClose } from './useDragToClose';
+import { Pressable } from './Pressable';
 
 const hhmm = (t: number) => new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
@@ -36,7 +37,7 @@ export function WhichAppSheet({ visible, apps, onClose }: { visible: boolean; ap
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={{ flex: 1, backgroundColor: 'rgba(6,6,28,0.5)' }} onPress={onClose} accessibilityLabel="Close" />
+      <Pressable sound="back" style={{ flex: 1, backgroundColor: 'rgba(6,6,28,0.5)' }} onPress={onClose} accessibilityLabel="Close" />
       <Animated.View
         {...handlers}
         accessibilityLabel="Choose an app for your Shopping Pass"

@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo } from 'react';
-import { Animated, Easing, Image, Pressable, ScrollView, Text, useAnimatedValue, View } from 'react-native';
+import { Animated, Easing, Image, ScrollView, Text, useAnimatedValue, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 
@@ -11,6 +11,7 @@ import { Button, CircleButton, useReduceMotion } from '../ui/components';
 import { IconChevrons } from '../ui/icons';
 import { PackageIcon } from '../ui/ph';
 import { color, font, type } from '../ui/theme';
+import { Pressable } from '../ui/Pressable';
 
 // The sticker book: every sticker in one place. Earned ones in full colour on a cream disc with a
 // little wobble; the rest as silhouettes with a progress ring. Tap any of them to see how to get it.

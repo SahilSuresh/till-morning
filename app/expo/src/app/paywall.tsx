@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { BellRinging } from '../ui/ph';
 import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Easing, Linking, Pressable, ScrollView, Switch, Text, useAnimatedValue, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Easing, Linking, ScrollView, Switch, Text, useAnimatedValue, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, G } from 'react-native-svg';
 
 import { config, links } from '../lib/config';
@@ -14,6 +14,7 @@ import { TopGlow } from '../ui/backgrounds';
 import { Button, Rise, TextLink, toast, useReduceMotion } from '../ui/components';
 import { useObSpace } from '../ui/onboarding/space';
 import { color, font, type } from '../ui/theme';
+import { Pressable } from '../ui/Pressable';
 
 const dt = (days: number) => new Date(Date.now() + days * 86400000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 

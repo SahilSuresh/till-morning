@@ -1,7 +1,8 @@
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import { ShelfTag, TagTitle } from '../ShelfTag';
 import type { NextStep } from './TodayParts';
+import { Pressable } from '../Pressable';
 
 // Night Trolley · Part 1, option 1F in our colours: the one next step hangs from a little star
 // as a purple shelf tag, with a moon-yellow "price" on a tear-off stub ("1 min").

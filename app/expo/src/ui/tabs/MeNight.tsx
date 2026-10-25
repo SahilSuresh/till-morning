@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useIsFocused } from 'expo-router';
 import { useMemo } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { GOALS, STICKER_IMG, STICKER_NAME } from '../../lib/progress';
@@ -9,6 +9,7 @@ import { dayKey, useAppState } from '../../lib/store';
 import { Button } from '../components';
 import { CaretRightIcon, PackageIcon } from '../ph';
 import { color, font } from '../theme';
+import { Pressable } from '../Pressable';
 
 // Me, in the Night Trolley world: your stickers on a moon-yellow shelf (opening the sticker book),
 // and recent decisions printed as a Till Morning receipt.

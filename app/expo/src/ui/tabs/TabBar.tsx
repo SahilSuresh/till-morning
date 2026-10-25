@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTabTrigger } from 'expo-router/ui';
 import { useEffect, useMemo, useRef } from 'react';
-import { PanResponder, Pressable, type StyleProp, Text, View, type ViewStyle } from 'react-native';
+import { PanResponder, type StyleProp, Text, View, type ViewStyle } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -20,6 +20,7 @@ import { font } from '../theme';
 import { useBoundaryNow } from './clock';
 import { setTabMotion } from './roomView';
 import { play } from '../../lib/sound';
+import { Pressable } from '../Pressable';
 
 export type TabDef = { name: 'index' | 'waiting' | 'me' | 'settings'; label: string; Icon: Icon };
 
@@ -105,6 +106,7 @@ export function TabBar({ tabs, style }: { tabs: TabDef[]; style?: StyleProp<View
         if (to !== start) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
           setTabMotion(to > start ? 1 : -1);
+          play('tab');
           latest.current.switchTab(tabs[to].name, {});
         }
       },

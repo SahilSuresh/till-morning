@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { setState, useAppState } from '../lib/store';
@@ -8,6 +8,7 @@ import { MEAL_IDEAS } from '../lib/week';
 import { Button, Card, CircleButton, toast } from '../ui/components';
 import { IconCheck, IconChevrons } from '../ui/icons';
 import { color, font, type } from '../ui/theme';
+import { Pressable } from '../ui/Pressable';
 
 /** Backup dinner (V.meals, L1490): easy meals shown under the breathing ring on takeaway apps. */
 export default function Meals() {

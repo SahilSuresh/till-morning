@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode, useEffect } from 'react';
-import { Animated, Easing, Pressable, Text, useAnimatedValue, View } from 'react-native';
+import { Animated, Easing, Text, useAnimatedValue, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { AppLabel } from '../../../modules/tm-native';
@@ -12,6 +12,7 @@ import { CaretRightIcon } from '../ph';
 import type { SpotRef } from '../Spotlight';
 import { StFace } from '../StFace';
 import { color, font } from '../theme';
+import { Pressable } from '../Pressable';
 
 // Today, kept simple: your trolley first (the big card: what's waiting), then a smaller card
 // for the shields (which apps), then the pass button. Night Trolley colours throughout.

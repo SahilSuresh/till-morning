@@ -1,7 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { CameraIcon } from '../../ui/ph';
 import { useCallback, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppState } from '../../lib/store';
@@ -16,6 +16,7 @@ import { type ScrollRef, TabTip } from '../../ui/tabs/TabTip';
 import { RoomEmptyNight } from '../../ui/tabs/RoomEmptyNight';
 import { LetGoShelf, Rail, RailTag } from '../../ui/tabs/WaitingParts';
 import { color, font, type } from '../../ui/theme';
+import { Pressable } from '../../ui/Pressable';
 
 /** roomTab() from the prototype (P:L2117–2129; CSS P:L551–573). */
 export default function Waiting() {

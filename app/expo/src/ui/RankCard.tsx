@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import { CaretRightIcon } from './ph';
 import { useCallback, useEffect, useState } from 'react';
-import { Animated, Pressable, Text, View } from 'react-native';
+import { Animated, Text, View } from 'react-native';
 
 import { useAppState } from '../lib/store';
 import { rankFor } from '../lib/xp';
@@ -10,6 +10,7 @@ import { easeOut, useReduceMotion } from './components';
 import { Medal } from './Medal';
 import type { SpotRef } from './Spotlight';
 import { color, font, type } from './theme';
+import { Pressable } from './Pressable';
 
 const fmtN = (n: number) => Math.round(n).toLocaleString('en-GB');
 

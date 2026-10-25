@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTabTrigger, type TabTriggerSlotProps } from 'expo-router/ui';
 import type { Icon } from 'phosphor-react-native';
 import { type ComponentRef, forwardRef, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, PanResponder, Pressable, Text, View } from 'react-native';
+import { Animated, PanResponder, Text, View } from 'react-native';
 import R from 'react-native-reanimated';
 
 import { useAppState } from '../../lib/store';
@@ -12,6 +12,7 @@ import { useBoundaryNow } from './clock';
 import { EASE, popIn, SPRING } from './motion';
 import { setTabMotion, tabMotion } from './roomView';
 import { font } from '../theme';
+import { Pressable } from '../Pressable';
 
 // The prototype's tab bar and tab switching (P:L216–221, 370–376, 514–515, 2194–2197, 2838–2882).
 

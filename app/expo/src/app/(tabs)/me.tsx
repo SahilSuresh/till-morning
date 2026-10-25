@@ -1,6 +1,6 @@
 import { CaretRightIcon, CheckIcon } from '../../ui/ph';
 import { useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppState } from '../../lib/store';
@@ -16,6 +16,7 @@ import { DecisionsReceipt, ParcelButton, StickerShelf } from '../../ui/tabs/MeNi
 import { type ScrollRef, TabTip } from '../../ui/tabs/TabTip';
 import { XpRules } from '../../ui/tabs/XpRules';
 import { color, type } from '../../ui/theme';
+import { Pressable } from '../../ui/Pressable';
 
 /** progressTab() from the prototype (P:L2090–2116): rank, Morning card, stickers, your note, XP rules, recent decisions. */
 export default function Me() {

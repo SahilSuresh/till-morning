@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useIsFocused } from 'expo-router';
 import { CaretRightIcon, CheckCircleIcon, MicrophoneIcon, PackageIcon } from '../ph';
 import { useMemo } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import R, { css } from 'react-native-reanimated';
 
 import { lockDays, TIERS, tierFor } from '../../lib/budget';
@@ -13,6 +13,7 @@ import { NotePlayer } from '../NotePlayer';
 import { Seal } from '../Seal';
 import { color, font, gradient, type } from '../theme';
 import { Tile } from './Tile';
+import { Pressable } from '../Pressable';
 
 // ---- Sticker goals (meExtras, P:L2107–2112; CSS P:L1741–1759) ---------------------------------
 

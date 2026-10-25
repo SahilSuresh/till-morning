@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, Pressable, Text, useAnimatedValue, View } from 'react-native';
+import { Animated, Easing, Text, useAnimatedValue, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import type { ParkedWant } from '../../lib/store';
 import { useReduceMotion } from '../components';
 import type { SpotRef } from '../Spotlight';
 import { color, font } from '../theme';
+import { Pressable } from '../Pressable';
 
 // Night Trolley · Part 1 (Today, option B "the route"): tonight as a flight-tracker timeline.
 // Every parked want rides a trolley from the shop shutting to the Morning Till at 08:00.

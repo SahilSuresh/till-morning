@@ -1,10 +1,11 @@
 import { type ComponentRef, type RefObject, useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Modal, Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { Animated, Modal, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Mask, Rect } from 'react-native-svg';
 
 import { useReduceMotion } from './components';
 import { StFace } from './StFace';
 import { color, font } from './theme';
+import { Pressable } from './Pressable';
 
 export type SpotRect = { x: number; y: number; width: number; height: number; radius: number };
 

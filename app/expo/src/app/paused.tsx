@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { protectedCount } from '../lib/core';
@@ -8,6 +8,7 @@ import { rankFor } from '../lib/xp';
 import { Button, Card, Rise } from '../ui/components';
 import { IconShield } from '../ui/icons';
 import { color, font, type } from '../ui/theme';
+import { Pressable } from '../ui/Pressable';
 
 /** Protection is paused (V.paused, L1685): shown when the plan ends and every shield is lifted. */
 export default function Paused() {

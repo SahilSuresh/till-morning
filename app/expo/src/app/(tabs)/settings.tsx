@@ -2,7 +2,7 @@ import { router, useFocusEffect } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
 import { ArrowCounterClockwiseIcon, BellRingingIcon, BugIcon, CalendarCheckIcon, CreditCardIcon, CrownSimpleIcon, EyeIcon, FileTextIcon, HeartIcon, type Icon, InfoIcon, LifebuoyIcon, LockIcon, LockKeyIcon, MoonStarsIcon, PiggyBankIcon, PlayIcon, ScrollIcon, ShieldCheckIcon, ShieldIcon, SquaresFourIcon, StarIcon, ToggleRightIcon } from '../../ui/ph';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, Switch, Text, TextInput, type TextInputProps, View } from 'react-native';
+import { Alert, Linking, ScrollView, Switch, Text, TextInput, type TextInputProps, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { budgetSummary, lockDays } from '../../lib/budget';
@@ -24,6 +24,7 @@ import { TimePick } from '../../ui/TimePick';
 import { useTabBarSpace } from '../../ui/layout';
 import { color, font, type } from '../../ui/theme';
 import { play } from '../../lib/sound';
+import { Pressable } from '../../ui/Pressable';
 
 // settingsTab() in the prototype (P:L2155): cards of rows, each with a tinted icon tile.
 

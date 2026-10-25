@@ -1,9 +1,10 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 
 import { MinusIcon, PlusIcon } from './ph';
 import { color, font } from './theme';
+import { Pressable } from './Pressable';
 
 /**
  * The prototype's timePick() (P:L862): equal tiles for the usual choices plus a Custom tile.

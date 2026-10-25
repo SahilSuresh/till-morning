@@ -1,9 +1,10 @@
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { PauseIcon, PlayIcon } from './ph';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import type { AppState } from '../lib/store';
 import { color, font } from './theme';
+import { Pressable } from './Pressable';
 
 /**
  * "Your note from calm you": tap to hear your own voice (the pause's .wr-voice button, P:L604/1466).

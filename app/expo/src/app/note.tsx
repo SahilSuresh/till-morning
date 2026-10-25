@@ -11,7 +11,7 @@ import { File, Paths } from 'expo-file-system';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Easing, Linking, Pressable, ScrollView, Text, useAnimatedValue, View } from 'react-native';
+import { Alert, Animated, Easing, Linking, ScrollView, Text, useAnimatedValue, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 
@@ -20,6 +20,7 @@ import { Button, CircleButton, TextLink, toast, useReduceMotion } from '../ui/co
 import { IconChevrons } from '../ui/icons';
 import { MicrophoneIcon, PauseIcon, PlayIcon } from '../ui/ph';
 import { color, font, type } from '../ui/theme';
+import { Pressable } from '../ui/Pressable';
 
 const MAX_SECONDS = 20;
 

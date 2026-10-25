@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { CameraIcon, CheckCircleIcon, CheckIcon, ReceiptIcon, WalletIcon, WarningCircleIcon } from '../ui/ph';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
+import { Animated, ScrollView, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { AppLabel, hasTmNative } from '../../modules/tm-native';
@@ -16,6 +16,7 @@ import { Dialog, Enter, ReadingBar, Tile, useFootPad, useHeadPad } from '../ui/f
 import { IconReceipt } from '../ui/icons';
 import { TicketMain, tk } from '../ui/TearTicket';
 import { color, font, type } from '../ui/theme';
+import { Pressable } from '../ui/Pressable';
 
 const ANSWERS: { id: CheckInAnswer; label: string }[] = [
   { id: 'stuck', label: 'Bought only what I planned' },

@@ -4,7 +4,7 @@ import * as SMS from 'expo-sms';
 import { router, useLocalSearchParams } from 'expo-router';
 import { CameraIcon, ChatCircleIcon, CheckCircleIcon, SparkleIcon, WarningCircleIcon } from '../ui/ph';
 import { memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, AppState, Easing, Pressable, ScrollView, Text, TextInput, useAnimatedValue, View } from 'react-native';
+import { AccessibilityInfo, Animated, AppState, Easing, ScrollView, Text, TextInput, useAnimatedValue, View } from 'react-native';
 
 import { hasTmNative } from '../../modules/tm-native';
 import { track } from '../lib/analytics';
@@ -37,7 +37,8 @@ import { SkyCorner } from '../ui/SkyCorner';
 import { StFace } from '../ui/StFace';
 import { TrolleyIcon } from '../ui/tabs/TrolleyRoute';
 import { color, font, type } from '../ui/theme';
-import { play } from '../lib/sound';
+import { play, useCalmMusic } from '../lib/sound';
+import { Pressable } from '../ui/Pressable';
 
 const hhmm = (at: number) => {
   const d = new Date(at);
@@ -305,6 +306,8 @@ export default function Pause() {
   const [parked, setParked] = useState<ParkedWant | null>(null);
   const finished = useRef(false);
   const onDone = useCallback(() => setDone(true), []);
+  // Soft music while you breathe through the pause; it fades out when the pause ends.
+  useCalmMusic(!night && !done && !parked && !preview);
 
   useEffect(() => {
     if (!done) return;

@@ -6,7 +6,6 @@ import {
   Easing,
   KeyboardAvoidingView,
   Modal,
-  Pressable,
   ScrollView,
   type StyleProp,
   StyleSheet,
@@ -19,6 +18,7 @@ import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { easeOut, springOut, useReduceMotion } from '../components';
 import { useDragToClose } from '../useDragToClose';
+import { Pressable } from '../Pressable';
 
 // Small pieces shared by the core-loop screens (pause, pass, check-in, decide, urgent) and Settings.
 
@@ -229,7 +229,7 @@ export function BottomSheet({
   return (
     <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: DIM, opacity: v }]}>
-        <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" />
+        <Pressable sound="back" style={{ flex: 1 }} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" />
       </Animated.View>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1, justifyContent: 'flex-end' }} pointerEvents="box-none">
         <Animated.View

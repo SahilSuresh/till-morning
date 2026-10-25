@@ -1,11 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useState } from 'react';
-import { Animated, Easing, Pressable, Text, useAnimatedValue, View } from 'react-native';
+import { Animated, Easing, Text, useAnimatedValue, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { useReduceMotion } from '../components';
 import type { SpotRef } from '../Spotlight';
 import { color, font } from '../theme';
+import { Pressable } from '../Pressable';
 
 // Night Trolley · Part 1 finishing touches: 2C "Test the shutters" and 3A "the sleeping ticket".
 

@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   cancelAnimation,
@@ -21,6 +21,7 @@ import { useReduceMotion } from '../components';
 import { color, font, type } from '../theme';
 import { StepBody, useStepAnims } from './StepMotion';
 import { play, stop } from '../../lib/sound';
+import { Pressable } from '../Pressable';
 
 // The first screen (P:L1119–1126, logic P:L2773–2803): sale noise jiggling around one button, a crescent
 // moon (Night Trolley). Holding it for 2.5 s fills the ring and the moon grows full while the noise slows and

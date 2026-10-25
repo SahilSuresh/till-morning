@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { AppLabel } from '../../modules/tm-native';
 import { knownApp, parkWant, recentShieldedApp, startPass } from '../lib/core';
@@ -9,6 +9,8 @@ import { CountRing } from '../ui/flow/CountRing';
 import { Enter, NlSky, useFootPad, useHeadPad } from '../ui/flow/kit';
 import { IconMoon, IconX } from '../ui/icons';
 import { color, font, type } from '../ui/theme';
+import { Pressable } from '../ui/Pressable';
+import { useCalmMusic } from '../lib/sound';
 
 // Urgent means urgent: a short beat to be sure, not a full minute.
 const WAIT = 15;
@@ -28,6 +30,7 @@ export default function Urgent() {
   const [startedAt] = useState(Date.now);
   // Only the ring counts down; the screen re-renders when the wait is up and as you type.
   const [done, setDone] = useState(false);
+  useCalmMusic(!done);
   const onDone = useCallback(() => setDone(true), []);
   const [why, setWhy] = useState('');
   const ok = done && why.trim().length > 1;

@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { ShoppingBagIcon } from '../ph';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 
 import { AppLabel } from '../../../modules/tm-native';
@@ -11,6 +11,7 @@ import { workTime } from '../../lib/rules';
 import type { ParkedWant } from '../../lib/store';
 import { ShelfTag, TagTitle } from '../ShelfTag';
 import { color, font } from '../theme';
+import { Pressable } from '../Pressable';
 
 // GRADS from the prototype (P:L967): each want gets its own colour.
 const GRADS: [string, string][] = [

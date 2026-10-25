@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Image, Pressable, Text, View } from 'react-native';
+import { Animated, Image, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GOALS, openParcel, STICKER_IMG, STICKER_NAME, type StickerKey } from '../lib/progress';
@@ -11,6 +11,7 @@ import { PauseBackground } from '../ui/backgrounds';
 import { Button, Chip, CircleButton, springOut, useReduceMotion } from '../ui/components';
 import { IconX } from '../ui/icons';
 import { color, font, type } from '../ui/theme';
+import { Pressable } from '../ui/Pressable';
 
 const SLOTS = 9;
 
@@ -120,7 +121,7 @@ export default function Parcel() {
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
         <Text style={[type.h1, { color: '#FFFFFF', textAlign: 'center' }]}>A parcel for you</Text>
         <Text style={[type.body, { color: color.white82, marginTop: 8, textAlign: 'center' }]}>{why}</Text>
-        <Pressable onPress={tear} accessibilityRole="button" accessibilityLabel="Tear open the parcel" style={{ marginTop: 32 }}>
+        <Pressable sound="tear" onPress={tear} accessibilityRole="button" accessibilityLabel="Tear open the parcel" style={{ marginTop: 32 }}>
           <Animated.View style={{ transform: [{ rotate: shake.interpolate({ inputRange: [-1, 1], outputRange: ['-4deg', '4deg'] }) }] }}>
             <LinearGradient
               colors={['#FFD46E', '#E7A500']}

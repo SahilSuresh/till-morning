@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppLabel, editApps, hasTmNative } from '../../modules/tm-native';
@@ -13,6 +13,7 @@ import { lose } from '../lib/xp';
 import { Card, CircleButton, Tag, toast } from '../ui/components';
 import { IconChevrons } from '../ui/icons';
 import { color, font, type } from '../ui/theme';
+import { Pressable } from '../ui/Pressable';
 
 /** "Other": a box for what tempts you in this app, in your words. It goes on this app's shield. */
 function OtherBox({ appKey, appLabel }: { appKey: string; appLabel: string }) {

@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { DeviceActivitySelectionSheetViewPersisted } from 'react-native-device-activity';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,6 +11,7 @@ import { type AppState, type ChallengeKey, type PriceBand, setState, useAppState
 import { Button, Card, Chip, CircleButton, OptionCard, Rise, Tag, toast } from '../ui/components';
 import { IconCaret, IconChevrons, IconMinus, IconPlus } from '../ui/icons';
 import { color, font, gradient, type } from '../ui/theme';
+import { Pressable } from '../ui/Pressable';
 
 const Divider = () => <View style={{ height: 1.5, backgroundColor: color.divider, marginVertical: 4 }} />;
 const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];

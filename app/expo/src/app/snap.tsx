@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Camera, CheckCircle, Hourglass, ShoppingBag } from '../ui/ph';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Image, KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, KeyboardAvoidingView, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Rect } from 'react-native-svg';
 
@@ -14,6 +14,7 @@ import { award, xpToast } from '../lib/xp';
 import { Button, Chip, CircleButton, Tag, TextLink, toast } from '../ui/components';
 import { IconChevrons } from '../ui/icons';
 import { color, font, type } from '../ui/theme';
+import { Pressable } from '../ui/Pressable';
 
 const BANDS: PriceBand[] = ['unsure', 'under20', '20to50', '50to100', 'over100'];
 type Read = { state: 'idle' } | { state: 'reading'; uri: string } | { state: 'done'; uri: string; total: number; items?: number } | { state: 'fail'; uri: string };

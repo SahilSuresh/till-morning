@@ -22,6 +22,7 @@ import { MoonTimer, NotifStack, PopTag, ScrollScene, ShelfRow, ShopShutters, Tro
 import { ShelfTag, TagTitle } from '../ui/ShelfTag';
 import { WelcomeHold } from '../ui/onboarding/WelcomeHold';
 import { color, font, type } from '../ui/theme';
+import { useCalmMusic } from '../lib/sound';
 
 // Setup, as the prototype's onboarding (P:L1119–1363). One route; the steps slide between each
 // other under a header that stays still. "Tap to start your pause" needs notifications, so the
@@ -479,6 +480,13 @@ function Demo({ onNext }: { onNext: () => void }) {
 /** One play of the demo. Everything runs on the UI thread; "Play it again" remounts it. */
 function DemoRun({ again, onReplay }: { again: boolean; onReplay: () => void }) {
   const rm = useReduceMotion();
+  // Soft music for the 5 seconds of the demo pause.
+  const [running, setRunning] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setRunning(false), DEMO_REVEAL);
+    return () => clearTimeout(t);
+  }, []);
+  useCalmMusic(running);
   const after = useSharedValue(rm ? 1 : 0);
   useEffect(() => {
     if (rm) return;

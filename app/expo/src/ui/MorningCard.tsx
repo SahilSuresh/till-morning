@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import { CheckIcon, XIcon } from './ph';
 import { useCallback, useState } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import R from 'react-native-reanimated';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
@@ -12,6 +12,7 @@ import { useReduceMotion } from './components';
 import { useBoundaryNow } from './tabs/clock';
 import { SPRING, stamp } from './tabs/motion';
 import { font, type } from './theme';
+import { Pressable } from './Pressable';
 
 // Stamps shown the last time the card was on screen: new ones stamp in, 170 ms apart.
 let shownStamps: number | null = null;

@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { knownApps, lockDays, money, tierFor } from '../lib/budget';
@@ -9,6 +9,7 @@ import { Button, Card, CircleButton, toast } from '../ui/components';
 import { IconCheck, IconChevrons, IconLock } from '../ui/icons';
 import { Seal } from '../ui/Seal';
 import { color, font, gradient, type } from '../ui/theme';
+import { Pressable } from '../ui/Pressable';
 
 /** Add a bank limit (V.bankGuide, L1314): five self-reported steps, then the seal. */
 export default function BankGuide() {

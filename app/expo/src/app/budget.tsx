@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppLabel } from '../../modules/tm-native';
@@ -12,6 +12,7 @@ import { Button, Card, CircleButton, OptionCard, Tag, toast } from '../ui/compon
 import { IconCaret, IconChevrons, IconMinus, IconPlus } from '../ui/icons';
 import { Seal } from '../ui/Seal';
 import { color, font, type } from '../ui/theme';
+import { Pressable } from '../ui/Pressable';
 
 type Split = AppState['split'];
 
