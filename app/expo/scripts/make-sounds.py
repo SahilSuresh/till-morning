@@ -116,10 +116,13 @@ b = blank(0.1, R)
 add(b, 0, glass(2093, 0.06, R, attack=0.001, decay=70, bright=0.1), R)
 save('select', finish(room(b, R), 0.15, R))
 
-# tab: a soft round tock
-b = blank(0.16, R)
-add(b, 0, glass(523.25, 0.12, R, attack=0.002, decay=30, bright=0.3), R)
-save('tab', finish(room(lowpass(b, 0.45), R), 0.2, R))
+# tab: a soft click, like the iPhone keyboard (picked from the demo, option A)
+click, y = [], 0.0
+for i in range(int(0.025 * R)):
+    t = i / R
+    y += 0.5 * (random.uniform(-1, 1) - y)
+    click.append(y * min(1.0, t / 0.0005) * math.exp(-260 * t) + 0.6 * math.sin(TAU * 2600 * t) * min(1.0, t / 0.0005) * math.exp(-300 * t))
+save('tab', finish(room(click + [0.0] * int(0.06 * R), R, taps=((0.021, 0.25), (0.039, 0.16), (0.061, 0.09))), 0.22, R))
 
 # next: two glassy notes going up (D6 → A6)
 b = blank(0.5, R)

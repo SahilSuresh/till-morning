@@ -572,7 +572,7 @@ export default function Settings() {
           )}
         </Group>
 
-        <Head title="Sounds" d={115} />
+        <Head title="Till Morning" d={115} />
         <Group d={118}>
           <Row
             first
@@ -581,6 +581,13 @@ export default function Settings() {
             label="Sounds"
             sub={st.sounds !== false ? 'Little taps, chimes and the boom. Quiet when your phone is on silent.' : 'Off. Till Morning stays silent.'}
             right={<Toggle label="Sounds" value={st.sounds !== false} onChange={(v) => set({ sounds: v })} />}
+          />
+          <Row
+            Icon={PlayIcon}
+            tone="lav"
+            label="Replay the intro"
+            sub="See the welcome screens again. Your apps and plan stay as they are."
+            onPress={() => router.push({ pathname: '/setup', params: { step: 'replay' } })}
           />
         </Group>
 
@@ -628,8 +635,7 @@ export default function Settings() {
           <>
             <Head title={`Test tools (${config.appEnv})`} d={170} />
             <Group d={180}>
-              <Row first Icon={PlayIcon} tone="hush" label="Replay onboarding" sub="Your data stays as it is" onPress={() => router.push('/setup')} />
-              <Row Icon={PlayIcon} tone="hush" label="Try the pause" onPress={() => router.push({ pathname: '/pause', params: { app: 'Test app' } })} />
+              <Row first Icon={PlayIcon} tone="hush" label="Try the pause" onPress={() => router.push({ pathname: '/pause', params: { app: 'Test app' } })} />
               <Row Icon={MoonStarsIcon} tone="hush" label="Try the urgent door" onPress={() => router.push({ pathname: '/urgent', params: { app: 'Test app' } })} />
               <Row Icon={LockKeyIcon} tone="hush" label="Pass re-lock check" sub="When the last pass re-lock ran" onPress={() => Alert.alert('Pass re-lock', passRelockReport())} />
               <Row

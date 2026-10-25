@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { BellRinging } from '../ui/ph';
 import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode, useEffect, useState } from 'react';
@@ -43,6 +43,8 @@ function shieldsLine(apps: number, categories: number) {
  */
 export default function Paywall() {
   const sp = useObSpace();
+  // Settings → Replay the intro ends here, with a way back.
+  const replay = useLocalSearchParams<{ replay?: string }>().replay === '1';
   const plan = useAppState((s) => s.plan);
   const [remind, setRemind] = useState(true);
   const [plans, setPlans] = useState<Plans | null>(null);
@@ -212,7 +214,8 @@ export default function Paywall() {
             </Pressable>
           ))}
         </View>
-        {config.isTestBuild && <TextLink label="Skip (test build only)" style={{ color: color.text3, fontSize: 13 }} onPress={done} />}
+        {replay && <TextLink label="Back to the app" style={{ color: color.text2, fontSize: 14 }} onPress={() => router.replace('/')} />}
+        {config.isTestBuild && !replay && <TextLink label="Skip (test build only)" style={{ color: color.text3, fontSize: 13 }} onPress={done} />}
       </View>
     </View>
   );

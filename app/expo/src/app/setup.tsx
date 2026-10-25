@@ -23,6 +23,7 @@ import { ShelfTag, TagTitle } from '../ui/ShelfTag';
 import { WelcomeHold } from '../ui/onboarding/WelcomeHold';
 import { color, font, type } from '../ui/theme';
 import { useCalmMusic } from '../lib/sound';
+import { getScreenTimeStatus } from '../lib/screenTime';
 
 // Setup, as the prototype's onboarding (P:L1119–1363). One route; the steps slide between each
 // other under a header that stays still. "Tap to start your pause" needs notifications, so the
@@ -36,6 +37,8 @@ const DARK: Step[] = ['story', 'demo'];
 
 export default function Setup() {
   const params = useLocalSearchParams<{ step?: string }>();
+  // Settings → Replay the intro: every screen again, but nothing changes (apps, permissions, plan).
+  const replay = params.step === 'replay';
   // Opened from Home or Your apps just to choose apps: Apple's list opens straight away.
   const pickerOnly = params.step === 'picker';
   const rm = useReduceMotion();
@@ -59,7 +62,7 @@ export default function Setup() {
   // Setup ends on the paywall; starting the free week (or restoring) turns the shields on.
   const finish = () => {
     track('onboarding_completed');
-    router.push('/paywall');
+    router.push(replay ? { pathname: '/paywall', params: { replay: '1' } } : '/paywall');
   };
 
   // The picker reports "Done" before it has saved the selection (it saves ~0.1 s later),
@@ -101,10 +104,10 @@ export default function Setup() {
       body = <Story onNext={() => go('screenTime')} />;
       break;
     case 'screenTime':
-      body = <ScreenTime onAllowed={() => go('ukApps')} />;
+      body = <ScreenTime replay={replay} onAllowed={() => go('ukApps')} />;
       break;
     case 'ukApps':
-      body = <UkApps onOpen={() => setPicker(true)} />;
+      body = <UkApps replay={replay} onOpen={() => (replay ? go('notify') : setPicker(true))} />;
       break;
     case 'notify':
       body = <Notify onNext={() => go('demo')} />;
@@ -257,7 +260,9 @@ const SCREEN_TIME_ROWS: [Icon, string][] = [
   [ToggleRight, 'Switch it off anytime in Settings'],
 ];
 
-function ScreenTime({ onAllowed }: { onAllowed: () => void }) {
+function ScreenTime({ onAllowed, replay }: { onAllowed: () => void; replay?: boolean }) {
+  // On a replay with Screen Time already on, the button simply moves on.
+  const already = replay && getScreenTimeStatus() === 2;
   const base = useStepBase();
   const rd = useRiseDelay();
   const [denied, setDenied] = useState(false);
@@ -296,7 +301,7 @@ function ScreenTime({ onAllowed }: { onAllowed: () => void }) {
           <ConnectedNote />
         ) : (
           <>
-            <Button sound="next" variant="night" label={denied ? 'Try again' : 'Allow Screen Time'} onPress={allowScreenTime} />
+            <Button sound="next" variant="night" label={already ? 'Next' : denied ? 'Try again' : 'Allow Screen Time'} onPress={already ? onAllowed : allowScreenTime} />
             <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>Next, a quick tip on which apps to pick.</Text>
           </>
         )
@@ -363,7 +368,7 @@ const UK_SHELVES: [[string, string][], string][] = [
   ],
 ];
 
-function UkApps({ onOpen }: { onOpen: () => void }) {
+function UkApps({ onOpen, replay }: { onOpen: () => void; replay?: boolean }) {
   const base = useStepBase();
   const rd = useRiseDelay();
   return (
@@ -371,7 +376,7 @@ function UkApps({ onOpen }: { onOpen: () => void }) {
       contentStyle={{ paddingHorizontal: 28, paddingTop: 12, paddingBottom: 8 }}
       footer={
         <>
-          <Button sound="next" variant="night" label="Open Apple’s app list" onPress={onOpen} />
+          <Button sound="next" variant="night" label={replay ? 'Next' : 'Open Apple’s app list'} onPress={onOpen} />
           <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>You can change this any time.</Text>
         </>
       }
