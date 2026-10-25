@@ -1,6 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { useCallback, useMemo, useRef } from 'react';
 import { Animated, Easing, type NativeScrollEvent, type NativeSyntheticEvent, PanResponder, useAnimatedValue } from 'react-native';
+import { play } from '../lib/sound';
 
 /**
  * Drag a sheet down to close it, like iOS sheets: it follows your finger (with a little resistance
@@ -29,6 +30,7 @@ export function useDragToClose(onClose: () => void) {
         if (g.dy > 110 || (g.dy > 30 && g.vy > 0.9)) {
           Haptics.selectionAsync().catch(() => {});
           Animated.timing(drag, { toValue: 900, duration: 220, easing: Easing.in(Easing.quad), useNativeDriver: true }).start();
+          play('back');
           onClose();
         } else {
           Animated.spring(drag, { toValue: 0, friction: 7, tension: 90, useNativeDriver: true }).start();

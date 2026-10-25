@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
-import { ArrowCounterClockwiseIcon, BugIcon, CalendarCheckIcon, CreditCardIcon, CrownSimpleIcon, EyeIcon, FileTextIcon, HeartIcon, type Icon, InfoIcon, LifebuoyIcon, LockIcon, LockKeyIcon, MoonStarsIcon, PiggyBankIcon, PlayIcon, ScrollIcon, ShieldCheckIcon, SquaresFourIcon, StarIcon, ToggleRightIcon } from '../../ui/ph';
+import { ArrowCounterClockwiseIcon, BellRingingIcon, BugIcon, CalendarCheckIcon, CreditCardIcon, CrownSimpleIcon, EyeIcon, FileTextIcon, HeartIcon, type Icon, InfoIcon, LifebuoyIcon, LockIcon, LockKeyIcon, MoonStarsIcon, PiggyBankIcon, PlayIcon, ScrollIcon, ShieldCheckIcon, ShieldIcon, SquaresFourIcon, StarIcon, ToggleRightIcon } from '../../ui/ph';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, Switch, Text, TextInput, type TextInputProps, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +23,7 @@ import { IconCaret } from '../../ui/icons';
 import { TimePick } from '../../ui/TimePick';
 import { useTabBarSpace } from '../../ui/layout';
 import { color, font, type } from '../../ui/theme';
+import { play } from '../../lib/sound';
 
 // settingsTab() in the prototype (P:L2155): cards of rows, each with a tinted icon tile.
 
@@ -111,7 +112,10 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: bool
   return (
     <Switch
       value={value}
-      onValueChange={onChange}
+      onValueChange={(v) => {
+        play(v ? 'toggleOn' : 'toggleOff');
+        onChange(v);
+      }}
       accessibilityLabel={label}
       trackColor={{ true: '#7C4DFF', false: '#2B2F69' }}
       ios_backgroundColor="#2B2F69"
@@ -338,8 +342,8 @@ export default function Settings() {
           {shieldsOn &&
             (offTill ? (
               <Row
-                Icon={MoonStarsIcon}
-                tone="hush"
+                Icon={ShieldIcon}
+                tone="peach"
                 label="Every shield is off till 07:00"
                 sub="Tap to turn them back on now"
                 onPress={() => {
@@ -348,7 +352,7 @@ export default function Settings() {
                 }}
               />
             ) : (
-              <Row Icon={MoonStarsIcon} tone="hush" label="Turn every shield off till 07:00" sub="All apps open with no pause until morning" onPress={askOffTill} />
+              <Row Icon={ShieldIcon} tone="peach" label="Turn every shield off till 07:00" sub="All apps open with no pause until morning" onPress={askOffTill} />
             ))}
           <Row
             Icon={SquaresFourIcon}
@@ -565,6 +569,18 @@ export default function Settings() {
               />
             </>
           )}
+        </Group>
+
+        <Head title="Sounds" d={115} />
+        <Group d={118}>
+          <Row
+            first
+            Icon={BellRingingIcon}
+            tone="lav"
+            label="Sounds"
+            sub={st.sounds !== false ? 'Little taps, chimes and the boom. Quiet when your phone is on silent.' : 'Off. Till Morning stays silent.'}
+            right={<Toggle label="Sounds" value={st.sounds !== false} onChange={(v) => set({ sounds: v })} />}
+          />
         </Group>
 
         <Head title="Subscription and privacy" d={120} />

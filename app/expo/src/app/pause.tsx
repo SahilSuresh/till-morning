@@ -37,6 +37,7 @@ import { SkyCorner } from '../ui/SkyCorner';
 import { StFace } from '../ui/StFace';
 import { TrolleyIcon } from '../ui/tabs/TrolleyRoute';
 import { color, font, type } from '../ui/theme';
+import { play } from '../lib/sound';
 
 const hhmm = (at: number) => {
   const d = new Date(at);
@@ -577,7 +578,16 @@ function PriceTag({ label, selected, onPress, index }: { label: string; selected
         transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }, { scale: bounce }],
       }}
     >
-      <Pressable onPress={onPress} accessibilityRole="radio" accessibilityState={{ selected }} accessibilityLabel={label} hitSlop={4}>
+      <Pressable
+        onPress={() => {
+          play('select');
+          onPress();
+        }}
+        accessibilityRole="radio"
+        accessibilityState={{ selected }}
+        accessibilityLabel={label}
+        hitSlop={4}
+      >
         {({ pressed }) => (
           <View style={{ borderRadius: 11, backgroundColor: selected ? '#4524A8' : '#121540', paddingBottom: pressed ? 0 : 2, marginTop: pressed ? 2 : 0 }}>
             <View
@@ -693,6 +703,7 @@ function ParkSheet({
       Animated.timing(clip, { toValue: 1, duration: 440, easing: Easing.in(Easing.quad), useNativeDriver: true }),
     ]).start(() => {
       setCaught(true);
+      play('chime');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       Animated.spring(catchV, { toValue: 1, friction: 3.2, tension: 150, useNativeDriver: true }).start();
       setTimeout(go, 460);

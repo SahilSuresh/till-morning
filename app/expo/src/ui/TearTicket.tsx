@@ -8,6 +8,7 @@ import { AppLabel } from '../../modules/tm-native';
 import { knownApp } from '../lib/core';
 import { springOut, toast, useReduceMotion } from './components';
 import { font } from './theme';
+import { play } from '../lib/sound';
 
 const TEAR_AT = 70;
 const H = 98;
@@ -150,6 +151,7 @@ export function TearTicket({
 
   const tear = () => {
     if (tornRef.current) return;
+    play('tear');
     tornRef.current = true;
     setTorn(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});

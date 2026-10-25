@@ -20,6 +20,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useReduceMotion } from '../components';
 import { color, font, type } from '../theme';
 import { StepBody, useStepAnims } from './StepMotion';
+import { play, stop } from '../../lib/sound';
 
 // The first screen (P:L1119–1126, logic P:L2773–2803): sale noise jiggling around one button, a crescent
 // moon (Night Trolley). Holding it for 2.5 s fills the ring and the moon grows full while the noise slows and
@@ -120,6 +121,8 @@ export function WelcomeHold({ onHeld, onSkip }: { onHeld: () => void; onSkip: ()
   useEffect(() => () => clearTimeout(timer.current), []);
 
   const complete = () => {
+    stop('hold');
+    play('boom');
     if (held.current) return;
     held.current = true;
     holding.current = false;
@@ -135,6 +138,7 @@ export function WelcomeHold({ onHeld, onSkip }: { onHeld: () => void; onSkip: ()
 
   const start = () => {
     if (held.current || holding.current) return;
+    play('hold');
     holding.current = true;
     setLabel('Keep holding…');
     press.set(withTiming(0.96, { duration: 200 }));
@@ -150,6 +154,7 @@ export function WelcomeHold({ onHeld, onSkip }: { onHeld: () => void; onSkip: ()
   const release = () => {
     if (held.current || !holding.current) return;
     if (k.get() >= 1) return; // the ring is full: "Paused." is on its way
+    stop('hold');
     holding.current = false;
     cancelAnimation(k);
     k.set(0); // the ring empties at once (P:L2795)
@@ -191,7 +196,12 @@ export function WelcomeHold({ onHeld, onSkip }: { onHeld: () => void; onSkip: ()
         contentStyle={{ alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}
         footerStyle={{ paddingTop: 8, alignItems: 'center' }}
         footer={
-          <Pressable onPress={onSkip} accessibilityRole="button" style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+          <Pressable
+            onPress={() => {
+              play('next');
+              onSkip();
+            }}
+            accessibilityRole="button" style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
             <Text style={{ fontFamily: font.bodyBold, fontSize: 14, lineHeight: 20, color: color.text3, textDecorationLine: 'underline' }}>Skip</Text>
           </Pressable>
         }

@@ -190,6 +190,7 @@ export default function Paywall() {
       <View style={{ paddingHorizontal: 28, paddingTop: 12, paddingBottom: sp.bottom(40), alignItems: 'center', gap: 8 }}>
         {/* Never greyed out while the plans load: tapping fetches them if they aren't in yet. */}
         <Button
+          sound="next"
           variant="night"
           label="Start my free week"
           onPress={start}

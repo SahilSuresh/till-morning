@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { play, type Sound } from '../lib/sound';
 import { color, font, gradient, radius, type } from './theme';
 
 export const easeOut = Easing.bezier(0.2, 0.8, 0.2, 1);
@@ -64,6 +65,7 @@ export function Button({
   icon,
   style,
   accessibilityHint,
+  sound = 'tap',
 }: {
   label: string;
   onPress?: () => void;
@@ -72,6 +74,8 @@ export function Button({
   icon?: ReactNode;
   style?: StyleProp<ViewStyle>;
   accessibilityHint?: string;
+  /** The sound it makes: tap by default, next for a step forward, none for silent. */
+  sound?: Sound | null;
 }) {
   const look = buttonLook[variant];
   const rm = useReduceMotion();
@@ -90,6 +94,7 @@ export function Button({
     <Pressable
       onPress={() => {
         Haptics.selectionAsync().catch(() => {});
+        if (sound) play(sound);
         playBump();
         onPress?.();
       }}
@@ -156,7 +161,11 @@ export function TextLink({
   const [lines, setLines] = useState<{ x: number; y: number; width: number; height: number; ascender: number; descender: number }[]>([]);
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        if (!onPress) return;
+        play('tap');
+        onPress();
+      }}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
@@ -378,7 +387,10 @@ export function Tag({
   const size = large ? 16 : 13.5;
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        play('select');
+        onPress();
+      }}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ selected }}
@@ -423,7 +435,10 @@ export function CircleButton({
 }) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        play('back');
+        onPress();
+      }}
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={8}

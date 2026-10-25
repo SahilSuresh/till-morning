@@ -62,6 +62,7 @@ export type AppState = {
     nlFrom: number; // 22 | 23 | 0
     nlTo: number; // 6 | 7 | 8
     schedule: 'all' | 'evenings' | 'weekends';
+    sounds: boolean; // little UI sounds (Settings → Sounds)
     sale: boolean; // sale week: waits ×2, pause +15 s
     wage: number; // £ per hour, for "about X of your work"
     challenge: ChallengeKey;
@@ -147,6 +148,7 @@ export const initialState: AppState = {
     nlFrom: 23,
     nlTo: 7,
     schedule: 'all',
+    sounds: true,
     sale: false,
     wage: 12,
     challenge: 'none',

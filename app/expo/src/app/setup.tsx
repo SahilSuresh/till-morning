@@ -189,7 +189,7 @@ function Welcome({ onNext }: { onNext: () => void }) {
       contentStyle={{ paddingHorizontal: 32, paddingTop: 8, paddingBottom: 8, alignItems: 'center' }}
       footer={
         <>
-          <Button variant="night" label="Let’s get started" onPress={onNext} />
+          <Button sound="next" variant="night" label="Let’s get started" onPress={onNext} />
           <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>7 days free, then pick a plan</Text>
         </>
       }
@@ -224,7 +224,7 @@ function Story({ onNext }: { onNext: () => void }) {
   const base = useStepBase();
   const rd = useRiseDelay();
   return (
-    <StepBody contentStyle={{ paddingHorizontal: 32, paddingTop: 8, alignItems: 'center' }} footer={<Button variant="white" label="Next" onPress={onNext} />}>
+    <StepBody contentStyle={{ paddingHorizontal: 32, paddingTop: 8, alignItems: 'center' }} footer={<Button sound="next" variant="white" label="Next" onPress={onNext} />}>
       {/* the story as a picture: the phone scrolling at night, the trolley filling up */}
       <ScrollScene delay={base} />
       <Rise delay={rd(120)}>
@@ -295,7 +295,7 @@ function ScreenTime({ onAllowed }: { onAllowed: () => void }) {
           <ConnectedNote />
         ) : (
           <>
-            <Button variant="night" label={denied ? 'Try again' : 'Allow Screen Time'} onPress={allowScreenTime} />
+            <Button sound="next" variant="night" label={denied ? 'Try again' : 'Allow Screen Time'} onPress={allowScreenTime} />
             <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>Next, a quick tip on which apps to pick.</Text>
           </>
         )
@@ -370,7 +370,7 @@ function UkApps({ onOpen }: { onOpen: () => void }) {
       contentStyle={{ paddingHorizontal: 28, paddingTop: 12, paddingBottom: 8 }}
       footer={
         <>
-          <Button variant="night" label="Open Apple’s app list" onPress={onOpen} />
+          <Button sound="next" variant="night" label="Open Apple’s app list" onPress={onOpen} />
           <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>You can change this any time.</Text>
         </>
       }
@@ -421,6 +421,7 @@ function Notify({ onNext }: { onNext: () => void }) {
       footer={
         <>
           <Button
+            sound="next"
             variant="night"
             label="Allow notifications"
             onPress={async () => {
@@ -462,7 +463,7 @@ const CHOICES: [string, string, 'mint' | 'sun' | 'lilac'][] = [
 function Demo({ onNext }: { onNext: () => void }) {
   const [run, setRun] = useState(0);
   return (
-    <StepBody contentStyle={{ paddingHorizontal: 28, paddingBottom: 8, alignItems: 'center' }} footer={<Button variant="white" label="Got it" onPress={onNext} />}>
+    <StepBody contentStyle={{ paddingHorizontal: 28, paddingBottom: 8, alignItems: 'center' }} footer={<Button sound="next" variant="white" label="Got it" onPress={onNext} />}>
       <View style={{ marginTop: 4 }}>
         <Chip tone="glass" size={13} icon={<Timer size={15} weight="bold" color="#FFFFFF" />} label="Try it once" />
       </View>
@@ -536,7 +537,7 @@ function Tour({ onNext }: { onNext: () => void }) {
       footer={
         <>
           <Text style={[type.small, { textAlign: 'center' }]}>More arrives on Today during your first week.</Text>
-          <Button variant="night" label="Continue" onPress={onNext} style={{ marginTop: 12 }} />
+          <Button sound="next" variant="night" label="Continue" onPress={onNext} style={{ marginTop: 12 }} />
         </>
       }
     >

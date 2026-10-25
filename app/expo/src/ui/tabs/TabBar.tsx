@@ -19,6 +19,7 @@ import type { Icon } from '../ph';
 import { font } from '../theme';
 import { useBoundaryNow } from './clock';
 import { setTabMotion } from './roomView';
+import { play } from '../../lib/sound';
 
 export type TabDef = { name: 'index' | 'waiting' | 'me' | 'settings'; label: string; Icon: Icon };
 
@@ -166,6 +167,7 @@ export function TabBar({ tabs, style }: { tabs: TabDef[]; style?: StyleProp<View
   function switchTo(i: number) {
     if (i === focused) return;
     Haptics.selectionAsync().catch(() => {});
+    play('tab');
     setTabMotion(0);
     switchTab(tabs[i].name, {});
   }

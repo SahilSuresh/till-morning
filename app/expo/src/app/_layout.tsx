@@ -17,6 +17,7 @@ import { flushState, getState, loadState, setState, useAppState, useLoaded } fro
 import { rankFor } from '../lib/xp';
 import { toast, ToastHost } from '../ui/components';
 import { color } from '../ui/theme';
+import { initSounds } from '../lib/sound';
 
 initCrashReporting();
 initAnalytics();
@@ -81,6 +82,7 @@ function RootLayout() {
   const lastResponse = Notifications.useLastNotificationResponse();
 
   useEffect(() => {
+    initSounds();
     loadState().then(() => {
       onForeground();
       checkPlan();
