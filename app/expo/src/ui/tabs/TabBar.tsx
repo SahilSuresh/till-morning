@@ -59,6 +59,12 @@ export function TabBar({ tabs, style }: { tabs: TabDef[]; style?: StyleProp<View
 
   const pos = useSharedValue(focused);
   const unit = useSharedValue(0);
+  // Where you're heading: updated on the tap itself, so very fast taps aren't compared with a
+  // tab the screen hasn't finished leaving yet (which used to swallow the second tap).
+  const target = useRef(focused);
+  useEffect(() => {
+    target.current = focused;
+  }, [focused]);
   const dragging = useRef(false);
   const latest = useRef({ switchTab, focused, rm });
   useEffect(() => {
@@ -107,6 +113,7 @@ export function TabBar({ tabs, style }: { tabs: TabDef[]; style?: StyleProp<View
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
           setTabMotion(to > start ? 1 : -1);
           play('tab');
+          target.current = to;
           latest.current.switchTab(tabs[to].name, {});
         }
       },
@@ -167,7 +174,8 @@ export function TabBar({ tabs, style }: { tabs: TabDef[]; style?: StyleProp<View
   );
 
   function switchTo(i: number) {
-    if (i === focused) return;
+    if (i === target.current) return;
+    target.current = i;
     Haptics.selectionAsync().catch(() => {});
     play('tab');
     setTabMotion(0);
@@ -214,6 +222,7 @@ function Tab({ def, index, pos, unit, onPress, badge }: TabProps) {
   return (
     <Animated.View style={box}>
       <Pressable
+        sound={null}
         onPress={onPress}
         onPressIn={() => (press.value = withTiming(0.94, { duration: 80 }))}
         onPressOut={() => (press.value = withSpring(1, { damping: 14, stiffness: 320 }))}

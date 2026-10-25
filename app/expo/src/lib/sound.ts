@@ -24,8 +24,8 @@ const SRC = {
 
 export type Sound = keyof typeof SRC;
 
-// Two players per short sound, used in turn, so a quick double tap plays twice instead of once.
-const POOL = 2;
+// Several players per short sound: each tap takes a free one, so even very fast taps all sound.
+const POOL = 4;
 const players: Partial<Record<Sound, AudioPlayer[]>> = {};
 const turn: Partial<Record<Sound, number>> = {};
 let count = 0;
@@ -72,13 +72,23 @@ export function play(name: Sound) {
   if (!soundsOn()) return;
   try {
     const list = pool(name);
-    const i = (turn[name] ?? 0) % list.length;
-    turn[name] = i + 1;
-    const p = list[i];
-    p.pause();
-    p.seekTo(0)
-      .then(() => p.play())
-      .catch(() => p.play());
+    // A player that isn't busy, else the next one in turn.
+    let p = list.find((x) => !x.playing);
+    if (!p) {
+      const i = (turn[name] ?? 0) % list.length;
+      turn[name] = i + 1;
+      p = list[i];
+      p.pause();
+    }
+    const player = p;
+    if (player.currentTime > 0.005) {
+      player
+        .seekTo(0)
+        .then(() => player.play())
+        .catch(() => player.play());
+    } else {
+      player.play();
+    }
   } catch {
     // Never let a sound get in the way.
   }
