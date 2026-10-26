@@ -9,6 +9,7 @@ import { budgetSummary, lockDays } from '../../lib/budget';
 import { config, links } from '../../lib/config';
 import { applyShieldLook, liftAllShields, passRelockReport, protectedCount, shieldChosenApps, syncShields, turnOffTillTomorrow } from '../../lib/core';
 import { sendTestEvent } from '../../lib/crashes';
+import { fillDemoData } from '../../lib/demo';
 import { getOfferings, isPurchasesReady, restorePurchases } from '../../lib/purchases';
 import { hh } from '../../lib/rules';
 import { getScreenTimeStatus } from '../../lib/screenTime';
@@ -645,7 +646,27 @@ export default function Settings() {
           <>
             <Head title={`Test tools (${config.appEnv})`} d={170} />
             <Group d={180}>
-              <Row first Icon={PlayIcon} tone="hush" label="Try the pause" onPress={() => router.push({ pathname: '/pause', params: { app: 'Test app' } })} />
+              <Row
+                first
+                Icon={SparkleIcon}
+                tone="hush"
+                label="Fill with demo data"
+                sub="Sample wants, stickers and progress, for screen recordings"
+                onPress={() =>
+                  Alert.alert('Fill with demo data?', 'Your trolley, stickers and progress are replaced with sample data. Your shielded apps stay as they are.', [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Fill it',
+                      onPress: () => {
+                        fillDemoData();
+                        router.navigate('/');
+                        toast('Demo data is in');
+                      },
+                    },
+                  ])
+                }
+              />
+              <Row Icon={PlayIcon} tone="hush" label="Try the pause" onPress={() => router.push({ pathname: '/pause', params: { app: 'Test app' } })} />
               <Row Icon={MoonStarsIcon} tone="hush" label="Try the urgent door" onPress={() => router.push({ pathname: '/urgent', params: { app: 'Test app' } })} />
               <Row Icon={LockKeyIcon} tone="hush" label="Pass re-lock check" sub="When the last pass re-lock ran" onPress={() => Alert.alert('Pass re-lock', passRelockReport())} />
               <Row
