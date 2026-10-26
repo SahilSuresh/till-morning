@@ -19,11 +19,11 @@ export const config = {
 // The single RevenueCat entitlement that unlocks the shields.
 export const ENTITLEMENT_ID = 'pro';
 
-// Draft URLs. Replace once the privacy and support pages are hosted (see docs/setup-commands.md).
+// The website (site/ in this repo, hosted on Cloudflare at tillmorning.co.uk).
 export const links = {
-  privacy: 'https://example.com/till-morning/privacy',
-  support: 'https://example.com/till-morning/support',
+  privacy: 'https://tillmorning.co.uk/privacy/',
+  support: 'https://tillmorning.co.uk/support/',
   // Apple's standard licence agreement, used as the Terms of Use for subscriptions.
   terms: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
-  supportEmail: 'mailto:support@example.com',
+  supportEmail: 'mailto:support@tillmorning.co.uk',
 };
