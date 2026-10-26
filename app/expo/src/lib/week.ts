@@ -74,15 +74,15 @@ export function recapDue(now = Date.now()) {
 export const thisWeek = weekNo;
 
 export const COACH_TIPS = [
-  { t: 'Your trolley', d: 'When a want hits, park it and it waits here till morning, with the time left. Then you decide with a clear head.' },
-  { t: 'Your shields are up', d: 'These are the shop apps Till Morning watches. They pause before they open. Tap here to change them.' },
-  { t: 'Need to shop for real?', d: 'Get a pass: say what you need, set a limit and a timer. The app locks again after.' },
-  { t: 'Try it once now', d: 'Open a shopping app from your home screen and park something. New tips arrive here over your first week.' },
+  { t: 'This is your trolley', d: 'When a want hits, park it here. It waits till morning with a timer on it, then you decide with a clear head.' },
+  { t: 'Your shields are up', d: 'These shop apps get a little pause before they open. Tap the card to change which ones.' },
+  { t: 'Need to shop for real?', d: 'Grab a pass: say what you need, set a limit and a timer. It all locks again after.' },
+  { t: 'Now try it once', d: 'Open a shielded app from your Home Screen and park something. New tips land here all week.' },
 ];
 
 export const TAB_TIPS: Record<string, { t: string; d: string }> = {
-  waiting: { t: 'Everything you park waits here', d: 'When it’s ready, you decide: let it go, or shop with a plan.' },
-  me: { t: 'Your rank, stickers and calm days', d: 'They only grow. Nothing here ever drops.' },
+  waiting: { t: 'Everything you park waits here', d: 'When its timer runs out, you decide: let it go, or shop with a plan.' },
+  me: { t: 'Your rank, stickers and calm nights', d: 'They only ever grow. Nothing here goes down, even on a wobbly day.' },
 };
 
 export const MEAL_IDEAS: [string, string, number][] = [

@@ -288,7 +288,7 @@ export default function Today() {
         : 'Go to your Home Screen and open one of your shielded apps.',
     );
 
-  // ---- First-time tour (P:L1840–1867, 2252–2262): starts 1.9 s after Today appears ----
+  // ---- First-time tour: starts once Today has risen in; each step waits for its target to settle ----
   const coachDue = coachStep >= 0 && focused && subscribed && !lapsed;
   const [coachOn, setCoachOn] = useState(false);
   useEffect(() => {
@@ -296,7 +296,7 @@ export default function Today() {
     const t = setTimeout(() => {
       scrollRef.current?.scrollTo({ y: 0, animated: false });
       setCoachOn(true);
-    }, 1900);
+    }, 1100);
     return () => {
       clearTimeout(t);
       setCoachOn(false);
@@ -311,7 +311,8 @@ export default function Today() {
   const steps = COACH_KEYS.map((k, i) => ({ k, ...COACH_TIPS[i] })).filter((s) => targets[s.k]);
   const ci = Math.max(0, Math.min(coachStep, steps.length - 1));
   const step = coachOn && coachDue ? steps[ci] : undefined;
-  const rect = useTarget(step ? targets[step.k] : null, !!step, step ? COACH_RADIUS[step.k] : 22, 30);
+  const stepRef = step ? targets[step.k] : null;
+  const rect = useTarget(step && stepRef ? { key: step.k, ref: stepRef } : null, step ? COACH_RADIUS[step.k] : 22, 40);
   const last = ci === steps.length - 1;
 
   return (
@@ -407,8 +408,10 @@ export default function Today() {
       <WhichAppSheet visible={!!whichApps} apps={whichApps ?? []} onClose={() => setWhichApps(null)} />
 
       <Spotlight
-        visible={!!step && !!rect}
+        active={!!step}
         target={rect}
+        tipKey={step?.k ?? ''}
+        label="Quick tour"
         title={step?.t ?? ''}
         body={step?.d ?? ''}
         step={ci}

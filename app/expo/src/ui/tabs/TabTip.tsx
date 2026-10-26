@@ -10,9 +10,9 @@ import { useTarget } from './spot';
 export type ScrollRef = RefObject<ComponentRef<typeof ScrollView> | null>;
 
 /**
- * First visit to Waiting or Me (maybeTabTip, P:L1851–1855; SHEETS.tabtip, P:L2244–2250):
- * after 450 ms the spotlight outlines the segmented control or the rank card with one tip and
- * "Got it". Waits until the first-time tour on Today is over.
+ * First visit to Waiting or Me: once the screen has settled, the spotlight outlines the
+ * segmented control or the rank card and one tag drops in with "Got it". Waits until the
+ * first-time tour on Today is over.
  */
 export function TabTip({
   k,
@@ -33,13 +33,15 @@ export function TabTip({
     if (active) scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [active, scrollRef]);
 
-  const rect = useTarget(targetRef, active, radius, 450);
+  const rect = useTarget(active ? { key: k, ref: targetRef } : null, radius, 600);
   const tip = TAB_TIPS[k];
 
   return (
     <Spotlight
-      visible={active && !!rect}
+      active={active}
       target={rect}
+      tipKey={k}
+      label="New here"
       title={tip.t}
       body={tip.d}
       next="Got it"

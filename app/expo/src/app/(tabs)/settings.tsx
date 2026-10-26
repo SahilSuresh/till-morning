@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
-import { ArrowCounterClockwiseIcon, BellRingingIcon, BugIcon, CalendarCheckIcon, CreditCardIcon, CrownSimpleIcon, EyeIcon, FileTextIcon, HeartIcon, type Icon, InfoIcon, LifebuoyIcon, LockIcon, LockKeyIcon, MoonStarsIcon, PiggyBankIcon, PlayIcon, ScrollIcon, ShieldCheckIcon, ShieldIcon, SquaresFourIcon, StarIcon, ToggleRightIcon } from '../../ui/ph';
+import { ArrowCounterClockwiseIcon, BellRingingIcon, BugIcon, CalendarCheckIcon, CreditCardIcon, CrownSimpleIcon, EyeIcon, FileTextIcon, HeartIcon, type Icon, InfoIcon, LifebuoyIcon, LockIcon, LockKeyIcon, MoonStarsIcon, PiggyBankIcon, PlayIcon, ScrollIcon, ShieldCheckIcon, ShieldIcon, SparkleIcon, SquaresFourIcon, StarIcon, ToggleRightIcon } from '../../ui/ph';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking, ScrollView, Switch, Text, TextInput, type TextInputProps, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -588,6 +588,16 @@ export default function Settings() {
             label="Replay the intro"
             sub="See the welcome screens again. Your apps and plan stay as they are."
             onPress={() => router.push({ pathname: '/setup', params: { step: 'replay' } })}
+          />
+          <Row
+            Icon={SparkleIcon}
+            tone="lav"
+            label="Show the tips again"
+            sub="The quick tour on Today, and the tips on Waiting and Me."
+            onPress={() => {
+              setState({ coachStep: 0, tabTips: {} });
+              router.navigate('/');
+            }}
           />
         </Group>
 
