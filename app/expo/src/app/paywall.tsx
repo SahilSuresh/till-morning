@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { BellRinging, X } from '../ui/ph';
 import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Easing, Linking, ScrollView, Switch, Text, useAnimatedValue, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Easing, Linking, ScrollView, Text, useAnimatedValue, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, G } from 'react-native-svg';
 
 import { links } from '../lib/config';
@@ -44,31 +44,44 @@ export default function Paywall() {
   const plan = useAppState((s) => s.plan);
   // Set up already (opened from Today, Settings or a lapsed plan): there's always a way out.
   const [canClose] = useState(() => getState().onboarded);
-  const [remind, setRemind] = useState(true);
   const [plans, setPlans] = useState<Plans | null>(null);
-  // Can this Apple ID have the free week? Unknown until the App Store answers; a lapsed or
-  // returning person is assumed not to, so they never see "free" they can't have.
-  const [trial, setTrial] = useState(() => !getState().lapsed && getState().trialAt === 0);
+  // Per plan: can this Apple ID have that plan's free week? Until the App Store answers, nothing
+  // is called free, so nobody ever sees "free" they can't have.
+  const [eligible, setEligible] = useState<Record<string, boolean> | null>(null);
   const [busy, setBusy] = useState(false);
   const count = protectedCount();
 
-  useEffect(() => {
+  const fetchPlans = () =>
     getPlans()
       .then((p) => {
         setPlans(p);
-        trialEligible(p)
-          .then(setTrial)
-          .catch(() => {});
+        return trialEligible(p)
+          .then(setEligible)
+          .catch(() => setEligible({}));
       })
-      .catch(() => setPlans({}));
+      .catch(() => {
+        setPlans({});
+        setEligible({});
+      });
+  useEffect(() => {
+    fetchPlans();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const retry = () => {
+    setPlans(null);
+    setEligible(null);
+    fetchPlans();
+  };
 
   // Prices only ever come from the App Store, in the person's own currency.
-  const loading = plans === null;
-  const yearlyPrice = plans?.yearly?.product.priceString ?? (loading ? '…' : '–');
-  const monthlyPrice = plans?.monthly?.product.priceString ?? (loading ? '…' : '–');
-  const perMonth = plans?.yearly?.product.pricePerMonthString;
   const yearly = plan === 'yearly';
+  const pkg = yearly ? plans?.yearly : plans?.monthly;
+  const checking = plans === null || eligible === null;
+  const failed = !checking && !plans?.yearly && !plans?.monthly;
+  const trial = !!pkg && !!eligible?.[pkg.product.identifier];
+  const yearlyPrice = plans?.yearly?.product.priceString ?? '…';
+  const monthlyPrice = plans?.monthly?.product.priceString ?? '…';
+  const perMonth = plans?.yearly?.product.pricePerMonthString;
   const price = yearly ? `${yearlyPrice} a year` : `${monthlyPrice} a month`;
   const shields = shieldsLine(count.apps, count.categories);
 
@@ -78,7 +91,7 @@ export default function Paywall() {
     const returning = getState().lapsed || getState().trialAt > 0;
     setState({ subscribed: true, lapsed: false, onboarded: true, appsChosen: true, ...(returning ? {} : { trialAt: now, day: '', coachStep: 0 }) });
     shieldChosenApps();
-    if (trial && remind && (await askNotificationPermission().catch(() => false))) {
+    if (trial && (await askNotificationPermission().catch(() => false))) {
       const when = new Date(now + 5 * 86400000);
       when.setHours(10, 0, 0, 0);
       Notifications.scheduleNotificationAsync({
@@ -97,13 +110,6 @@ export default function Paywall() {
   const start = async () => {
     if (busy) return;
     setBusy(true);
-    let pkg = yearly ? plans?.yearly : plans?.monthly;
-    if (!pkg) {
-      // The plans may have failed to load the first time: try once more before giving up.
-      const fresh = await getPlans().catch(() => ({}) as Plans);
-      setPlans(fresh);
-      pkg = yearly ? fresh.yearly : fresh.monthly;
-    }
     if (!pkg) {
       setBusy(false);
       Alert.alert('The App Store isn’t ready yet', 'The plans couldn’t load. Check your connection and try again.');
@@ -114,8 +120,8 @@ export default function Paywall() {
       if (r === 'active') await done();
       else if (r === 'inactive')
         Alert.alert('Almost there', 'The App Store took the purchase, but Till Morning Pro didn’t switch on. Tap Restore purchases, or try again in a minute.');
-    } catch (e) {
-      Alert.alert('Purchase didn’t go through', String((e as Error).message ?? e));
+    } catch {
+      Alert.alert('Purchase didn’t go through', 'Nothing was charged. Check your connection and try again.');
     } finally {
       setBusy(false);
     }
@@ -142,7 +148,18 @@ export default function Paywall() {
           accessibilityRole="button"
           accessibilityLabel="Close"
           hitSlop={10}
-          style={{ position: 'absolute', zIndex: 2, top: sp.top(10), left: 18, width: 40, height: 40, borderRadius: 20, backgroundColor: '#1E2256', alignItems: 'center', justifyContent: 'center' }}
+          style={{
+            position: 'absolute',
+            zIndex: 2,
+            top: sp.top(10),
+            left: 18,
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: '#1E2256',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           <X size={20} weight="bold" color={color.text} />
         </Pressable>
@@ -161,71 +178,67 @@ export default function Paywall() {
           </Text>
         </Rise>
 
-        {/* Seven moons, one per night, growing to full on the night the plan starts (free week only) */}
-        {trial && (
-          <View style={{ marginTop: 20 }}>
-            <SevenMoons remind={remind} />
+        {checking ? (
+          // Asking the App Store for the plans and whether the free week applies
+          <ActivityIndicator style={{ marginTop: 40 }} color={MOON} accessibilityLabel="Loading the plans" />
+        ) : failed ? (
+          <View
+            style={{
+              marginTop: 24,
+              borderRadius: 18,
+              backgroundColor: '#1E2256',
+              borderWidth: 1,
+              borderColor: '#3A3F86',
+              padding: 18,
+              gap: 12,
+              alignItems: 'center',
+            }}
+          >
+            <Text style={[type.title, { textAlign: 'center' }]}>Couldn’t load the plans</Text>
+            <Text style={[type.small, { textAlign: 'center' }]}>The App Store didn’t answer. Check your connection and try again.</Text>
+            <Button variant="night" label="Try again" onPress={retry} />
           </View>
-        )}
+        ) : (
+          <>
+            {/* Seven moons, one per night, growing to full on the night the plan starts (free week only) */}
+            {trial && (
+              <View style={{ marginTop: 20 }}>
+                <SevenMoons remind />
+              </View>
+            )}
 
-        {/* The terms in one place */}
-        <Rise delay={trial ? 1700 : 200} style={{ marginTop: 18 }}>
-          <View style={{ borderRadius: 18, backgroundColor: '#1E2256', borderWidth: 1, borderColor: '#3A3F86', padding: 14 }}>
-            <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, lineHeight: 19, color: color.text2 }}>
-              Tonight: {shields.charAt(0).toLowerCase() + shields.slice(1)}.{' '}
-              {trial ? (
-                <>
-                  Nothing to pay today. {remind ? `We remind you on ${weekday(5)}. ` : ''}
-                  <Text style={{ fontFamily: font.bodyHeavy, color: color.text }}>{price}</Text> starts {weekday(7)} ({dt(7)}) unless you cancel before.
-                </>
-              ) : (
-                <>
-                  <Text style={{ fontFamily: font.bodyHeavy, color: color.text }}>{price}</Text>, billed today.
-                </>
-              )}
-            </Text>
-          </View>
-        </Rise>
+            {/* The terms in one place */}
+            <Rise delay={trial ? 1700 : 200} style={{ marginTop: 18 }}>
+              <View style={{ borderRadius: 18, backgroundColor: '#1E2256', borderWidth: 1, borderColor: '#3A3F86', padding: 14 }}>
+                <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, lineHeight: 19, color: color.text2 }}>
+                  Tonight: {shields.charAt(0).toLowerCase() + shields.slice(1)}.{' '}
+                  {trial ? (
+                    <>
+                      Nothing to pay today. With notifications on, we remind you on {weekday(5)}.{' '}
+                      <Text style={{ fontFamily: font.bodyHeavy, color: color.text }}>{price}</Text> starts {weekday(7)} ({dt(7)}) unless you cancel before.
+                    </>
+                  ) : (
+                    <>
+                      <Text style={{ fontFamily: font.bodyHeavy, color: color.text }}>{price}</Text>, billed today.
+                    </>
+                  )}
+                </Text>
+              </View>
+            </Rise>
 
-        <Rise delay={trial ? 1950 : 300} style={{ marginTop: 14 }}>
-          <View accessibilityRole="radiogroup" accessibilityLabel="Choose a plan" style={{ gap: 10 }}>
-            <PlanTag
-              on={yearly}
-              name="Yearly"
-              sub={perMonth ? `${perMonth} a month, billed yearly` : 'Billed yearly'}
-              amount={yearlyPrice}
-              onPress={() => setState({ plan: 'yearly' })}
-            />
-            <PlanTag on={!yearly} name="Monthly" sub="Billed monthly" amount={monthlyPrice} onPress={() => setState({ plan: 'monthly' })} />
-          </View>
-        </Rise>
-
-        {trial && (
-          <Rise delay={2150} style={{ marginTop: 10 }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 12,
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: '#3A3F86',
-                backgroundColor: '#1E2256',
-                paddingHorizontal: 16,
-                paddingVertical: 13,
-              }}
-            >
-              <BellRinging size={20} weight="bold" color={MOON} />
-              <Text style={{ flex: 1, fontFamily: font.bodyBold, fontSize: 16, lineHeight: 24, color: color.text }}>Remind me before it ends</Text>
-              <Switch
-                value={remind}
-                onValueChange={setRemind}
-                accessibilityLabel="Remind me before the free week ends"
-                trackColor={{ true: '#7C4DFF', false: '#2B2F69' }}
-                ios_backgroundColor="#2B2F69"
-              />
-            </View>
-          </Rise>
+            <Rise delay={trial ? 1950 : 300} style={{ marginTop: 14 }}>
+              <View accessibilityRole="radiogroup" accessibilityLabel="Choose a plan" style={{ gap: 10 }}>
+                <PlanTag
+                  on={yearly}
+                  name="Yearly"
+                  sub={perMonth ? `${perMonth} a month, billed yearly` : 'Billed yearly'}
+                  amount={yearlyPrice}
+                  onPress={() => setState({ plan: 'yearly' })}
+                />
+                <PlanTag on={!yearly} name="Monthly" sub="Billed monthly" amount={monthlyPrice} onPress={() => setState({ plan: 'monthly' })} />
+              </View>
+            </Rise>
+          </>
         )}
       </ScrollView>
 
@@ -239,11 +252,13 @@ export default function Paywall() {
           icon={busy ? <ActivityIndicator color="#FFFFFF" /> : undefined}
           accessibilityHint={busy ? 'Opening the App Store' : undefined}
         />
-        <Text style={{ fontFamily: font.bodySemi, fontSize: 11.5, lineHeight: 16, color: color.text2, textAlign: 'center' }}>
-          {trial
-            ? `Free for 7 days, then ${price}. Till Morning Pro renews automatically until you cancel. Payment is charged to your Apple ID when the free week ends. Cancel any time in Settings › your name › Subscriptions, at least 24 hours before it ends.`
-            : `Till Morning Pro, ${price}, charged to your Apple ID today. It renews automatically until you cancel. Cancel any time in Settings › your name › Subscriptions, at least 24 hours before the period ends.`}
-        </Text>
+        {!checking && !failed && (
+          <Text style={{ fontFamily: font.bodySemi, fontSize: 11.5, lineHeight: 16, color: color.text2, textAlign: 'center' }}>
+            {trial
+              ? `Free for 7 days, then ${price}. Till Morning Pro renews automatically until you cancel. Payment is charged to your Apple ID when the free week ends. Cancel any time in Settings › your name › Subscriptions, at least 24 hours before it ends.`
+              : `Till Morning Pro, ${price}, charged to your Apple ID today. It renews automatically until you cancel. Cancel any time in Settings › your name › Subscriptions, at least 24 hours before the period ends.`}
+          </Text>
+        )}
         <View style={{ flexDirection: 'row', gap: 16 }}>
           {[
             ['Restore purchases', restore],
@@ -288,7 +303,11 @@ function SevenMoons({ remind }: { remind: boolean }) {
   const rm = useReduceMotion();
   const days = Array.from({ length: 7 }, (_, i) => weekday(i + 1, true));
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }} accessible accessibilityLabel={`Seven free nights. ${remind ? 'A reminder on night 5. ' : ''}Your plan starts after night 7.`}>
+    <View
+      style={{ flexDirection: 'row', justifyContent: 'space-between' }}
+      accessible
+      accessibilityLabel={`Seven free nights. ${remind ? 'A reminder on night 5. ' : ''}Your plan starts after night 7.`}
+    >
       {days.map((d, i) => (
         <MoonPop key={i} delay={rm ? 0 : 250 + i * 190}>
           <View style={{ alignItems: 'center', gap: 5 }}>
@@ -296,12 +315,28 @@ function SevenMoons({ remind }: { remind: boolean }) {
               {i === 6 && <View style={{ position: 'absolute', width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: DAWN }} />}
               <NightMoon lit={(i + 1) / 7} id={`night${i}`} />
               {i === 4 && remind && (
-                <View style={{ position: 'absolute', top: -8, right: -6, width: 18, height: 18, borderRadius: 9, backgroundColor: '#7C4DFF', alignItems: 'center', justifyContent: 'center' }}>
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -8,
+                    right: -6,
+                    width: 18,
+                    height: 18,
+                    borderRadius: 9,
+                    backgroundColor: '#7C4DFF',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
                   <BellRinging size={11} weight="fill" color="#FFFFFF" />
                 </View>
               )}
             </View>
-            <Text style={{ fontFamily: font.bodyHeavy, fontSize: 10.5, letterSpacing: 0.5, color: i === 6 ? DAWN : i === 4 && remind ? '#C4B5FD' : color.text3 }}>{d}</Text>
+            <Text
+              style={{ fontFamily: font.bodyHeavy, fontSize: 10.5, letterSpacing: 0.5, color: i === 6 ? DAWN : i === 4 && remind ? '#C4B5FD' : color.text3 }}
+            >
+              {d}
+            </Text>
           </View>
         </MoonPop>
       ))}
@@ -322,7 +357,10 @@ function MoonPop({ delay, children }: { delay: number; children: ReactNode }) {
     <Animated.View
       style={{
         opacity: v.interpolate({ inputRange: [0, 0.3], outputRange: [0, 1], extrapolate: 'clamp' }),
-        transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) }, { translateY: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
+        transform: [
+          { scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) },
+          { translateY: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) },
+        ],
       }}
     >
       {children}
@@ -363,15 +401,39 @@ function PlanTag({ on, name, sub, amount, onPress }: { on: boolean; name: string
             }}
           >
             {/* the eyelet, filled when picked */}
-            <View style={{ marginLeft: 14, width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: on ? MOON : '#8A8EC6', alignItems: 'center', justifyContent: 'center' }}>
+            <View
+              style={{
+                marginLeft: 14,
+                width: 14,
+                height: 14,
+                borderRadius: 7,
+                borderWidth: 2,
+                borderColor: on ? MOON : '#8A8EC6',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               {on && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: MOON }} />}
             </View>
             <View style={{ flex: 1, paddingHorizontal: 12, paddingVertical: 10 }}>
               <Text style={{ fontFamily: font.bodyHeavy, fontSize: 16, color: '#FFFFFF' }}>{name}</Text>
               <Text style={{ fontFamily: font.bodySemi, fontSize: 12.5, color: on ? '#E3D9FF' : color.text3 }}>{sub}</Text>
             </View>
-            <View style={{ alignSelf: 'stretch', width: 1.5, marginVertical: 10, borderLeftWidth: 1.5, borderStyle: 'dashed', borderColor: on ? 'rgba(255,255,255,0.45)' : '#3A3F86' }} />
-            <Text style={{ width: 92, textAlign: 'center', fontFamily: font.display, fontSize: 24, color: on ? MOON : '#FFFFFF', fontVariant: ['tabular-nums'] }}>{amount}</Text>
+            <View
+              style={{
+                alignSelf: 'stretch',
+                width: 1.5,
+                marginVertical: 10,
+                borderLeftWidth: 1.5,
+                borderStyle: 'dashed',
+                borderColor: on ? 'rgba(255,255,255,0.45)' : '#3A3F86',
+              }}
+            />
+            <Text
+              style={{ width: 92, textAlign: 'center', fontFamily: font.display, fontSize: 24, color: on ? MOON : '#FFFFFF', fontVariant: ['tabular-nums'] }}
+            >
+              {amount}
+            </Text>
           </LinearGradient>
         </View>
       )}

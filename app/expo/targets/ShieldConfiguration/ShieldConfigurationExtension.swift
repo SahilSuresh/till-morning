@@ -176,7 +176,7 @@ func tmPersonalised(_ config: [String: Any]?, application: Application) -> [Stri
     cfg["subtitle"] = sub
   }
   // Notifications off: "I still want it" can't send its "Tap to start your pause", so say what to do.
-  if userDefaults?.object(forKey: "tm_notify_ok") as? Bool == false {
+  if config != nil, userDefaults?.object(forKey: "tm_notify_ok") as? Bool == false {
     let base = (cfg["subtitle"] as? String) ?? "Is this a planned purchase?"
     cfg["subtitle"] = base + "\nStill want it? Tap below, then open Till Morning for your pause."
   }
@@ -206,7 +206,7 @@ func tmNightActive(_ date: Date = Date()) -> Bool {
 }
 
 /// The night-lock shield ("It's late. … can wait till morning.") and the late shield
-/// (22:00–05:00 when night lock isn't on: "It's 23:10. … will still be there at 8.").
+/// (22:00 to midnight when night lock isn’t on: "It's 23:10. … will still be there at 8.").
 func tmNightOrLateShield(application: Application, config: [String: Any]?) -> ShieldConfiguration? {
   let name = application.localizedDisplayName ?? "this app"
   let now = Date()

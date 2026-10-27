@@ -12,7 +12,7 @@ import { askNotificationPermission } from '../lib/notify';
 import { requestScreenTimeAccess } from '../lib/screenTime';
 import { setState } from '../lib/store';
 import { PauseBackground } from '../ui/backgrounds';
-import { Button, Card, Chip, Rise, useReduceMotion } from '../ui/components';
+import { Button, Card, Chip, Rise, TextLink, toast, useReduceMotion } from '../ui/components';
 import { Hl } from '../ui/Hl';
 import { IconTile, LetterTile, MonoLabel, UnderlineLink } from '../ui/onboarding/bits';
 import { ObHeader } from '../ui/onboarding/ObHeader';
@@ -59,7 +59,7 @@ export default function Setup() {
   // Setup ends on the paywall; starting the free week (or restoring) turns the shields on.
   const finish = () => {
     track('onboarding_completed');
-    router.push('/paywall');
+    router.replace('/paywall');
   };
 
   // The picker reports "Done" before it has saved the selection (it saves ~0.1 s later),
@@ -86,7 +86,7 @@ export default function Setup() {
         shieldChosenApps();
         router.back();
       } else go('notify');
-    }
+    } else toast('Pick at least one app, or a whole category');
   };
 
   let body: ReactNode = null;
@@ -101,7 +101,7 @@ export default function Setup() {
       body = <Story onNext={() => go('screenTime')} />;
       break;
     case 'screenTime':
-      body = <ScreenTime onAllowed={() => go('ukApps')} />;
+      body = <ScreenTime onAllowed={() => go('ukApps')} onSkip={() => go('notify')} />;
       break;
     case 'ukApps':
       body = <UkApps onOpen={() => setPicker(true)} />;
@@ -191,7 +191,7 @@ function Welcome({ onNext }: { onNext: () => void }) {
       footer={
         <>
           <Button sound="next" variant="night" label="Let’s get started" onPress={onNext} />
-          <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>Starts with a free week</Text>
+          <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>Takes about 2 minutes</Text>
         </>
       }
     >
@@ -257,7 +257,7 @@ const SCREEN_TIME_ROWS: [Icon, string][] = [
   [ToggleRight, 'Switch it off anytime in Settings'],
 ];
 
-function ScreenTime({ onAllowed }: { onAllowed: () => void }) {
+function ScreenTime({ onAllowed, onSkip }: { onAllowed: () => void; onSkip: () => void }) {
   const base = useStepBase();
   const rd = useRiseDelay();
   const [denied, setDenied] = useState(false);
@@ -297,7 +297,11 @@ function ScreenTime({ onAllowed }: { onAllowed: () => void }) {
         ) : (
           <>
             <Button sound="next" variant="night" label={denied ? 'Try again' : 'Continue'} onPress={allowScreenTime} />
-            <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>Next, a quick tip on which apps to pick.</Text>
+            {denied ? (
+              <TextLink label="Not now" style={{ color: color.text3 }} onPress={onSkip} />
+            ) : (
+              <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>Next, a quick tip on which apps to pick.</Text>
+            )}
           </>
         )
       }
@@ -317,7 +321,7 @@ function ScreenTime({ onAllowed }: { onAllowed: () => void }) {
           style={{ marginTop: 16, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: 'rgba(255,143,120,0.12)', borderWidth: 1.5, borderColor: 'rgba(255,143,120,0.32)' }}
         >
           <Text style={{ fontFamily: font.bodyBold, fontSize: 15, lineHeight: 21, color: '#FFE4DC' }}>
-            Till Morning can’t shield apps without Screen Time. Tap Try again, then Continue.
+            Till Morning can’t shield apps without Screen Time access. You can allow it now, or later from Today.
           </Text>
         </View>
       )}
@@ -426,7 +430,7 @@ function Notify({ onNext }: { onNext: () => void }) {
             variant="night"
             label="Continue"
             onPress={async () => {
-              await askNotificationPermission();
+              await askNotificationPermission().catch(() => false);
               onNext();
             }}
           />
@@ -457,7 +461,7 @@ const DEMO_REVEAL = DEMO_DELAY + DEMO_SECS * 1000; // the check and the choices 
 const CHOICES: [string, string, 'mint' | 'sun' | 'lilac'][] = [
   ['I’ll leave it', '+10 XP', 'mint'],
   ['Park it till morning', '+5 XP', 'sun'],
-  ['Shop with a plan', 'Shopping Pass', 'lilac'],
+  ['I need it now', 'Shopping Pass', 'lilac'],
 ];
 
 function Demo({ onNext }: { onNext: () => void }) {

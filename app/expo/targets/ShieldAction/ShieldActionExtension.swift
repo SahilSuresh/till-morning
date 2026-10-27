@@ -271,7 +271,7 @@ func handleAction(
 ) {
   CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication)
 
-  if applicationToken != nil,
+  if applicationToken != nil || categoryToken != nil,
     tmHandleShieldTap(
       action: action, applicationToken: applicationToken, completionHandler: completionHandler)
   {

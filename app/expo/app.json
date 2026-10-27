@@ -50,7 +50,8 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Till Morning records a short note from you, in your own voice, to play back in your pause. It stays on this phone."
+          "microphonePermission": "Till Morning records a short note from you, in your own voice, to play back in your pause. It stays on this phone.",
+          "enableBackgroundPlayback": false
         }
       ],
       [

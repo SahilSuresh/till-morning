@@ -2,9 +2,9 @@ import { Figtree_500Medium, Figtree_600SemiBold, Figtree_700Bold, Figtree_800Ext
 import { Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
 import { useFonts } from 'expo-font';
 import { ObserveRoot, useObserve } from 'expo-observe';
-import { router, Stack } from 'expo-router';
+import { router, Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AppState, View } from 'react-native';
 
 import { initAnalytics } from '../lib/analytics';
@@ -23,6 +23,11 @@ initCrashReporting();
 initAnalytics();
 initPurchases();
 
+// "I still want it" with notifications off: onForeground asks for the pause; RootLayout opens it
+// once the screens are up, and not if a pause is already showing.
+let wantPause = false;
+const pauseListeners = new Set<() => void>();
+
 function onForeground() {
   rollDay();
   syncShields();
@@ -37,7 +42,10 @@ function onForeground() {
   Notifications.getPermissionsAsync()
     .then((p) => {
       setNotifyFlag(p.granted);
-      if (want && !p.granted) router.push('/pause');
+      if (want && !p.granted) {
+        wantPause = true;
+        pauseListeners.forEach((l) => l());
+      }
     })
     .catch(() => {});
   const goal = goalToast(checkGoals());
@@ -120,6 +128,21 @@ function RootLayout() {
   useEffect(() => {
     if (ready) markInteractive();
   }, [ready, markInteractive]);
+
+  const pathname = usePathname();
+  const [pauseAsk, setPauseAsk] = useState(0);
+  useEffect(() => {
+    const l = () => setPauseAsk((n) => n + 1);
+    pauseListeners.add(l);
+    return () => {
+      pauseListeners.delete(l);
+    };
+  }, []);
+  useEffect(() => {
+    if (!ready || !wantPause) return;
+    wantPause = false;
+    if (pathname !== '/pause') router.push('/pause');
+  }, [ready, pauseAsk, pathname]);
 
   // A new rank gets its celebration as soon as the XP lands.
   const xpTotal = useAppState((s) => s.xp.total);

@@ -8,6 +8,7 @@ import { hasTmNative } from '../../../modules/tm-native';
 import { type MyApp, myApps } from '../../lib/apps';
 import { endPass, formatReady, shieldChosenApps } from '../../lib/core';
 import { hh, nightOn, pauseSeconds, risky } from '../../lib/rules';
+import { getScreenTimeStatus, requestScreenTimeAccess } from '../../lib/screenTime';
 import { setState, useAppState } from '../../lib/store';
 import { COACH_TIPS, recapDue } from '../../lib/week';
 import { xpToast } from '../../lib/xp';
@@ -106,6 +107,15 @@ export default function Today() {
   const tryRef: SpotRef = useRef(null);
   const [whichApps, setWhichApps] = useState<MyApp[] | null>(null);
 
+  // Screen Time first if it was skipped in setup, then Apple's app list.
+  const chooseApps = async () => {
+    if (hasTmNative && getScreenTimeStatus() !== 2) {
+      const st = await requestScreenTimeAccess().catch(() => 0);
+      if (st !== 2) return toast('Till Morning needs Screen Time access to shield apps. You can allow it in iPhone Settings › Screen Time.');
+    }
+    router.push({ pathname: '/setup', params: { step: 'picker' } });
+  };
+
   const shieldsBackOn = () => {
     const r = shieldChosenApps();
     toast(r ? xpToast(r, 'Shields are back on') : 'Shields are back on');
@@ -141,7 +151,7 @@ export default function Today() {
         face: 'off' as const,
         title: 'No apps shielded',
         sub: 'Pick the apps that get you, and Till Morning puts a pause in front of them.',
-        action: <Button label="Choose apps" onPress={() => router.push({ pathname: '/setup', params: { step: 'picker' } })} />,
+        action: <Button label="Choose apps" onPress={chooseApps} />,
       };
     const timeLine = night
       ? `Night lock is on till ${hh(settings.nlTo)}: park it or close it.`

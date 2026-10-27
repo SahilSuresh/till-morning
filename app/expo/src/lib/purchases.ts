@@ -70,14 +70,20 @@ export async function buy(pkg: PurchasesPackage) {
   }
 }
 
-/** Will the App Store give this Apple ID the free week? Unknown counts as yes only if the plan has one. */
-export async function trialEligible(plans: Plans): Promise<boolean> {
+/**
+ * Per plan (product id): will the App Store give this Apple ID that plan's free week?
+ * A plan without a free week is never "free"; unknown counts as yes only when the plan has one.
+ */
+export async function trialEligible(plans: Plans): Promise<Record<string, boolean>> {
   const pkgs = [plans.yearly, plans.monthly].filter((p): p is PurchasesPackage => !!p);
-  if (!configured || !pkgs.length) return false;
+  if (!configured || !pkgs.length) return {};
   const res = await Purchases.checkTrialOrIntroductoryPriceEligibility(pkgs.map((p) => p.product.identifier));
-  return pkgs.some((p) => {
+  const out: Record<string, boolean> = {};
+  for (const p of pkgs) {
     const st = res[p.product.identifier]?.status;
-    if (st === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_ELIGIBLE) return true;
-    return st === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_UNKNOWN && !!p.product.introPrice;
-  });
+    const hasTrial = !!p.product.introPrice;
+    out[p.product.identifier] =
+      hasTrial && (st === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_ELIGIBLE || st === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_UNKNOWN);
+  }
+  return out;
 }

@@ -199,7 +199,6 @@ export default function Settings() {
   const budgetTotal = useAppState((s) => s.budgetTotal);
   const split = useAppState((s) => s.split);
   const lapsed = useAppState((s) => s.lapsed);
-  const plan = useAppState((s) => s.plan);
   const trialAt = useAppState((s) => s.trialAt);
   const [more, setMore] = useState(false);
   const offTill = offUntil > Date.now();
@@ -282,9 +281,10 @@ export default function Settings() {
     ]);
 
   const rate = async () => {
+    // Apple's own rating sheet first (it works in review too); the App Store page only as a fallback.
+    if (await StoreReview.hasAction()) return StoreReview.requestReview();
     const url = StoreReview.storeUrl();
     if (url) Linking.openURL(`${url}?action=write-review`);
-    else if (await StoreReview.hasAction()) StoreReview.requestReview();
     else toast('Reviews open once Till Morning is on the App Store');
   };
 
@@ -584,7 +584,7 @@ export default function Settings() {
             first
             Icon={CrownSimpleIcon}
             tone="lav"
-            label={lapsed ? 'Protection is paused' : `Till Morning ${plan === 'yearly' ? 'yearly' : 'monthly'}`}
+            label={lapsed ? 'Protection is paused' : 'Till Morning Pro'}
             sub={
               lapsed
                 ? 'Your plan has ended. Tap to turn protection back on.'

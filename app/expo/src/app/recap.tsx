@@ -31,8 +31,9 @@ export default function Recap() {
   const top = byDay.indexOf(Math.max(...byDay));
   const date = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' });
 
+  // Opened on a Sunday (from Today or Me), this week's recap card is done; other days leave it be.
   useEffect(() => {
-    setState({ recapSeenWeek: thisWeek() });
+    if (new Date().getDay() === 0) setState({ recapSeenWeek: thisWeek() });
   }, []);
 
   const rows: [string, string, boolean?][] = [

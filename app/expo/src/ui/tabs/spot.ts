@@ -30,6 +30,7 @@ export function useTarget(target: { key: string; ref: SpotRef } | null, radius: 
           setGot({ key, rect: { ...r, radius: Math.min(r.radius, r.height / 2) } });
           return;
         }
+        if (!r && tries >= 30) return; // never laid out: the tip simply doesn't show
         last = r;
         timer = setTimeout(tick, 90);
       });
