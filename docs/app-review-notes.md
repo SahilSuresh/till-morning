@@ -4,70 +4,70 @@ Two of our other apps were rejected under **guideline 5.6 (Developer Code of Con
 
 ---
 
-## A. Notes for App Review (paste into App Store Connect)
+## A. Notes for App Review (in App Store Connect; keep the two in step)
 
-Till Morning helps people stop impulse buying. They choose their shopping and takeaway apps with Apple's Screen Time picker, and those apps then open behind a short pause. Everything runs on the phone. There is no account, no bank connection and no server of our own.
+Contact: Andrej Gazi, support@tillmorning.co.uk (phone in App Store Connect).
 
-**What you need to test it**
-- A real iPhone (Screen Time / Family Controls doesn't work in the Simulator).
-- Allow Screen Time access when asked during setup, and pick one or two apps (for example a shopping app).
-- The shields need an active subscription. The paywall offers a free week. A sandbox account works.
+```
+Till Morning is a shopping-specific tool against impulse buying: wants are "parked" with a wait time and decided on later with a clear head. People pick their shopping and takeaway apps with Apple's Screen Time picker; those apps open behind a short pause. No account, no bank connection, no server of our own.
 
-**Core flow (about 2 minutes)**
-1. Open one of the chosen apps. iOS shows the Till Morning shield (drawn by iOS from our Shield Configuration extension).
-2. Tap **"I still want to shop"**. A notification, "Tap to start your pause", opens the breathing pause in Till Morning.
-3. After the pause, choose **"I'll leave it"**, **"Park it till morning"** (saves the want to the Waiting room with a wait time) or **"Shop with a plan"** (a Shopping Pass that unlocks the app for a few minutes and re-locks it).
-4. **Today → "Need to shop? Get a pass"** starts the same flow from inside the app.
+TO TEST
+- A real iPhone (Family Controls does not work in the Simulator).
+- During setup, allow Screen Time and pick one or two shopping apps.
+- Shields need the subscription. The paywall offers a 7-day free trial to eligible Apple IDs; a sandbox account works.
 
-**Behaviour that depends on the time or date.** These are not hidden; they are part of the product and can each be seen as follows:
-| Feature | When it appears | How to see it during review |
-|---|---|---|
-| Night lock | 23:00–07:00 by default (Settings → Night lock) | **Settings → Night lock → "See how night lock looks"** shows the exact screen |
-| Late-night shield and longer pause | after 22:00 | Same pause as the day, with a longer timer and different shield text |
-| Treat nights | days chosen in **Your rules** | Pick today in Your rules → Treat nights |
-| Sale week (waits ×2) | switched on by the user | **Your rules → More rules → Sale week** |
-| Day 2–7 tips on Today | first week | Tips only. Every feature they mention is already available from the first launch (Your rules, Shopping Pass, stickers on Me, voice note, basket screenshot) |
-| Rating prompt | Apple's own `SKStoreReviewController`, after a calm win on day 4+ | System controlled |
+CORE FLOW (2-3 minutes)
+1. Open a chosen app. iOS shows the Till Morning shield.
+2. Tap "I still want it". A notification "Tap to start your pause" opens the breathing pause. (If notifications are off, the shield says to open Till Morning, which then starts the pause.)
+3. After the pause: "I'll leave it", "Park it till morning" (the want goes to the trolley on Today and to Waiting) or "I need it now" (Shopping Pass).
+4. Shopping Pass: say what you need, set a limit and minutes. The app unlocks, a Live Activity counts down, and it locks again. Also from Today > "Get a pass".
+5. Decide: a want parked as "£20 or less" before 21:00 is ready in 1 hour. Then Waiting > Ready > tap it > "Let it go" or "Still want it" (which offers a Shopping Pass). Wants never become ready between 22:00 and 08:00.
 
-**Shopping Pass countdown outside the app**
-- While a Shopping Pass runs, the countdown shows as a Live Activity (Lock Screen and Dynamic Island), plus notifications at 2 minutes and 30 seconds left.
+EVERYTHING IS VISIBLE FROM DAY 1 (nothing unlocks later)
+- Night lock (23:00-07:00 by default): Settings > Night lock > "See how night lock looks". Its "It's urgent" door (10 minutes after a short wait and a reason) can be opened from that preview.
+- After 22:00 the pause is longer and the shield text changes.
+- Your rules (Settings): challenges, treat nights (for takeaway apps you picked), sale seasons (waits doubled while switched on), "When to shield" (all day / evenings / weekends).
+- Cool-off: after "Close" on a shield, that app stays closed for the minutes set in Settings.
+- Weekly recap: Me > "Your week" (it also appears on Today on Sundays).
+- Stickers, ranks and the Morning card: Me. Requirements are shown on screen.
+- Voice note from calm you: Today setup card or Me > note. Plays in the pause.
+- Monthly budget, cool-off length and the optional self-reported bank limit: Settings > More options.
+- Rating prompt: Apple's SKStoreReviewController only.
 
-**Share and Safari**
-- Share extension: in any app, Share → Till Morning parks a screenshot (the total is read on the phone with Vision) or a link.
-- Till Morning for Safari: runs only on a fixed list of shop sites, notices checkout pages, and offers to park the basket. Turn it on in Settings → Apps → Safari → Extensions. The app explains this on its "Caught at checkout" page.
+EXTENSIONS
+- Share: in any app, Share > Till Morning parks a link or a basket screenshot (the total is read on the phone with Vision).
+- Safari: Settings > "Safari and the Share button" explains it. Turn it on in iPhone Settings > Apps > Safari > Extensions > Till Morning, then open a basket/checkout page on a listed shop (e.g. asos.com, open the bag). It offers to park the basket. Tapping its toolbar icon shows what it does.
+- Widget: "Waiting room" widget for the Home and Lock Screen (long-press the Home Screen > Edit > Add Widget > Till Morning).
 
-**Permissions and why**
-- Screen Time (Family Controls): to put the shield on the apps the person picks.
-- Notifications: "Tap to start your pause", pass ended, and "your parked want is ready".
-- Microphone: optional. Records a short "note from calm you" that plays in the pause. Stays on the phone.
-- Photos: optional. The person picks a checkout or basket screenshot; Apple's Vision framework reads the total on the phone. Nothing is uploaded.
-- Messages: optional "Ask a friend" opens the Messages composer with a draft; the person presses send.
+PERMISSIONS
+- Screen Time (Family Controls): only to shield the apps the person picks.
+- Notifications: start the pause, pass ended, a parked want is ready, the trial reminder. No marketing.
+- Microphone (optional): the voice note. Photos (optional): a basket screenshot. Both stay on the phone.
+- Messages (optional): "Ask a friend" opens the composer; the person sends it.
 
-**Things the app does not do**
-- No hidden screens, gestures or debug menus in the App Store build. Test tools exist only in internal development builds and are compiled out of production.
-- No remote configuration or feature flags. Over-the-air updates are switched off in App Store builds, so the build you review is the build people get.
-- The bank limit is self-reported: the app shows the steps and never connects to a bank.
+The App Store build has no test tools, hidden screens, gestures, remote feature flags or over-the-air updates. The bank limit is self-reported; the app never connects to a bank.
 
-Contact for review questions: [add a phone number and email that are answered during review]
+Website, privacy and support: https://tillmorning.co.uk
+```
 
 ---
 
 ## B. Guideline 5.6 checklist (run before every submission)
 
 **Built into the code** (keep it that way):
-- [x] Test-only controls ("Skip" on the paywall, Settings → Test tools) appear only when `config.isTestBuild` is true: `__DEV__`, or `APP_ENV` = `development`/`preview`. A missing `APP_ENV` counts as production (fails safe). See `src/lib/config.ts`.
+- [x] There are no test tools in the app at all (no Test tools section, no paywall skip, no replay/reset screens, no `isTestBuild`). Test on TestFlight builds like a customer.
 - [x] `app.config.ts` turns expo-updates **off** when `APP_ENV` is `production`. Fixes ship as new reviewed builds. If OTA is ever turned back on, only bug fixes may go out that way, never new features or changed behaviour.
 - [x] No long-press, multi-tap or other secret gestures (`grep -rn "onLongPress" src` should stay empty).
-- [x] No feature waits for a date or a server switch to unlock. The week-one cards only point to features that already exist.
+- [x] No feature waits for a date or a server switch to unlock. There are no week-one "New · day N" cards. Sunday's recap is always on Me → Your week.
 - [x] Time-based features each have a visible way to see them (table above).
-- [x] In-app copy describes only what exists in this build. Widgets, the Share button and the Safari extension are **not** mentioned until they ship.
+- [x] In-app copy describes only what exists in this build. The widget, Share and Safari extensions ship and are in the notes and the description.
 
 **Before you press Submit:**
-- [ ] Build with the **production** profile (`eas build --profile production`), never a development or preview build.
-- [ ] Install that exact build from TestFlight and check: no "Skip (test build only)" on the paywall, no "Test tools" section at the bottom of Settings.
+- [ ] Build with Codemagic → "Till Morning for iPhone" (APP_ENV=production) from the latest main.
+- [ ] Install that exact build from TestFlight and walk the notes above end to end (night-lock preview + It's urgent, Your week, Safari page, paywall close button).
 - [ ] The App Store description, screenshots and preview video show only features in this build, and every main feature in the build is mentioned (night lock, Waiting room, Shopping Pass, budget, rules, voice note, basket screenshot).
-- [ ] Privacy policy and support URLs in `src/lib/config.ts` point to real, live pages. They are still `example.com` placeholders.
-- [ ] App Privacy answers match the app: crash reports (Sentry), purchases (RevenueCat), nothing else leaves the phone.
+- [x] Privacy policy and support URLs point to https://tillmorning.co.uk (site/ in this repo, deployed with wrangler).
+- [ ] App Privacy answers match the app: purchases (RevenueCat), crash/performance/diagnostics (Sentry, Expo), product interaction (Expo Observe). Not linked, no tracking.
 - [ ] Paste Part A into the App Review notes, with a real contact.
 - [ ] Don't reuse code, screenshots, descriptions or metadata from the other apps on this account. Shared templates across apps are a common reason for 5.6 and 4.3 "pattern" flags.
 - [ ] Reply to any App Review question in Resolution Center plainly and quickly, and list where each feature is.

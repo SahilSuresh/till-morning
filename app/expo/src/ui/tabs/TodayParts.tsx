@@ -327,8 +327,8 @@ export function SaleBanner() {
   return (
     <View accessible style={{ borderRadius: 20, borderWidth: 1.5, borderColor: 'rgba(255,143,120,0.5)', overflow: 'hidden', paddingHorizontal: 14, paddingVertical: 12 }}>
       <LinearGradient colors={['#3A1430', '#2A1638']} start={{ x: 0.07, y: 0.25 }} end={{ x: 0.93, y: 0.75 }} style={{ position: 'absolute', inset: 0 }} />
-      <Text style={{ fontFamily: font.display, fontSize: 17, lineHeight: 20, color: '#FFAB98' }}>It’s Black Friday week</Text>
-      <Text style={type.small}>Waits are doubled until Monday.</Text>
+      <Text style={{ fontFamily: font.display, fontSize: 17, lineHeight: 20, color: '#FFAB98' }}>Sale week is on</Text>
+      <Text style={type.small}>Waits are doubled until you switch it off.</Text>
     </View>
   );
 }

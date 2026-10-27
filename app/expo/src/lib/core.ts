@@ -6,7 +6,7 @@ import { cancelPassEnd, scheduleParkedReady, schedulePassEnd } from './notify';
 import { breakDay, bump, FREE_PASSES } from './progress';
 import { activeChallenge, inSchedule, isTreatNight, saleOn } from './rules';
 import { dayKey, getState, type ParkedWant, type PriceBand, setState, type ShoppingPass } from './store';
-import { endPassActivities, reloadWidgets, startPassActivity, stopPassPip } from '../../modules/tm-native';
+import { endPassActivities, reloadWidgets, startPassActivity } from '../../modules/tm-native';
 import { shieldLine1, shieldLine2, writeAppLines } from './apps';
 import { award } from './xp';
 
@@ -259,6 +259,27 @@ export function startCoolOff(app: string, key?: string | null) {
 
 type ShieldLogEntry = { a: 'close' | 'want'; n: string; t: number };
 
+// The latest "I still want it" tap on a shield. With notifications off, opening Till Morning
+// right after it starts the pause, so that button is never a dead end.
+let lastWant: ShieldLogEntry | null = null;
+
+/** The app tapped "I still want it" on in the last 3 minutes, once (then it's used up). */
+export function takeRecentWant() {
+  const w = lastWant;
+  lastWant = null;
+  return w && Date.now() - w.t < 3 * 60000 ? w.n : null;
+}
+
+/** The shield reads this: with notifications off it tells you to open Till Morning instead. */
+export function setNotifyFlag(on: boolean) {
+  if (!ios) return;
+  try {
+    DA.userDefaultsSet('tm_notify_ok', on);
+  } catch {
+    // Not critical: the shield just keeps its usual words.
+  }
+}
+
 /** Turns shield taps (logged while Till Morning was closed) into XP and cool-offs. */
 export function processShieldLog() {
   if (!ios) return [] as string[];
@@ -277,6 +298,7 @@ export function processShieldLog() {
   const toasts: string[] = [];
   const minutes = getState().settings.coolOffMinutes;
   for (const e of fresh) {
+    if (e.a === 'want' && (!lastWant || e.t > lastWant.t)) lastWant = e;
     if (e.a !== 'close') continue;
     const r = award(2, `Closed ${e.n} at the shield`, { app: e.n, gap: true, isClose: true, at: e.t });
     if (r.ok) toasts.push(`+2 XP · You closed ${e.n}`);
@@ -357,7 +379,7 @@ export async function startPass(draft: Omit<ShoppingPass, 'id' | 'startedAt' | '
       );
       DA.userDefaultsRemove('tm_pass_monitor_error');
     } catch (e) {
-      // Recorded for Settings → Test tools; Till Morning still re-locks when it's next opened.
+      // Kept for crash diagnosis; Till Morning still re-locks when it's next opened.
       DA.userDefaultsSet('tm_pass_monitor_error', String((e as Error)?.message ?? e));
     }
   }
@@ -400,26 +422,9 @@ export function endPass(early = false) {
   }
   if (early) cancelPassEnd(pass);
   endPassActivities();
-  stopPassPip();
   setState({ pass: null, pendingCheckIn: pass.urgent ? getState().pendingCheckIn : pass });
   syncShields(); // re-blocks everything a whole-selection pass lifted
   return pass.urgent ? (knownApp(pass.app) ? `${pass.app} is locked again. Sleep well.` : 'Locked again. Sleep well.') : null;
-}
-
-const NL = String.fromCharCode(10);
-
-/** For Settings → Test tools: did the pass re-lock run? */
-export function passRelockReport() {
-  if (!ios) return 'Not on iOS';
-  try {
-    const events = DA.getEvents(PASS_ACTIVITY);
-    const fmt = (d: Date) => new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const lines = events.map((e) => `${e.callbackName}${e.eventName ? ` (${e.eventName})` : ''}: ${fmt(e.lastCalledAt)}`);
-    const err = DA.userDefaultsGet<string>('tm_pass_monitor_error');
-    return [lines.length ? lines.join(NL) : 'No re-lock events recorded yet', err ? `Error: ${err}` : ''].filter(Boolean).join(NL);
-  } catch (e) {
-    return String(e);
-  }
 }
 
 /** Called on launch, on resume and every second while the app is open. Returns a toast, if any. */

@@ -23,9 +23,4 @@ export function initCrashReporting() {
   scope.setTag('expo-channel', Updates.channel ?? 'none');
 }
 
-// Used by the hidden "Send test crash report" row to prove the gate.
-export function sendTestEvent() {
-  Sentry.captureException(new Error('Till Morning test event'));
-}
-
 export { Sentry };

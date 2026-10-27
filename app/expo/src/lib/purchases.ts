@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import Purchases, { LOG_LEVEL, type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
+import Purchases, { INTRO_ELIGIBILITY_STATUS, LOG_LEVEL, type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
 
 import { track } from './analytics';
 import { config, ENTITLEMENT_ID } from './config';
@@ -28,11 +28,6 @@ export async function restorePurchases() {
   const active = hasPro(info);
   if (active) track('purchase_restored');
   return active;
-}
-
-// Gate check: sandbox offerings must come back with the yearly and monthly packages.
-export async function getOfferings() {
-  return Purchases.getOfferings();
 }
 
 export function onSubscriptionChange(listener: (active: boolean) => void) {
@@ -73,4 +68,16 @@ export async function buy(pkg: PurchasesPackage) {
     if ((e as { userCancelled?: boolean }).userCancelled) return 'cancelled' as const;
     throw e;
   }
+}
+
+/** Will the App Store give this Apple ID the free week? Unknown counts as yes only if the plan has one. */
+export async function trialEligible(plans: Plans): Promise<boolean> {
+  const pkgs = [plans.yearly, plans.monthly].filter((p): p is PurchasesPackage => !!p);
+  if (!configured || !pkgs.length) return false;
+  const res = await Purchases.checkTrialOrIntroductoryPriceEligibility(pkgs.map((p) => p.product.identifier));
+  return pkgs.some((p) => {
+    const st = res[p.product.identifier]?.status;
+    if (st === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_ELIGIBLE) return true;
+    return st === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_UNKNOWN && !!p.product.introPrice;
+  });
 }

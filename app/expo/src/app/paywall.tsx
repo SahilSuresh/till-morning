@@ -1,25 +1,22 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { BellRinging } from '../ui/ph';
+import { router } from 'expo-router';
+import { BellRinging, X } from '../ui/ph';
 import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Animated, Easing, Linking, ScrollView, Switch, Text, useAnimatedValue, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, G } from 'react-native-svg';
 
-import { config, links } from '../lib/config';
+import { links } from '../lib/config';
 import { protectedCount, shieldChosenApps } from '../lib/core';
-import { Notifications } from '../lib/notify';
-import { buy, getPlans, type Plans, restorePurchases } from '../lib/purchases';
+import { askNotificationPermission, Notifications } from '../lib/notify';
+import { buy, getPlans, type Plans, restorePurchases, trialEligible } from '../lib/purchases';
 import { getState, setState, useAppState } from '../lib/store';
 import { TopGlow } from '../ui/backgrounds';
-import { Button, Rise, TextLink, toast, useReduceMotion } from '../ui/components';
+import { Button, Rise, toast, useReduceMotion } from '../ui/components';
 import { useObSpace } from '../ui/onboarding/space';
 import { color, font, type } from '../ui/theme';
 import { Pressable } from '../ui/Pressable';
 
 const dt = (days: number) => new Date(Date.now() + days * 86400000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-
-// The prices set in App Store Connect, shown only until the App Store's own strings arrive.
-const FALLBACK = { yearly: '£29.99', monthly: '£4.99', perMonth: `£${(29.99 / 12).toFixed(2)}` };
 
 /** "Wednesday" for n days from now; "WED" when short. */
 const weekday = (n: number, short = false) => {
@@ -38,31 +35,42 @@ function shieldsLine(apps: number, categories: number) {
 }
 
 /**
- * "Your free week" as "7 nights free" (Night Trolley, option C): seven moons growing to full, the terms in one
- * card, the plans as purple shelf tags. The billed price stays the biggest number (Apple's rule).
+ * The plans. Apple's rules (3.1.2): the billed price is the biggest price on screen, the free week is shown only
+ * to people Apple will give it to, the terms say it renews automatically, and once you're set up you can close it.
+ * First-timers get "7 nights free" as seven moons growing to full; the plans are purple shelf tags.
  */
 export default function Paywall() {
   const sp = useObSpace();
-  // Settings → Replay the intro ends here, with a way back.
-  const replay = useLocalSearchParams<{ replay?: string }>().replay === '1';
   const plan = useAppState((s) => s.plan);
+  // Set up already (opened from Today, Settings or a lapsed plan): there's always a way out.
+  const [canClose] = useState(() => getState().onboarded);
   const [remind, setRemind] = useState(true);
   const [plans, setPlans] = useState<Plans | null>(null);
+  // Can this Apple ID have the free week? Unknown until the App Store answers; a lapsed or
+  // returning person is assumed not to, so they never see "free" they can't have.
+  const [trial, setTrial] = useState(() => !getState().lapsed && getState().trialAt === 0);
   const [busy, setBusy] = useState(false);
   const count = protectedCount();
 
   useEffect(() => {
     getPlans()
-      .then(setPlans)
+      .then((p) => {
+        setPlans(p);
+        trialEligible(p)
+          .then(setTrial)
+          .catch(() => {});
+      })
       .catch(() => setPlans({}));
   }, []);
 
-  // Live App Store prices, with the App Store Connect prices as a fallback while they load.
-  const yearlyPrice = plans?.yearly?.product.priceString ?? FALLBACK.yearly;
-  const monthlyPrice = plans?.monthly?.product.priceString ?? FALLBACK.monthly;
-  const perMonth = plans?.yearly?.product.pricePerMonthString ?? FALLBACK.perMonth;
+  // Prices only ever come from the App Store, in the person's own currency.
+  const loading = plans === null;
+  const yearlyPrice = plans?.yearly?.product.priceString ?? (loading ? '…' : '–');
+  const monthlyPrice = plans?.monthly?.product.priceString ?? (loading ? '…' : '–');
+  const perMonth = plans?.yearly?.product.pricePerMonthString;
   const yearly = plan === 'yearly';
   const price = yearly ? `${yearlyPrice} a year` : `${monthlyPrice} a month`;
+  const shields = shieldsLine(count.apps, count.categories);
 
   const done = async () => {
     const now = Date.now();
@@ -70,7 +78,7 @@ export default function Paywall() {
     const returning = getState().lapsed || getState().trialAt > 0;
     setState({ subscribed: true, lapsed: false, onboarded: true, appsChosen: true, ...(returning ? {} : { trialAt: now, day: '', coachStep: 0 }) });
     shieldChosenApps();
-    if (remind) {
+    if (trial && remind && (await askNotificationPermission().catch(() => false))) {
       const when = new Date(now + 5 * 86400000);
       when.setHours(10, 0, 0, 0);
       Notifications.scheduleNotificationAsync({
@@ -122,72 +130,103 @@ export default function Paywall() {
     }
   };
 
+  const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
+
   return (
     <View style={{ flex: 1 }}>
       <TopGlow />
+      {canClose && (
+        <Pressable
+          onPress={close}
+          sound="back"
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+          hitSlop={10}
+          style={{ position: 'absolute', zIndex: 2, top: sp.top(10), left: 18, width: 40, height: 40, borderRadius: 20, backgroundColor: '#1E2256', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <X size={20} weight="bold" color={color.text} />
+        </Pressable>
+      )}
       {/* Centred between the top and the button, so it sits right on every iPhone size */}
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingTop: sp.top(24), paddingHorizontal: 24, paddingBottom: 16 }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingTop: sp.top(canClose ? 56 : 24), paddingHorizontal: 24, paddingBottom: 16 }}
         showsVerticalScrollIndicator={false}
       >
         <Rise delay={40}>
-          <Text accessibilityRole="header" accessibilityLabel="Your free week: 7 nights free" style={[type.h1, { textAlign: 'center' }]}>
-            7 nights free
+          <Text accessibilityRole="header" style={[type.h1, { textAlign: 'center' }]}>
+            Till Morning Pro
+          </Text>
+          <Text style={[type.body, { textAlign: 'center', marginTop: 6, color: color.text2 }]}>
+            {trial ? 'Your first 7 nights are free.' : 'Turn the shields on.'}
           </Text>
         </Rise>
 
-        {/* Seven moons, one per night, growing to full on the night the plan starts */}
-        <View style={{ marginTop: 22 }}>
-          <SevenMoons remind={remind} />
-        </View>
+        {/* Seven moons, one per night, growing to full on the night the plan starts (free week only) */}
+        {trial && (
+          <View style={{ marginTop: 20 }}>
+            <SevenMoons remind={remind} />
+          </View>
+        )}
 
-        {/* The terms in one place: due today, the reminder, when the plan starts */}
-        <Rise delay={1700} style={{ marginTop: 18 }}>
-          <View style={{ borderRadius: 18, backgroundColor: '#1E2256', borderWidth: 1, borderColor: '#3A3F86', padding: 14, gap: 4 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <Text style={{ fontFamily: font.bodyHeavy, fontSize: 15.5, color: color.mintText }}>Due today</Text>
-              <Text style={{ fontFamily: font.display, fontSize: 18, color: color.mintText }}>£0.00</Text>
-            </View>
+        {/* The terms in one place */}
+        <Rise delay={trial ? 1700 : 200} style={{ marginTop: 18 }}>
+          <View style={{ borderRadius: 18, backgroundColor: '#1E2256', borderWidth: 1, borderColor: '#3A3F86', padding: 14 }}>
             <Text style={{ fontFamily: font.bodySemi, fontSize: 13.5, lineHeight: 19, color: color.text2 }}>
-              Tonight: {shieldsLine(count.apps, count.categories).charAt(0).toLowerCase() + shieldsLine(count.apps, count.categories).slice(1)}.{' '}
-              {remind ? `We remind you on ${weekday(5)}. ` : 'No reminder, you turned it off below. '}
-              <Text style={{ fontFamily: font.bodyHeavy, color: color.text }}>{price}</Text> starts {weekday(7)} ({dt(7)}). Cancel any time before.
+              Tonight: {shields.charAt(0).toLowerCase() + shields.slice(1)}.{' '}
+              {trial ? (
+                <>
+                  Nothing to pay today. {remind ? `We remind you on ${weekday(5)}. ` : ''}
+                  <Text style={{ fontFamily: font.bodyHeavy, color: color.text }}>{price}</Text> starts {weekday(7)} ({dt(7)}) unless you cancel before.
+                </>
+              ) : (
+                <>
+                  <Text style={{ fontFamily: font.bodyHeavy, color: color.text }}>{price}</Text>, billed today.
+                </>
+              )}
             </Text>
           </View>
         </Rise>
 
-        <Rise delay={1950} style={{ marginTop: 14 }}>
+        <Rise delay={trial ? 1950 : 300} style={{ marginTop: 14 }}>
           <View accessibilityRole="radiogroup" accessibilityLabel="Choose a plan" style={{ gap: 10 }}>
-            <PlanTag on={yearly} name="Yearly" sub={`${perMonth} a month`} amount={yearlyPrice} onPress={() => setState({ plan: 'yearly' })} />
-            <PlanTag on={!yearly} name="Monthly" sub="Pay as you go" amount={monthlyPrice} onPress={() => setState({ plan: 'monthly' })} />
+            <PlanTag
+              on={yearly}
+              name="Yearly"
+              sub={perMonth ? `${perMonth} a month, billed yearly` : 'Billed yearly'}
+              amount={yearlyPrice}
+              onPress={() => setState({ plan: 'yearly' })}
+            />
+            <PlanTag on={!yearly} name="Monthly" sub="Billed monthly" amount={monthlyPrice} onPress={() => setState({ plan: 'monthly' })} />
           </View>
         </Rise>
 
-        <Rise delay={2150} style={{ marginTop: 10 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: '#3A3F86',
-              backgroundColor: '#1E2256',
-              paddingHorizontal: 16,
-              paddingVertical: 13,
-            }}
-          >
-            <BellRinging size={20} weight="bold" color={MOON} />
-            <Text style={{ flex: 1, fontFamily: font.bodyBold, fontSize: 16, lineHeight: 24, color: color.text }}>Remind me on day 5</Text>
-            <Switch
-              value={remind}
-              onValueChange={setRemind}
-              accessibilityLabel="Remind me on day 5"
-              trackColor={{ true: '#7C4DFF', false: '#2B2F69' }}
-              ios_backgroundColor="#2B2F69"
-            />
-          </View>
-        </Rise>
+        {trial && (
+          <Rise delay={2150} style={{ marginTop: 10 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: '#3A3F86',
+                backgroundColor: '#1E2256',
+                paddingHorizontal: 16,
+                paddingVertical: 13,
+              }}
+            >
+              <BellRinging size={20} weight="bold" color={MOON} />
+              <Text style={{ flex: 1, fontFamily: font.bodyBold, fontSize: 16, lineHeight: 24, color: color.text }}>Remind me before it ends</Text>
+              <Switch
+                value={remind}
+                onValueChange={setRemind}
+                accessibilityLabel="Remind me before the free week ends"
+                trackColor={{ true: '#7C4DFF', false: '#2B2F69' }}
+                ios_backgroundColor="#2B2F69"
+              />
+            </View>
+          </Rise>
+        )}
       </ScrollView>
 
       <View style={{ paddingHorizontal: 28, paddingTop: 12, paddingBottom: sp.bottom(40), alignItems: 'center', gap: 8 }}>
@@ -195,27 +234,27 @@ export default function Paywall() {
         <Button
           sound="next"
           variant="night"
-          label="Start my free week"
+          label={trial ? 'Start my free week' : 'Subscribe'}
           onPress={start}
           icon={busy ? <ActivityIndicator color="#FFFFFF" /> : undefined}
           accessibilityHint={busy ? 'Opening the App Store' : undefined}
         />
-        <Text style={{ fontFamily: font.bodySemi, fontSize: 12.5, lineHeight: 17, color: color.text2, textAlign: 'center' }}>
-          No payment today. Cancel anytime in Settings at least 24 hours before your trial ends.
+        <Text style={{ fontFamily: font.bodySemi, fontSize: 11.5, lineHeight: 16, color: color.text2, textAlign: 'center' }}>
+          {trial
+            ? `Free for 7 days, then ${price}. Till Morning Pro renews automatically until you cancel. Payment is charged to your Apple ID when the free week ends. Cancel any time in Settings › your name › Subscriptions, at least 24 hours before it ends.`
+            : `Till Morning Pro, ${price}, charged to your Apple ID today. It renews automatically until you cancel. Cancel any time in Settings › your name › Subscriptions, at least 24 hours before the period ends.`}
         </Text>
         <View style={{ flexDirection: 'row', gap: 16 }}>
           {[
             ['Restore purchases', restore],
-            ['Terms', () => Linking.openURL(links.terms)],
-            ['Privacy', () => Linking.openURL(links.privacy)],
+            ['Terms of Use', () => Linking.openURL(links.terms)],
+            ['Privacy Policy', () => Linking.openURL(links.privacy)],
           ].map(([label, fn]) => (
             <Pressable key={label as string} onPress={fn as () => void} accessibilityRole="link" hitSlop={6}>
               <Text style={{ fontFamily: font.bodyBold, fontSize: 12.5, color: color.text2, textDecorationLine: 'underline' }}>{label as string}</Text>
             </Pressable>
           ))}
         </View>
-        {replay && <TextLink label="Back to the app" style={{ color: color.text2, fontSize: 14 }} onPress={() => router.replace('/')} />}
-        {config.isTestBuild && !replay && <TextLink label="Skip (test build only)" style={{ color: color.text3, fontSize: 13 }} onPress={done} />}
       </View>
     </View>
   );
@@ -332,7 +371,7 @@ function PlanTag({ on, name, sub, amount, onPress }: { on: boolean; name: string
               <Text style={{ fontFamily: font.bodySemi, fontSize: 12.5, color: on ? '#E3D9FF' : color.text3 }}>{sub}</Text>
             </View>
             <View style={{ alignSelf: 'stretch', width: 1.5, marginVertical: 10, borderLeftWidth: 1.5, borderStyle: 'dashed', borderColor: on ? 'rgba(255,255,255,0.45)' : '#3A3F86' }} />
-            <Text style={{ width: 92, textAlign: 'center', fontFamily: font.display, fontSize: 21, color: on ? MOON : '#FFFFFF', fontVariant: ['tabular-nums'] }}>{amount}</Text>
+            <Text style={{ width: 92, textAlign: 'center', fontFamily: font.display, fontSize: 24, color: on ? MOON : '#FFFFFF', fontVariant: ['tabular-nums'] }}>{amount}</Text>
           </LinearGradient>
         </View>
       )}

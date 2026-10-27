@@ -1,5 +1,5 @@
 import { router, useIsFocused } from 'expo-router';
-import { CalendarCheckIcon, ClipboardTextIcon, LockKeyIcon, MicrophoneIcon, PackageIcon, PiggyBankIcon, SparkleIcon, TicketIcon } from '../../ui/ph';
+import { CalendarCheckIcon, ClipboardTextIcon, LockKeyIcon, MicrophoneIcon, PackageIcon, PiggyBankIcon, TicketIcon } from '../../ui/ph';
 import { type ComponentRef, useEffect, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +9,7 @@ import { type MyApp, myApps } from '../../lib/apps';
 import { endPass, formatReady, shieldChosenApps } from '../../lib/core';
 import { hh, nightOn, pauseSeconds, risky } from '../../lib/rules';
 import { setState, useAppState } from '../../lib/store';
-import { COACH_TIPS, nextUnlock, recapDue } from '../../lib/week';
+import { COACH_TIPS, recapDue } from '../../lib/week';
 import { xpToast } from '../../lib/xp';
 import { TopGlow } from '../../ui/backgrounds';
 import { Button, Rise, toast } from '../../ui/components';
@@ -82,7 +82,7 @@ export default function Today() {
   const settings = useAppState((s) => s.settings);
   const coachStep = useAppState((s) => s.coachStep);
   const parcels = useAppState((s) => s.queue.length);
-  useAppState((s) => s.unlocked.length + s.trialAt + s.recapSeenWeek); // week-one cards and the Sunday recap
+  useAppState((s) => s.recapSeenWeek); // the Sunday recap
   const setupDone = useAppState(
     (s) =>
       `${Object.keys(s.habits).length > 0 ? 1 : 0}${s.budgetTotal > 0 || s.budgetSkipped ? 1 : 0}${s.passSet ? 1 : 0}${s.note ? 1 : 0}${s.bankLock ? 1 : 0}${s.setupHidden ? 1 : 0}`,
@@ -165,31 +165,16 @@ export default function Today() {
   // ---- Today's two cards: the shielded apps, and what's in your trolley ----
   const shieldedApps = myApps().filter((a) => !offApps.includes(a.key));
   const trolleySub = night
-    ? `Morning Till opens in ${untilText(nextHour(now, 8) - now)}`
+    ? `Ready to decide at 08:00, in ${untilText(nextHour(now, 8) - now)}`
     : waiting.length
       ? `Next one ready ${formatReady(waiting[0].readyAt, now)}`
       : undefined;
   // "Test the shutters" only until you've met the pause once.
   const showTry = useAppState((s) => s.pauseLog.length === 0);
 
-  // ---- At most one next step: week-one card, Sunday recap, a parcel, then what's left of setup ----
+  // ---- At most one next step: Sunday recap, a parcel, then what's left of setup ----
   const next: NextStep | null = (() => {
     if (lapsed) return null;
-    const unlock = nextUnlock();
-    if (unlock)
-      return {
-        key: `unlock-${unlock.k}`,
-        Icon: SparkleIcon,
-        weight: 'fill',
-        tone: 'sun',
-        isNew: true,
-        chip: `New · day ${unlock.day}`,
-        tag: `New · day ${unlock.day}`,
-        stub: { label: 'Day', value: String(unlock.day) },
-        title: unlock.t,
-        sub: unlock.kick,
-        go: () => router.push({ pathname: '/unlock', params: { k: unlock.k } }),
-      };
     if (recapDue(now))
       return {
         key: 'recap',

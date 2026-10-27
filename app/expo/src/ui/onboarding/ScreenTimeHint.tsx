@@ -27,7 +27,7 @@ export function AskingHint() {
       <Text style={[type.h2, { marginTop: 8, textAlign: 'center' }]}>Tap Continue</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
         <LockKey size={15} weight="bold" color={color.mintText} />
-        <Text style={[type.small, { textAlign: 'center' }]}>Your data never leaves your phone</Text>
+        <Text style={[type.small, { textAlign: 'center' }]}>Your app choices never leave your phone</Text>
       </View>
     </Animated.View>
   );

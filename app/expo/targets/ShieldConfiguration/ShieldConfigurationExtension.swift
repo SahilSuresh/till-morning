@@ -169,12 +169,18 @@ func tmCoolOffShieldIfNeeded(application: Application, config: [String: Any]?)
 /// Per-app shield lines the app writes for each protected app (habit line, its budget, backup dinner).
 /// tm_sub::<key> replaces the normal subtitle; tm_nightsub::<key> is added under the night-lock line.
 func tmPersonalised(_ config: [String: Any]?, application: Application) -> [String: Any]? {
-  guard let key = tmTokenKey(application.token),
-    let sub = userDefaults?.string(forKey: "tm_sub::" + key), !sub.isEmpty
-  else { return config }
   var cfg = config ?? [:]
-  cfg["subtitle"] = sub
-  return cfg
+  if let key = tmTokenKey(application.token),
+    let sub = userDefaults?.string(forKey: "tm_sub::" + key), !sub.isEmpty
+  {
+    cfg["subtitle"] = sub
+  }
+  // Notifications off: "I still want it" can't send its "Tap to start your pause", so say what to do.
+  if userDefaults?.object(forKey: "tm_notify_ok") as? Bool == false {
+    let base = (cfg["subtitle"] as? String) ?? "Is this a planned purchase?"
+    cfg["subtitle"] = base + "\nStill want it? Tap below, then open Till Morning for your pause."
+  }
+  return config == nil && cfg.isEmpty ? nil : cfg
 }
 
 func tmNightExtra(application: Application) -> String? {
@@ -225,7 +231,7 @@ func tmNightOrLateShield(application: Application, config: [String: Any]?) -> Sh
   }
 
   let h = Calendar.current.component(.hour, from: now)
-  guard h >= 22 || h < 5 else { return nil }
+  guard h >= 22 else { return nil }  // the risky hour, as in the app (rules.ts NIGHT_FROM)
   var subtitle = (config?["subtitle"] as? String) ?? "Is this a planned purchase?"
   if let stats = userDefaults?.string(forKey: "tm_leftstats::\(name)") {
     let parts = stats.split(separator: "|").compactMap { Int($0) }

@@ -6,9 +6,6 @@ const appEnv = (Constants.expoConfig?.extra?.appEnv as string | undefined) ?? 'p
 
 export const config = {
   appEnv,
-  // App Review (guideline 5.6): test-only controls exist only in development and internal
-  // preview builds. Fails safe: an App Store build with a missing setting counts as production.
-  isTestBuild: __DEV__ || appEnv === 'development' || appEnv === 'preview',
   appGroup: (Constants.expoConfig?.extra?.appGroup as string | undefined) ?? 'group.com.andrej.tillmorning',
   revenueCatIosKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? '',
   sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',

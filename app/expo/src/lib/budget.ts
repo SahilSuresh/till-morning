@@ -22,7 +22,7 @@ export function knownApps(): string[] {
       // Shared storage unavailable: fall back to the pause log.
     }
   }
-  for (const p of getState().pauseLog) if (p.app && p.app !== 'your shop apps' && p.app !== 'Test app') names.add(p.app);
+  for (const p of getState().pauseLog) if (p.app && p.app !== 'your shop apps') names.add(p.app);
   return [...names].sort((a, b) => a.localeCompare(b));
 }
 

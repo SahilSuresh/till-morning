@@ -81,7 +81,7 @@ export default function SafariHelp() {
         </Card>
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', marginTop: 4 }}>
           <ShieldCheck size={16} weight="bold" color={color.text3} />
-          <Text style={type.small}>No account, no bank links, nothing leaves your phone.</Text>
+          <Text style={type.small}>No account, no bank links. Pages are read on your phone.</Text>
         </View>
       </ScrollView>
     </View>

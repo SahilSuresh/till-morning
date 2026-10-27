@@ -8,7 +8,7 @@ import { useEffect } from 'react';
 import { AppState, View } from 'react-native';
 
 import { initAnalytics } from '../lib/analytics';
-import { importInbox, pauseProtection, processShieldLog, syncShields, tick } from '../lib/core';
+import { importInbox, pauseProtection, processShieldLog, setNotifyFlag, syncShields, takeRecentWant, tick } from '../lib/core';
 import { initCrashReporting, Sentry } from '../lib/crashes';
 import { Notifications } from '../lib/notify';
 import { checkGoals, goalToast, rollDay } from '../lib/progress';
@@ -31,6 +31,15 @@ function onForeground() {
   const imported = importInbox();
   if (imported) setTimeout(() => toast(imported), 600);
   const toasts = processShieldLog();
+  // "I still want it" normally arrives as a notification. If notifications are off, opening
+  // Till Morning straight after starts the pause instead.
+  const want = takeRecentWant();
+  Notifications.getPermissionsAsync()
+    .then((p) => {
+      setNotifyFlag(p.granted);
+      if (want && !p.granted) router.push('/pause');
+    })
+    .catch(() => {});
   const goal = goalToast(checkGoals());
   if (toasts.length) toast(toasts[toasts.length - 1]);
   if (goal) setTimeout(() => toast(goal), toasts.length ? 2800 : 0);
@@ -45,7 +54,7 @@ function onPlan(active: boolean) {
     if (wasLapsed) syncShields();
     return;
   }
-  // Test builds can skip the paywall without buying; those never lapse.
+  // Only a plan the store has confirmed at least once can lapse.
   if (s.proSeen && s.subscribed && !s.lapsed) {
     pauseProtection();
     router.push('/paused');

@@ -12,7 +12,7 @@ import { askNotificationPermission } from '../lib/notify';
 import { requestScreenTimeAccess } from '../lib/screenTime';
 import { setState } from '../lib/store';
 import { PauseBackground } from '../ui/backgrounds';
-import { Button, Card, Chip, Rise, TextLink, useReduceMotion } from '../ui/components';
+import { Button, Card, Chip, Rise, useReduceMotion } from '../ui/components';
 import { Hl } from '../ui/Hl';
 import { IconTile, LetterTile, MonoLabel, UnderlineLink } from '../ui/onboarding/bits';
 import { ObHeader } from '../ui/onboarding/ObHeader';
@@ -23,7 +23,6 @@ import { ShelfTag, TagTitle } from '../ui/ShelfTag';
 import { WelcomeHold } from '../ui/onboarding/WelcomeHold';
 import { color, font, type } from '../ui/theme';
 import { useCalmMusic } from '../lib/sound';
-import { getScreenTimeStatus } from '../lib/screenTime';
 
 // Setup, as the prototype's onboarding (P:L1119–1363). One route; the steps slide between each
 // other under a header that stays still. "Tap to start your pause" needs notifications, so the
@@ -37,8 +36,6 @@ const DARK: Step[] = ['story', 'demo'];
 
 export default function Setup() {
   const params = useLocalSearchParams<{ step?: string }>();
-  // Settings → Replay the intro: every screen again, but nothing changes (apps, permissions, plan).
-  const replay = params.step === 'replay';
   // Opened from Home or Your apps just to choose apps: Apple's list opens straight away.
   const pickerOnly = params.step === 'picker';
   const rm = useReduceMotion();
@@ -62,7 +59,7 @@ export default function Setup() {
   // Setup ends on the paywall; starting the free week (or restoring) turns the shields on.
   const finish = () => {
     track('onboarding_completed');
-    router.push(replay ? { pathname: '/paywall', params: { replay: '1' } } : '/paywall');
+    router.push('/paywall');
   };
 
   // The picker reports "Done" before it has saved the selection (it saves ~0.1 s later),
@@ -104,10 +101,10 @@ export default function Setup() {
       body = <Story onNext={() => go('screenTime')} />;
       break;
     case 'screenTime':
-      body = <ScreenTime replay={replay} onAllowed={() => go('ukApps')} />;
+      body = <ScreenTime onAllowed={() => go('ukApps')} />;
       break;
     case 'ukApps':
-      body = <UkApps replay={replay} onOpen={() => (replay ? go('notify') : setPicker(true))} />;
+      body = <UkApps onOpen={() => setPicker(true)} />;
       break;
     case 'notify':
       body = <Notify onNext={() => go('demo')} />;
@@ -181,7 +178,7 @@ function StepBackground({ step }: { step: Step }) {
 
 const TRUST: [Icon, string][] = [
   [LockKey, 'No bank links'],
-  [DeviceMobile, 'Stays on your phone'],
+  [DeviceMobile, 'No account'],
   [Heart, 'No shaming'],
 ];
 
@@ -194,7 +191,7 @@ function Welcome({ onNext }: { onNext: () => void }) {
       footer={
         <>
           <Button sound="next" variant="night" label="Let’s get started" onPress={onNext} />
-          <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>7 days free, then pick a plan</Text>
+          <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>Starts with a free week</Text>
         </>
       }
     >
@@ -256,13 +253,11 @@ function Story({ onNext }: { onNext: () => void }) {
 
 const SCREEN_TIME_ROWS: [Icon, string][] = [
   [EyeSlash, 'Till Morning can’t see inside your shop apps'],
-  [DeviceMobile, 'Everything stays on your phone'],
+  [DeviceMobile, 'Your app choices stay on this phone'],
   [ToggleRight, 'Switch it off anytime in Settings'],
 ];
 
-function ScreenTime({ onAllowed, replay }: { onAllowed: () => void; replay?: boolean }) {
-  // On a replay with Screen Time already on, the button simply moves on.
-  const already = replay && getScreenTimeStatus() === 2;
+function ScreenTime({ onAllowed }: { onAllowed: () => void }) {
   const base = useStepBase();
   const rd = useRiseDelay();
   const [denied, setDenied] = useState(false);
@@ -301,7 +296,7 @@ function ScreenTime({ onAllowed, replay }: { onAllowed: () => void; replay?: boo
           <ConnectedNote />
         ) : (
           <>
-            <Button sound="next" variant="night" label={already ? 'Next' : denied ? 'Try again' : 'Allow Screen Time'} onPress={already ? onAllowed : allowScreenTime} />
+            <Button sound="next" variant="night" label={denied ? 'Try again' : 'Continue'} onPress={allowScreenTime} />
             <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>Next, a quick tip on which apps to pick.</Text>
           </>
         )
@@ -368,7 +363,7 @@ const UK_SHELVES: [[string, string][], string][] = [
   ],
 ];
 
-function UkApps({ onOpen, replay }: { onOpen: () => void; replay?: boolean }) {
+function UkApps({ onOpen }: { onOpen: () => void }) {
   const base = useStepBase();
   const rd = useRiseDelay();
   return (
@@ -376,7 +371,7 @@ function UkApps({ onOpen, replay }: { onOpen: () => void; replay?: boolean }) {
       contentStyle={{ paddingHorizontal: 28, paddingTop: 12, paddingBottom: 8 }}
       footer={
         <>
-          <Button sound="next" variant="night" label={replay ? 'Next' : 'Open Apple’s app list'} onPress={onOpen} />
+          <Button sound="next" variant="night" label="Open Apple’s app list" onPress={onOpen} />
           <Text style={[type.small, { textAlign: 'center', marginTop: 12 }]}>You can change this any time.</Text>
         </>
       }
@@ -429,13 +424,12 @@ function Notify({ onNext }: { onNext: () => void }) {
           <Button
             sound="next"
             variant="night"
-            label="Allow notifications"
+            label="Continue"
             onPress={async () => {
               await askNotificationPermission();
               onNext();
             }}
           />
-          <TextLink label="Not now" style={{ color: color.text3 }} onPress={onNext} />
         </>
       }
     >
@@ -549,8 +543,7 @@ function Tour({ onNext }: { onNext: () => void }) {
       contentStyle={{ paddingHorizontal: 28, paddingTop: 8, paddingBottom: 8 }}
       footer={
         <>
-          <Text style={[type.small, { textAlign: 'center' }]}>More arrives on Today during your first week.</Text>
-          <Button sound="next" variant="night" label="Continue" onPress={onNext} style={{ marginTop: 12 }} />
+          <Button sound="next" variant="night" label="Continue" onPress={onNext} />
         </>
       }
     >

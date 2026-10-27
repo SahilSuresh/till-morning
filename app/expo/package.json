@@ -56,8 +56,7 @@
     "build:dev": "eas build --profile development --platform ios",
     "build:preview": "eas build --profile preview --platform ios",
     "build:ios": "eas build --profile production --platform ios",
-    "submit:ios": "eas submit --profile production --platform ios --latest",
-    "update": "eas update --channel production --environment production && npx sentry-expo-upload-sourcemaps dist"
+    "submit:ios": "eas submit --profile production --platform ios --latest"
   },
   "private": true
 }

@@ -1,17 +1,15 @@
 import { router, useFocusEffect } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
-import { ArrowCounterClockwiseIcon, BellRingingIcon, BugIcon, CalendarCheckIcon, CreditCardIcon, CrownSimpleIcon, EyeIcon, FileTextIcon, HeartIcon, type Icon, InfoIcon, LifebuoyIcon, LockIcon, LockKeyIcon, MoonStarsIcon, PiggyBankIcon, PlayIcon, ScrollIcon, ShieldCheckIcon, ShieldIcon, SparkleIcon, SquaresFourIcon, StarIcon, ToggleRightIcon } from '../../ui/ph';
+import { ArrowCounterClockwiseIcon, BellRingingIcon, CalendarCheckIcon, CrownSimpleIcon, EyeIcon, FileTextIcon, HeartIcon, type Icon, LifebuoyIcon, LockIcon, LockKeyIcon, MoonStarsIcon, PiggyBankIcon, ScrollIcon, ShieldCheckIcon, ShieldIcon, SquaresFourIcon, StarIcon, ToggleRightIcon } from '../../ui/ph';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking, ScrollView, Switch, Text, TextInput, type TextInputProps, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { budgetSummary, lockDays } from '../../lib/budget';
 import { config, links } from '../../lib/config';
-import { applyShieldLook, liftAllShields, passRelockReport, protectedCount, shieldChosenApps, syncShields, turnOffTillTomorrow } from '../../lib/core';
-import { sendTestEvent } from '../../lib/crashes';
-import { getOfferings, isPurchasesReady, restorePurchases } from '../../lib/purchases';
+import { applyShieldLook, liftAllShields, protectedCount, shieldChosenApps, syncShields, turnOffTillTomorrow } from '../../lib/core';
+import { restorePurchases } from '../../lib/purchases';
 import { hh } from '../../lib/rules';
-import { getScreenTimeStatus } from '../../lib/screenTime';
 import { type AppState, resetState, setState, useAppState } from '../../lib/store';
 import { lose, xpToast } from '../../lib/xp';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -299,17 +297,6 @@ export default function Settings() {
     }
   };
 
-  const onCheckOfferings = async () => {
-    if (!isPurchasesReady()) return Alert.alert('RevenueCat key missing');
-    try {
-      const offerings = await getOfferings();
-      const ids = offerings.current?.availablePackages.map((p) => p.product.identifier) ?? [];
-      Alert.alert('Offerings', ids.length ? ids.join('\n') : 'No current offering');
-    } catch (e) {
-      Alert.alert('Offerings failed', String(e));
-    }
-  };
-
   const days = bankLock ? lockDays() : 0;
 
   return (
@@ -583,21 +570,11 @@ export default function Settings() {
             right={<Toggle label="Sounds" value={st.sounds !== false} onChange={(v) => set({ sounds: v })} />}
           />
           <Row
-            Icon={PlayIcon}
+            Icon={SquaresFourIcon}
             tone="lav"
-            label="Replay the intro"
-            sub="See the welcome screens again. Your apps and plan stay as they are."
-            onPress={() => router.push({ pathname: '/setup', params: { step: 'replay' } })}
-          />
-          <Row
-            Icon={SparkleIcon}
-            tone="lav"
-            label="Show the tips again"
-            sub="The quick tour on Today, and the tips on Waiting and Me."
-            onPress={() => {
-              setState({ coachStep: 0, tabTips: {} });
-              router.navigate('/');
-            }}
+            label="Safari and the Share button"
+            sub="Catch a basket at checkout, or share a screenshot or link to park it"
+            onPress={() => router.push('/safari')}
           />
         </Group>
 
@@ -625,7 +602,7 @@ export default function Settings() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Tile tone="mint" Icon={LockIcon} />
               <Text style={{ flex: 1, fontFamily: font.bodySemi, fontSize: 14.5, lineHeight: 20, color: color.text }}>
-                Everything stays on this phone. No bank links, no account.
+                Your wants, apps and notes stay on this phone. No bank links, no account.
               </Text>
             </View>
           </Cell>
@@ -640,28 +617,6 @@ export default function Settings() {
             <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: '#FF9F8A', textAlign: 'center' }}>Delete all data</Text>
           </Pressable>
         </Enter>
-
-        {config.isTestBuild && (
-          <>
-            <Head title={`Test tools (${config.appEnv})`} d={170} />
-            <Group d={180}>
-              <Row first Icon={PlayIcon} tone="hush" label="Try the pause" onPress={() => router.push({ pathname: '/pause', params: { app: 'Test app' } })} />
-              <Row Icon={MoonStarsIcon} tone="hush" label="Try the urgent door" onPress={() => router.push({ pathname: '/urgent', params: { app: 'Test app' } })} />
-              <Row Icon={LockKeyIcon} tone="hush" label="Pass re-lock check" sub="When the last pass re-lock ran" onPress={() => Alert.alert('Pass re-lock', passRelockReport())} />
-              <Row
-                Icon={BugIcon}
-                tone="hush"
-                label="Send test crash report"
-                onPress={() => {
-                  sendTestEvent();
-                  Alert.alert('Sent to Sentry');
-                }}
-              />
-              <Row Icon={CreditCardIcon} tone="hush" label="Check RevenueCat offerings" onPress={onCheckOfferings} />
-              <Row Icon={InfoIcon} tone="hush" label={`Screen Time status: ${String(getScreenTimeStatus())}`} />
-            </Group>
-          </>
-        )}
 
         <Text style={{ marginTop: 24, fontFamily: font.bodySemi, fontSize: 13, color: color.text3, textAlign: 'center' }}>
           Version {config.version} ({config.build})

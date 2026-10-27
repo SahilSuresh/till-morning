@@ -10,8 +10,6 @@ type TmNativeModule = {
   startPassActivity?(title: string, need: string, startedAt: number, endsAt: number): boolean;
   endPassActivities?(): void;
   reloadWidgets?(): void;
-  startPassPip?(title: string, startedAt: number, endsAt: number): boolean;
-  stopPassPip?(): void;
 };
 
 const native = requireOptionalNativeModule<TmNativeModule>('TmNative');
@@ -59,24 +57,6 @@ export function endPassActivities() {
     // Older install without Live Activities.
   }
 }
-
-/** Floating pass countdown over other apps (Picture in Picture). No-op on older installs. */
-export function startPassPip(title: string, startedAt: number, endsAt: number) {
-  try {
-    return native?.startPassPip?.(title, startedAt, endsAt) ?? false;
-  } catch {
-    return false;
-  }
-}
-
-export function stopPassPip() {
-  try {
-    native?.stopPassPip?.();
-  } catch {
-    // Older install without the floating timer.
-  }
-}
-
 export function reloadWidgets() {
   try {
     native?.reloadWidgets?.();

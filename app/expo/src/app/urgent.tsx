@@ -19,7 +19,9 @@ const WAIT = 15;
 export default function Urgent() {
   const headPad = useHeadPad();
   const footPad = useFootPad();
-  const params = useLocalSearchParams<{ app?: string }>();
+  const params = useLocalSearchParams<{ app?: string; preview?: string }>();
+  // Opened from the night-lock preview: everything looks real, nothing unlocks or parks.
+  const preview = params.preview === '1';
   const { app, key } = useMemo(() => {
     if (params.app) return { app: params.app, key: null as string | null };
     const recent = recentShieldedApp();
@@ -36,12 +38,18 @@ export default function Urgent() {
   const ok = done && why.trim().length > 1;
 
   const open = async () => {
+    if (preview) {
+      router.back();
+      setTimeout(() => toast('Preview: at night this opens the app for 10 minutes'), 400);
+      return;
+    }
     await startPass({ app, reason: 'specific', need: why.trim(), limit: '', minutes: 10, urgent: true });
     router.replace('/');
     setTimeout(() => toast(named ? `${app} is open for 10 minutes` : 'Open for 10 minutes'), 400);
   };
 
   const park = () => {
+    if (preview) return router.back();
     const w = parkWant(app, '', 'unsure', key);
     router.replace('/');
     setTimeout(() => toast(`Parked till ${new Date(w.readyAt).getHours() === 8 ? '08:00' : 'later'}`), 400);

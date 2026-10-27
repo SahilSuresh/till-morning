@@ -15,6 +15,7 @@
     },
     "ios": {
       "bundleIdentifier": "com.andrej.tillmorning",
+      "appStoreUrl": "https://apps.apple.com/app/id6826001952",
       "supportsTablet": false,
       "config": {
         "usesNonExemptEncryption": false

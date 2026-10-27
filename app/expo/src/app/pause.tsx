@@ -426,7 +426,17 @@ export default function Pause() {
           </View>
           <View style={{ alignSelf: 'stretch', gap: 8, paddingBottom: Math.max(footPad + 4, 28) }}>
             {preview ? (
-              <Button label="Close the preview" onPress={() => router.back()} />
+              <>
+                <Button label="Close the preview" onPress={() => router.back()} />
+                <Pressable
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => router.push({ pathname: '/urgent', params: { preview: '1' } })}
+                  style={{ alignSelf: 'center', marginTop: 6, padding: 6 }}
+                >
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: color.text3, textDecorationLine: 'underline' }}>It’s urgent</Text>
+                </Pressable>
+              </>
             ) : (
               <>
                 <Pressable onPress={() => setSheet('quick')} accessibilityRole="button">

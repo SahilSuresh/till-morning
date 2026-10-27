@@ -1,4 +1,5 @@
-import { CaretRightIcon, CheckIcon } from '../../ui/ph';
+import { CalendarCheckIcon, CaretRightIcon, CheckIcon } from '../../ui/ph';
+import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -77,6 +78,22 @@ export default function Me() {
 
         <Rise delay={120} style={{ marginTop: 16 }}>
           <NoteCard />
+        </Rise>
+
+        {/* Your week: pauses, waits and passes (also on Today every Sunday) */}
+        <Rise delay={130} style={{ marginTop: 16 }}>
+          <Pressable onPress={() => router.push('/recap')} accessibilityRole="button">
+            <Card style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(167,139,250,0.16)', alignItems: 'center', justifyContent: 'center' }}>
+                <CalendarCheckIcon size={22} weight="bold" color="#C4B5FD" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={type.title}>Your week</Text>
+                <Text style={type.small}>Pauses, waits and passes</Text>
+              </View>
+              <CaretRightIcon size={18} weight="bold" color={color.text3} />
+            </Card>
+          </Pressable>
         </Rise>
 
         {/* How XP works (a <details> card in the prototype) */}
