@@ -24,6 +24,20 @@ const weekday = (n: number, short = false) => {
   return short ? w.toUpperCase() : w;
 };
 
+/**
+ * The yearly price as a rounded monthly figure: £29.99 a year is £2.50 a month.
+ * (The store's own per-month string cuts the pennies off and says £2.49.)
+ */
+function perMonthOf(product?: { price: number; currencyCode: string; pricePerMonthString?: string | null }) {
+  if (!product) return undefined;
+  try {
+    const monthly = Math.round((product.price / 12) * 100) / 100;
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency: product.currencyCode }).format(monthly);
+  } catch {
+    return product.pricePerMonthString ?? undefined;
+  }
+}
+
 /** What "Today" shields: apps and whole categories are counted apart (a category isn't one app). */
 function shieldsLine(apps: number, categories: number) {
   const a = `${apps} app${apps === 1 ? '' : 's'}`;
@@ -81,7 +95,7 @@ export default function Paywall() {
   const trial = !!pkg && !!eligible?.[pkg.product.identifier];
   const yearlyPrice = plans?.yearly?.product.priceString ?? '…';
   const monthlyPrice = plans?.monthly?.product.priceString ?? '…';
-  const perMonth = plans?.yearly?.product.pricePerMonthString;
+  const perMonth = perMonthOf(plans?.yearly?.product);
   const price = yearly ? `${yearlyPrice} a year` : `${monthlyPrice} a month`;
   const shields = shieldsLine(count.apps, count.categories);
 
